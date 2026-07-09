@@ -21,13 +21,13 @@ Completion criteria:
 ## Design Verification Commands
 
 ```powershell
-Get-ChildItem -Force C:\Users\cs930\Desktop\ai_test3
-Get-ChildItem -Force C:\Users\cs930\Desktop\ai_test3\docs
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\README.md -Pattern "One-Sentence Use Case"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\SPEC.md -Pattern "MVP Features"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\SECURITY_BOUNDARY.md -Pattern "Local-First Policy"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\ACCEPTANCE_CRITERIA.md -Pattern "MVP Completion Criteria"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\HOLD_CONDITIONS.md -Pattern "HOLD Conditions"
+Get-ChildItem -Force .
+Get-ChildItem -Force .\docs
+Select-String -Path .\README.md -Pattern "One-Sentence Use Case"
+Select-String -Path .\SPEC.md -Pattern "MVP Features"
+Select-String -Path .\SECURITY_BOUNDARY.md -Pattern "Local-First Policy"
+Select-String -Path .\ACCEPTANCE_CRITERIA.md -Pattern "MVP Completion Criteria"
+Select-String -Path .\HOLD_CONDITIONS.md -Pattern "HOLD Conditions"
 ```
 
 ## Future Implementation Verification
@@ -44,31 +44,31 @@ Every verification step must use a real command or file read and must show a con
 ## Evaluation Criteria Verification
 
 ```powershell
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\evaluation_criteria.md -Pattern "Score Groups"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\evaluation_criteria.md -Pattern "PASS / REVISE / HOLD"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\SPEC.md -Pattern "Evaluation Criteria Source"
+Select-String -Path .\docs\evaluation_criteria.md -Pattern "Score Groups"
+Select-String -Path .\docs\evaluation_criteria.md -Pattern "PASS / REVISE / HOLD"
+Select-String -Path .\SPEC.md -Pattern "Evaluation Criteria Source"
 ```
 
 ## Specialist Criteria Verification
 
 ```powershell
-Get-ChildItem -Force C:\Users\cs930\Desktop\ai_test3\docs\*_criteria.md
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\composer_criteria.md -Pattern "Composer Criteria"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\lyricist_criteria.md -Pattern "Lyricist Criteria"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\producer_criteria.md -Pattern "Producer Criteria"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\mixing_criteria.md -Pattern "Mixing Criteria"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\mastering_criteria.md -Pattern "Mastering Criteria"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\ai_music_criteria.md -Pattern "AI Music Criteria"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\market_release_criteria.md -Pattern "Market and Release Criteria"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\scoring_model.md -Pattern "Default Score Groups"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\evaluation_criteria.md -Pattern "Specialist Criteria Documents"
+Get-ChildItem -Force .\docs\*_criteria.md
+Select-String -Path .\docs\composer_criteria.md -Pattern "Composer Criteria"
+Select-String -Path .\docs\lyricist_criteria.md -Pattern "Lyricist Criteria"
+Select-String -Path .\docs\producer_criteria.md -Pattern "Producer Criteria"
+Select-String -Path .\docs\mixing_criteria.md -Pattern "Mixing Criteria"
+Select-String -Path .\docs\mastering_criteria.md -Pattern "Mastering Criteria"
+Select-String -Path .\docs\ai_music_criteria.md -Pattern "AI Music Criteria"
+Select-String -Path .\docs\market_release_criteria.md -Pattern "Market and Release Criteria"
+Select-String -Path .\docs\scoring_model.md -Pattern "Default Score Groups"
+Select-String -Path .\docs\evaluation_criteria.md -Pattern "Specialist Criteria Documents"
 ```
 
 ## Docs Index Verification
 
 ```powershell
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\docs\README.md -Pattern "Read Order"
-Select-String -Path C:\Users\cs930\Desktop\ai_test3\README.md -Pattern "Criteria Docs"
+Select-String -Path .\docs\README.md -Pattern "Read Order"
+Select-String -Path .\README.md -Pattern "Criteria Docs"
 ```
 
 ## CLI MVP Verification

@@ -25,8 +25,10 @@
 
 ## Reference Sources
 
-- `C:\Users\cs930\Desktop\ai_test\Analysis_music`: Flask 리포트 생성, Suno 프롬프트 파서, 기본 오디오 분석
-- `C:\Users\cs930\Desktop\ai_test\mp3_daw`: BPM/Key/LUFS/주파수 분석, 파형 피크, 마스터링, stem 분리 엔진
+로컬 인접 프로젝트(이 저장소 밖, 경로는 비공개)의 로직을 참고해 재구성했습니다. 상세 파일 단위 참고 내역은 `docs/reference_sources.md`를 확인하세요.
+
+- `Analysis_music`: Flask 리포트 생성, Suno 프롬프트 파서, 기본 오디오 분석
+- `mp3_daw`: BPM/Key/LUFS/주파수 분석, 파형 피크, 마스터링, stem 분리 엔진
 
 ## Non-Goals for MVP
 

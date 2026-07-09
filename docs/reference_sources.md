@@ -2,7 +2,7 @@
 
 ## Analysis_music
 
-Path: `C:\Users\cs930\Desktop\ai_test\Analysis_music`
+Local sibling project outside this repository (path intentionally omitted).
 
 Useful files:
 
@@ -18,7 +18,7 @@ Risks:
 
 ## mp3_daw
 
-Path: `C:\Users\cs930\Desktop\ai_test\mp3_daw`
+Local sibling project outside this repository (path intentionally omitted).
 
 Useful files:
 

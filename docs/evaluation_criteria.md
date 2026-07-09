@@ -5,9 +5,9 @@
 ## Reference Hierarchy
 
 1. Measurable audio evidence: audio file에서 직접 추출한 BPM, Key, LUFS, RMS, dynamic range, frequency balance, energy curve.
-2. Production criteria: `C:\Users\cs930\Desktop\ai_test1\music_skills*`와 `music_beats`의 프로듀스/사운드/믹싱 기준.
-3. Lyric and hook criteria: `C:\Users\cs930\Desktop\ai_test1\music_lyric\LYRIC_MASTER_PROMPT.md`와 `LYRIC_REVIEW_PROMPT.md`의 훅, 가사, 현대어, Suno 사용성 기준.
-4. Channel and release criteria: `C:\Users\cs930\Desktop\hermes-agents\ai-workspace\suno\catalog-template.md`, `youtube/`, `AI_PARTNER.md`, `HERMES_CONTEXT_RULES.md`의 `justaimusickr` 방향성과 선별 기준.
+2. Production criteria: `ai_test1` 저장소의 `music_skills*`와 `music_beats`의 프로듀스/사운드/믹싱 기준 (로컬 인접 저장소, 경로 비공개).
+3. Lyric and hook criteria: `ai_test1` 저장소의 `music_lyric/LYRIC_MASTER_PROMPT.md`와 `LYRIC_REVIEW_PROMPT.md`의 훅, 가사, 현대어, Suno 사용성 기준.
+4. Channel and release criteria: `hermes-agents/ai-workspace` 저장소의 `suno/catalog-template.md`, `youtube/`, `AI_PARTNER.md`, `HERMES_CONTEXT_RULES.md`의 `justaimusickr` 방향성과 선별 기준.
 5. External platform criteria: 스트리밍 LUFS, 플랫폼별 권장값, 유튜브/숏폼 트렌드는 구현 직전 최신 공식/신뢰 자료로 재검증한다.
 
 ## Score Groups
