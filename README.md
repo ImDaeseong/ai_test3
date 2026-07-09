@@ -37,7 +37,18 @@
 
 ## Project Status
 
-1차 CLI MVP가 구현되어 검증되었습니다. 현재 CLI는 `analysis_report.md`, `analysis_report.ko.md`, `analysis_report.json`을 생성합니다. 로컬 Web MVP도 같은 `AnalysisService`를 호출해 업로드 파일을 분석하고 같은 화면에 한국어 리포트를 표시합니다.
+CLI MVP와 로컬 Web MVP 모두 구현·검증 완료 상태입니다. CLI는 `analysis_report.md`, `analysis_report.ko.md`, `analysis_report.json`을 생성하고, Web MVP는 같은 `AnalysisService`를 호출해 업로드 파일을 분석한 뒤 같은 화면에 한국어 리포트를 인라인으로 표시합니다 (`outputs/web/<request-id>/`에 동일한 3종 리포트 저장). 단위 테스트 19개가 `tests/test_cli_mvp.py`에 있으며 전부 통과합니다.
+
+## Setup
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\pip.exe install -r requirements.txt
+```
+
+DSP 정확도를 낮춘 대신 표준 라이브러리만으로도 WAV 분석은 동작하지만(`numpy`/`soundfile`/`pyloudnorm` 미설치 시 폴백), 위 설치를 권장합니다. `requirements-optional.txt`는 아직 이 분석 경로에서 쓰지 않는 실험적 MIR 패키지(librosa/demucs/pedalboard, `ARCHITECTURE.md` 참고) 목록이며 기본 설치에는 필요 없습니다.
+
+더블클릭으로 Web UI를 바로 열려면 `run.bat`을 실행하세요 (`.venv`가 있어야 합니다).
 
 ## Criteria Docs
 
@@ -62,6 +73,7 @@
 ```
 
 브라우저에서 `http://127.0.0.1:8765`를 열고 WAV/FLAC/MP3 파일을 업로드한 뒤 mode를 선택하면 같은 화면에서 한국어 분석 리포트를 볼 수 있습니다. 화면에는 JSON 링크만 표시하고, `outputs/web/<request-id>/` 아래에는 Markdown, Korean Markdown, JSON 리포트가 함께 생성됩니다.
+
 ## Codec Fixtures
 
 검증용 fixture는 `tests/fixtures`에 있습니다.
@@ -79,4 +91,11 @@
 .\.venv\Scripts\python.exe -m app.cli analyze .\tests\fixtures\sample.mp3 --out .\outputs\mp3 --mode general
 ```
 
+## Verification Log
 
+| 날짜 | 내용 | 결과 |
+|---|---|---|
+| 2026-07-09 | 저장소에 커밋이 하나도 없던 상태 확인 — `.gitignore` 추가(`.venv/`, `__pycache__/`, `uploads/`, `outputs/`), 초기 커밋 생성 후 `origin/main` 푸시 | PASS: 53 files, `python -m unittest discover -s tests` 19/19 |
+| 2026-07-09 | `requirements-optional.txt`가 `requirements.txt`와 완전 중복되던 것을 발견 — `ARCHITECTURE.md`에 명시된 실험용 의존성(librosa/demucs/pedalboard)만 남기도록 수정 | PASS: 19/19 유지 |
+| 2026-07-09 | `VERIFICATION.md`의 "unittest: 11 tests OK"가 실제(19개)와 불일치 — 최신 값으로 갱신, 문서에 적힌 다른 기대 점수(REVISE 57.5, PASS 77)도 실제 CLI 실행으로 재확인 | PASS: 값 일치 확인 |
+| 2026-07-09 | 웹 결과 화면에서 `` `code` ``/`**bold**` 인라인 마크다운이 그대로 문자로 노출되던 버그 발견(Suno 스타일 제안, 종합 점수/최종 판단, 기준 문서 참조 전부 영향) — `render_inline_markdown()` 추가로 수정, Playwright로 실제 브라우저 업로드까지 확인 | PASS: 19/19, 실브라우저 렌더링 확인 |
