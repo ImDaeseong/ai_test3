@@ -62,9 +62,9 @@ class ComposerScorer(BaseScorer):
         audio = context.audio
         text = context.text
         score = 45.0
-        if audio.available and len(audio.section_energies) >= 4:
-            if len({section.energy_label for section in audio.section_energies}) >= 2:
-                score += 20
+        energy_variety = len({section.energy_label for section in audio.section_energies}) if audio.available else 0
+        if audio.available and len(audio.section_energies) >= 4 and energy_variety >= 2:
+            score += 20
         if text.section_names:
             score += 15
         if text.hook_candidates:
@@ -72,7 +72,7 @@ class ComposerScorer(BaseScorer):
         if audio.available and audio.duration_sec >= MIN_FULL_TRACK_DURATION_SEC:
             score += 5
         score = cap_for_short_duration(clamp(score), audio.duration_sec, 55.0)
-        return self.result(score, verdict_from_score(score), [duration_evidence(audio.duration_sec), f"sections={len(text.section_names)}", f"hook_candidates={len(text.hook_candidates)}"], "Composition is estimated from section structure, energy movement, and hook evidence.", "Precise melody and harmony review needs chords, MIDI, or deeper audio analysis.", "Provide lyrics/prompt sections and chord progression to improve this score.")
+        return self.result(score, verdict_from_score(score), [duration_evidence(audio.duration_sec), f"sections={len(text.section_names)}", f"hook_candidates={len(text.hook_candidates)}", f"energy_label_variety={energy_variety}"], "Composition is estimated from section structure, energy movement, and hook evidence.", "Precise melody and harmony review needs chords, MIDI, or deeper audio analysis.", "Provide lyrics/prompt sections and chord progression to improve this score.")
 
 
 class LyricistScorer(BaseScorer):
@@ -105,12 +105,17 @@ class ProducerScorer(BaseScorer):
     def score(self, context: ScoringContext):
         audio = context.audio
         score = 45.0
+        energy_spread = "none"
         if audio.available and audio.section_energies:
             labels = [section.energy_label for section in audio.section_energies]
             if "High" in labels and "Low" in labels:
                 score += 20
+                energy_spread = "high_and_low"
             elif len(set(labels)) >= 2:
                 score += 12
+                energy_spread = "mixed"
+            else:
+                energy_spread = "flat"
         if context.text.has_prompt:
             score += 10
         if audio.rms_std > 0.005:
@@ -118,7 +123,7 @@ class ProducerScorer(BaseScorer):
         if audio.available and audio.duration_sec >= MIN_FULL_TRACK_DURATION_SEC:
             score += 5
         score = cap_for_short_duration(clamp(score), audio.duration_sec, 60.0)
-        return self.result(score, verdict_from_score(score), [duration_evidence(audio.duration_sec), f"section_energy_count={len(audio.section_energies)}", f"prompt={context.text.has_prompt}"], "Production is estimated from section energy movement and prompt texture evidence.", "Instrument layout and vocal space are only proxies until stem or deeper analysis is added.", "Add rhythm, texture, vocal attitude, and space notes in the prompt.")
+        return self.result(score, verdict_from_score(score), [duration_evidence(audio.duration_sec), f"section_energy_count={len(audio.section_energies)}", f"prompt={context.text.has_prompt}", f"energy_spread={energy_spread}"], "Production is estimated from section energy movement and prompt texture evidence.", "Instrument layout and vocal space are only proxies until stem or deeper analysis is added.", "Add rhythm, texture, vocal attitude, and space notes in the prompt.")
 
 
 class MixMasterScorer(BaseScorer):

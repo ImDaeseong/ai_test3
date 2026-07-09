@@ -121,7 +121,7 @@ Expected current environment signal:
 - libsndfile: `1.2.2`
 - MP3 codec: `True`
 - FLAC codec: `True`
-- unittest: `19 tests OK`
+- unittest: `20 tests OK`
 - each short-fixture CLI run: `verdict=REVISE score=57.5` and three report files
 
 ## Scoring Calibration Verification

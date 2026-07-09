@@ -39,7 +39,7 @@
 
 ## Project Status
 
-CLI MVP와 로컬 Web MVP 모두 구현·검증 완료 상태입니다. CLI는 `analysis_report.md`, `analysis_report.ko.md`, `analysis_report.json`을 생성하고, Web MVP는 같은 `AnalysisService`를 호출해 업로드 파일을 분석한 뒤 같은 화면에 한국어 리포트를 인라인으로 표시합니다 (`outputs/web/<request-id>/`에 동일한 3종 리포트 저장). 단위 테스트 19개가 `tests/test_cli_mvp.py`에 있으며 전부 통과합니다.
+CLI MVP와 로컬 Web MVP 모두 구현·검증 완료 상태입니다. CLI는 `analysis_report.md`, `analysis_report.ko.md`, `analysis_report.json`을 생성하고, Web MVP는 같은 `AnalysisService`를 호출해 업로드 파일을 분석한 뒤 같은 화면에 한국어 리포트를 인라인으로 표시합니다 (`outputs/web/<request-id>/`에 동일한 3종 리포트 저장). 단위 테스트 20개가 `tests/test_cli_mvp.py`에 있으며 전부 통과합니다.
 
 ## Setup
 
@@ -102,3 +102,4 @@ DSP 정확도를 낮춘 대신 표준 라이브러리만으로도 WAV 분석은 
 | 2026-07-09 | `VERIFICATION.md`의 "unittest: 11 tests OK"가 실제(19개)와 불일치 — 최신 값으로 갱신, 문서에 적힌 다른 기대 점수(REVISE 57.5, PASS 77)도 실제 CLI 실행으로 재확인 | PASS: 값 일치 확인 |
 | 2026-07-09 | 웹 결과 화면에서 `` `code` ``/`**bold**` 인라인 마크다운이 그대로 문자로 노출되던 버그 발견(Suno 스타일 제안, 종합 점수/최종 판단, 기준 문서 참조 전부 영향) — `render_inline_markdown()` 추가로 수정, Playwright로 실제 브라우저 업로드까지 확인 | PASS: 19/19, 실브라우저 렌더링 확인 |
 | 2026-07-09 | README/VERIFICATION.md/docs 2개 파일에 로컬 절대경로(사용자명 포함)가 그대로 커밋되어 있던 것 발견 — VERIFICATION.md의 검증 명령 ~22곳을 상대경로로, 참고 프로젝트 경로 언급은 이름만 남기고 경로 비공개로 수정 | PASS: 19/19, `grep -rl cs930` 추적 파일 0건 |
+| 2026-07-09 | 실제 마스터링 완료 곡 38개 배치 분석 결과 전곡 REVISE·점수 4종에만 몰리는 현상 발견 — 원인 조사: (1) sample peak=1.000일 때 Mix/Master 점수를 고정 상한(65)으로 묶는 로직은 `test_full_scale_peak_is_flagged_and_not_overrewarded`로 이미 검증된 의도된 동작, (2) Composition/Production evidence가 실제 점수를 가른 신호(구간 에너지 편차)를 누락해 동일 evidence에서 다른 점수가 나오는 투명성 결함 발견 — `energy_label_variety`/`energy_spread` evidence 필드 추가로 수정 | PASS: 20/20 (신규 회귀 테스트 포함), mutation test로 수정 제거 시 신규 테스트 FAIL 확인 후 복원 재확인 |

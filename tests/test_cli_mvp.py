@@ -186,6 +186,22 @@ class CliMvpTests(unittest.TestCase):
         self.assertNotEqual(report.overall_verdict, Verdict.HOLD)
         self.assertGreater(report.overall_score or 0, 60)
 
+    def test_composition_and_production_evidence_explains_energy_variety(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            flat_path = Path(tmp) / "flat.wav"
+            varied_path = Path(tmp) / "varied.wav"
+            write_test_wav(flat_path, seconds=90.0, peak_amp=0.2)
+            write_test_wav(varied_path, seconds=90.0, peak_amp=0.6)
+            flat_report = AnalysisService().analyze(TrackInput(audio_path=flat_path, mode=AnalysisMode.GENERAL))
+            varied_report = AnalysisService().analyze(TrackInput(audio_path=varied_path, mode=AnalysisMode.GENERAL))
+        flat_scores = {score.group: score for score in flat_report.scores}
+        varied_scores = {score.group: score for score in varied_report.scores}
+        self.assertIn("energy_label_variety=1", flat_scores["Composition"].evidence)
+        self.assertIn("energy_spread=flat", flat_scores["Production"].evidence)
+        self.assertGreaterEqual(len({e for e in varied_scores["Composition"].evidence if e.startswith("energy_label_variety=")}), 1)
+        self.assertNotIn("energy_label_variety=1", varied_scores["Composition"].evidence)
+        self.assertGreater(varied_scores["Composition"].score or 0, flat_scores["Composition"].score or 0)
+
     def test_ai_music_without_prompt_or_lyrics_is_not_overrated(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             audio_path = Path(tmp) / "ai.wav"
