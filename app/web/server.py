@@ -136,6 +136,25 @@ def analyze_upload(
     return links, report.overall_verdict, report.overall_score, korean_report
 
 
+_INLINE_CODE = re.compile(r"`([^`]+)`")
+_INLINE_BOLD = re.compile(r"\*\*([^*]+)\*\*")
+
+
+def render_inline_markdown(text: str) -> str:
+    """Escape HTML, then convert inline `code` spans and **bold** spans.
+
+    The rest of render_markdown_preview only understands block-level markdown
+    (headings, list items, plain paragraphs); it passed line content straight
+    through html.escape, so literal backticks/asterisks from the report
+    (e.g. Suno style tags in `code`, score/verdict in **bold**) leaked into
+    the rendered page unconverted.
+    """
+    escaped = html.escape(text)
+    escaped = _INLINE_CODE.sub(lambda m: f"<code>{m.group(1)}</code>", escaped)
+    escaped = _INLINE_BOLD.sub(lambda m: f"<strong>{m.group(1)}</strong>", escaped)
+    return escaped
+
+
 def render_markdown_preview(markdown: str) -> str:
     html_lines = []
     in_list = False
@@ -150,27 +169,27 @@ def render_markdown_preview(markdown: str) -> str:
             if in_list:
                 html_lines.append("</ul>")
                 in_list = False
-            html_lines.append(f"<h2>{html.escape(line[2:])}</h2>")
+            html_lines.append(f"<h2>{render_inline_markdown(line[2:])}</h2>")
         elif line.startswith("## "):
             if in_list:
                 html_lines.append("</ul>")
                 in_list = False
-            html_lines.append(f"<h3>{html.escape(line[3:])}</h3>")
+            html_lines.append(f"<h3>{render_inline_markdown(line[3:])}</h3>")
         elif line.startswith("### "):
             if in_list:
                 html_lines.append("</ul>")
                 in_list = False
-            html_lines.append(f"<h4>{html.escape(line[4:])}</h4>")
+            html_lines.append(f"<h4>{render_inline_markdown(line[4:])}</h4>")
         elif line.startswith("- "):
             if not in_list:
                 html_lines.append("<ul>")
                 in_list = True
-            html_lines.append(f"<li>{html.escape(line[2:])}</li>")
+            html_lines.append(f"<li>{render_inline_markdown(line[2:])}</li>")
         else:
             if in_list:
                 html_lines.append("</ul>")
                 in_list = False
-            html_lines.append(f"<p>{html.escape(line)}</p>")
+            html_lines.append(f"<p>{render_inline_markdown(line)}</p>")
     if in_list:
         html_lines.append("</ul>")
     return "\n".join(html_lines)
