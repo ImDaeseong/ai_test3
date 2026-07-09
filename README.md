@@ -101,3 +101,4 @@ DSP 정확도를 낮춘 대신 표준 라이브러리만으로도 WAV 분석은 
 | 2026-07-09 | `requirements-optional.txt`가 `requirements.txt`와 완전 중복되던 것을 발견 — `ARCHITECTURE.md`에 명시된 실험용 의존성(librosa/demucs/pedalboard)만 남기도록 수정 | PASS: 19/19 유지 |
 | 2026-07-09 | `VERIFICATION.md`의 "unittest: 11 tests OK"가 실제(19개)와 불일치 — 최신 값으로 갱신, 문서에 적힌 다른 기대 점수(REVISE 57.5, PASS 77)도 실제 CLI 실행으로 재확인 | PASS: 값 일치 확인 |
 | 2026-07-09 | 웹 결과 화면에서 `` `code` ``/`**bold**` 인라인 마크다운이 그대로 문자로 노출되던 버그 발견(Suno 스타일 제안, 종합 점수/최종 판단, 기준 문서 참조 전부 영향) — `render_inline_markdown()` 추가로 수정, Playwright로 실제 브라우저 업로드까지 확인 | PASS: 19/19, 실브라우저 렌더링 확인 |
+| 2026-07-09 | README/VERIFICATION.md/docs 2개 파일에 로컬 절대경로(사용자명 포함)가 그대로 커밋되어 있던 것 발견 — VERIFICATION.md의 검증 명령 ~22곳을 상대경로로, 참고 프로젝트 경로 언급은 이름만 남기고 경로 비공개로 수정 | PASS: 19/19, `grep -rl cs930` 추적 파일 0건 |
