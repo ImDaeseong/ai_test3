@@ -1,5 +1,16 @@
 ﻿# Roadmap
 
+## Status Summary
+
+| Phase | Status |
+|---|---|
+| 0: Design | Done |
+| 1: Local CLI MVP | Done |
+| 2: Web MVP | Done |
+| 3: AI Music and Suno Analysis | Partially done (style suggestion + basic text analysis; deeper vocal artifact detection not started) |
+| 4: Comparison and Release Strategy | Not started |
+| 5: Advanced Audio Processing | Not started |
+
 ## Phase 0: Design
 
 - Define purpose, security boundary, acceptance criteria, verification, and HOLD conditions.

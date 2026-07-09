@@ -41,6 +41,16 @@
 
 CLI MVP와 로컬 Web MVP 모두 구현·검증 완료 상태입니다. CLI는 `analysis_report.md`, `analysis_report.ko.md`, `analysis_report.json`을 생성하고, Web MVP는 같은 `AnalysisService`를 호출해 업로드 파일을 분석한 뒤 같은 화면에 한국어 리포트를 인라인으로 표시합니다 (`outputs/web/<request-id>/`에 동일한 3종 리포트 저장). 단위 테스트 20개가 `tests/test_cli_mvp.py`에 있으며 전부 통과합니다.
 
+## 개발 프로세스
+
+이 프로젝트는 AI 코딩 에이전트와 협업하되, 구현 전에 스펙·보안 경계·완료 기준·HOLD 조건을 문서로 먼저 정의하는 방식으로 진행했습니다 (`SPEC.md`, `SECURITY_BOUNDARY.md`, `ACCEPTANCE_CRITERIA.md`, `HOLD_CONDITIONS.md`). 이 프로젝트가 실제로 보여주는 역량은 오디오 신호처리 자체의 정교함보다 다음 세 가지입니다.
+
+- **검증 루프**: 결함을 고칠 때 회귀 테스트를 추가하고, 그 수정을 되돌렸을 때 테스트가 실제로 실패하는지(mutation test)까지 확인한 뒤 복원·커밋합니다. `VERIFICATION.md`와 아래 Verification Log가 각 라운드의 근거입니다.
+- **보안 감각**: 커밋된 문서에 로컬 절대경로(사용자명 포함)가 노출된 것을 직접 찾아 4개 파일에서 제거했습니다 (Verification Log 2026-07-09 항목).
+- **실데이터 검증**: 합성 fixture 통과만으로 끝내지 않고, 실제 마스터링 완료곡 38개를 배치 분석해 점수 분포 이상을 발견하고 원인을 코드 레벨까지 추적해 수정했습니다.
+
+2026-07-09 이전 작업은 커밋 없이 진행되어 초기 커밋에 한 번에 반영됐습니다. 그 이후부터는 기능 단위가 아니라 "검증이 끝난 단위"로 작게 커밋하고, 각 라운드를 Verification Log에 기록하는 방식을 유지합니다.
+
 ## Setup
 
 ```powershell

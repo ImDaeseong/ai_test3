@@ -1,12 +1,12 @@
 ﻿# Architecture
 
-## Proposed Stack
+## Actual Stack
 
 - Python 3.11+
-- FastAPI 또는 Flask
-- numpy, soundfile
-- optional: pyloudnorm, pedalboard, demucs, librosa for future MIR experiments
-- Markdown/HTML report renderer
+- Web MVP: stdlib `http.server` (`ThreadingHTTPServer`/`BaseHTTPRequestHandler`) — no Flask/FastAPI dependency
+- numpy, soundfile (optional DSP path; stdlib WAV fallback when absent)
+- optional: pyloudnorm for LUFS; demucs/pedalboard/librosa listed in `requirements-optional.txt` as deferred, unused MIR experiments
+- Markdown/JSON report renderer (no HTML templating engine)
 
 ## Folder Structure
 
@@ -20,19 +20,25 @@ ai_test3/
 ├─ VERIFICATION.md
 ├─ HOLD_CONDITIONS.md
 ├─ ROADMAP.md
-├─ docs/
-│  ├─ audio_analysis_scope.md
-│  ├─ ai_music_analysis_scope.md
-│  ├─ marketability_scoring.md
+├─ docs/                      (see docs/README.md for full read order)
+│  ├─ evaluation_criteria.md
+│  ├─ scoring_model.md
+│  ├─ composer_criteria.md / lyricist_criteria.md / producer_criteria.md
+│  ├─ mixing_criteria.md / mastering_criteria.md / ai_music_criteria.md
+│  ├─ market_release_criteria.md
+│  ├─ audio_analysis_scope.md / ai_music_analysis_scope.md / marketability_scoring.md
 │  └─ reference_sources.md
 ├─ app/
-│  ├─ analyzers/
-│  ├─ reports/
-│  ├─ scoring/
-│  └─ web/
+│  ├─ core/        (dataclasses/enums only)
+│  ├─ analyzers/    (audio + text/prompt feature extraction)
+│  ├─ scoring/      (criteria-file-linked scoring classes)
+│  ├─ reports/      (Markdown/JSON rendering)
+│  ├─ services/     (orchestration used by cli and web)
+│  ├─ cli/
+│  └─ web/          (stdlib http.server; calls AnalysisService only)
 ├─ tests/
-├─ uploads/
-└─ outputs/
+├─ uploads/    (gitignored, runtime only)
+└─ outputs/    (gitignored, runtime only)
 ```
 
 ## Components
