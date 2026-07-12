@@ -17,14 +17,14 @@
 
 Job Fit Analyzer입니다. 채용공고와 이력서/커리어/프로젝트 이력을 입력하면 채용 요건을 추출하고 후보자 증거와 매칭해 적합도 점수, 이력서 수정 제안, 소규모 보완 프로젝트 추천, 면접 준비 플랜을 생성합니다.
 
-- 상태: **문서 설계 단계, 앱 코드는 아직 없음** — 제품 범위·아키텍처·기능별 스펙·모듈 경계·라이브러리 결정까지 문서화됐지만 구현은 시작 전(`CareerDiff/VERIFICATION.md` 기준 진행률 게이트 40%).
-- 예정 스택: Next.js, TypeScript, LLM/RAG 기반 분석, provider 연동 전 mock-first UI.
+- 상태: **문서 설계 완료, 앱 스캐폴딩 진행 중** — `app/`에 Next.js/TypeScript/Tailwind 프로젝트, `DATA_MODEL.md` 기반 공유 타입, mock `CareerDiffAnalysisResult`, 테스트 4개까지 구축(`CareerDiff/VERIFICATION.md` 기준 진행률 게이트 40%→60% 사이). 실제 화면·오케스트레이터·LLM 연동은 아직 없음.
+- 스택: Next.js(App Router) + TypeScript + Tailwind CSS, Zod, Vitest/Testing Library/Playwright. LLM/RAG 기반 분석, provider 연동 전 mock-first UI 원칙.
 - 이 프로젝트가 보여주는 것: `music_insight_studio`보다 더 격식을 갖춘 문서 체계 — 기능별 문서(`docs/features/`), 전용 라이브러리 결정 체계(`docs/library-decisions/`), 모듈 경계 규칙(`docs/design/MODULE_BOUNDARIES.md`), 구현 시작 가능 여부를 판단하는 날짜별 문서 감사(`docs/DOCUMENTATION_AUDIT.md`).
 - 시작점: `CareerDiff/README.md`, 전체 문서 지도는 `CareerDiff/docs/INDEX.md`.
 
 ## 공통 관례
 
-`CareerDiff`가 아직 코드 단계에 이르지 않았어도, 두 프로젝트는 같은 "문서 먼저, 코드는 그다음" 원칙을 따릅니다.
+`CareerDiff`가 아직 MVP 기능 구현 단계에 이르지 않았어도, 두 프로젝트는 같은 "문서 먼저, 코드는 그다음" 원칙을 따릅니다.
 
 - 맨 앞에 한 문장짜리 사용 사례(one-sentence use case) 명시.
 - 구현 전 `SPEC.md`/제품 범위 정의.
