@@ -62,9 +62,9 @@ DSP 정확도를 낮춘 대신 표준 라이브러리만으로도 WAV 분석은 
 
 더블클릭으로 Web UI를 바로 열려면 `run.bat`을 실행하세요 (`.venv`가 있어야 합니다).
 
-## Criteria Docs
+## Documentation Map
 
-1차 평가 기준 문서는 `docs/README.md`에서 읽는 순서와 완료 기준을 확인한다.
+전체 문서(루트 8개 + `docs/` 전체)를 한눈에 보려면 `docs/INDEX.md`를 확인한다. 1차 평가 기준 문서만의 읽는 순서와 완료 기준은 `docs/README.md`를 확인한다.
 
 ## CLI Quick Start
 

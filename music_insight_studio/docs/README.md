@@ -1,6 +1,6 @@
 ﻿# Docs Index
 
-`ai_test3`의 설계/평가 기준 문서 입구입니다.
+`ai_test3`의 설계/평가 기준 문서 입구입니다. 전체 문서(루트 문서 포함) 지도는 `INDEX.md`를 참고하세요.
 
 ## Read Order
 

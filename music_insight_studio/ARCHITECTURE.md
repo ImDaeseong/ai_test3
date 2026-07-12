@@ -20,6 +20,16 @@ Every package below is technically optional in the sense that the app never cras
 
 `requirements.txt` is what `README.md`'s Setup section installs by default. `requirements-optional.txt` is never installed automatically; a user has to run `pip install -r requirements-optional.txt` deliberately to pick up `librosa` (and, if uncommented, `basic-pitch`).
 
+### Library Selection Policy
+
+This is a description of the pattern the Dependency Table above already follows in practice, written down so future additions stay consistent:
+
+1. Prefer the stdlib first; only add a dependency when stdlib genuinely can't do the job (audio decoding, real DSP).
+2. A new dependency must degrade gracefully — lazy `try`/`except` import with a working fallback, never a hard crash when it's missing.
+3. Heavier/model-download dependencies (e.g. `basic-pitch`) stay commented out in `requirements-optional.txt` until there's a concrete reason to install them locally; they must not become required for the MVP path.
+4. A dependency with zero code integration (tier 2: `music21`, `demucs`, `pedalboard`) stays commented out and undocumented as "in use" until it's actually wired into `app/` — don't claim a library is used just because it's listed as a future candidate.
+5. `SECURITY_BOUNDARY.md`'s External Dependency Rules still apply: no heavy model download or GPU requirement without explicit user approval.
+
 ## Folder Structure
 
 ```text
