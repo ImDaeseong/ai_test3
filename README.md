@@ -10,7 +10,7 @@
 
 - 상태: **구현·검증 완료** — CLI MVP와 로컬 Web MVP 모두 동작, 단위 테스트 33개 통과.
 - 스택: Python, stdlib `http.server`(Flask/FastAPI 미사용), 선택적 `numpy`/`soundfile`/`pyloudnorm`(DSP), 선택적 `librosa`/`basic-pitch`(정확도 업그레이드 provider, 내장 폴백 있음).
-- 이 프로젝트가 보여주는 것: 코드 작성 전에 문서(SPEC/ARCHITECTURE/ACCEPTANCE_CRITERIA/SECURITY_BOUNDARY/HOLD_CONDITIONS)부터 정의하는 개발 방식, mutation test까지 포함한 실제 검증 루프, 합성 fixture뿐 아니라 실제 마스터링 완료곡으로 버그를 찾고 고친 이력 — 라운드별 근거는 `music_insight_studio/README.md`의 Verification Log 참고.
+- 이 프로젝트가 보여주는 것: 코드 작성 전에 문서(SPEC/ARCHITECTURE/ACCEPTANCE_CRITERIA/SECURITY_BOUNDARY/HOLD_CONDITIONS)부터 정의하는 개발 방식, mutation test까지 포함한 실제 검증 루프, 합성 fixture뿐 아니라 실제 마스터링 완료곡으로 버그를 찾고 고친 이력 — 라운드별 근거는 `music_insight_studio/VERIFICATION.md`의 Verification Log 참고.
 - 시작점: `music_insight_studio/README.md`, 전체 문서 지도는 `music_insight_studio/docs/INDEX.md`.
 
 ### `CareerDiff/`

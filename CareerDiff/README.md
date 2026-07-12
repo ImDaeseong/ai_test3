@@ -1,122 +1,50 @@
-﻿# CareerDiff
+# CareerDiff
 
-CareerDiff is a developer-focused Job Fit Analyzer for comparing a job description with a candidate resume, career history, and project evidence.
+채용공고와 후보자 이력서/커리어/프로젝트 증거를 비교하는 개발자 대상 Job Fit Analyzer.
 
-## One-sentence use case
+## 정의
 
-나는 이직 준비 중에 CareerDiff로 채용공고와 내 이력서/프로젝트를 비교해서 부족한 역량, 이력서 수정안, 보완 프로젝트를 얻는다.
+- **목적**: 나는 이직 준비 중에 CareerDiff로 채용공고와 내 이력서/프로젝트를 비교해서 부족한 역량, 이력서 수정안, 보완 프로젝트를 얻는다.
+- **입력**: 채용공고 텍스트, 이력서/커리어/프로젝트 설명 (붙여넣기)
+- **출력**: 적합도 점수, 강한/약한/누락 매칭, 이력서 재작성 제안, 역량 우선순위, 소규모 보완 프로젝트 3개, 7일 준비 플랜
+- **상태**: 문서 설계 단계, 앱 코드 없음 — 진행률 게이트 40% (`VERIFICATION.md`)
+- **의의**: 본인 이직 준비용이자 포트폴리오 — LLM/RAG, 문서 파싱, 스킬 추출, 스코어링/랭킹, 프롬프트 설계, 프라이버시 인지 제품 설계, 대시보드 UI를 보여줌
 
-## MVP
+## 예정 스택
 
-1. Paste a job description.
-2. Paste resume, career notes, and project descriptions.
-3. Extract job requirements.
-4. Match requirements against candidate evidence.
-5. Produce a fit score, strong matches, weak matches, missing evidence, resume rewrite suggestions, skill priority, mini project recommendations, and a 7-day preparation plan.
+Next.js, TypeScript, mock-first 분석기(LLM 연동 전 목업 데이터로 UI 먼저 구축), 로컬 우선/무보관 데이터 정책(MVP).
 
-## First version
+## 문서 지도
 
-- Next.js web app.
-- Job description input.
-- Resume/career/project input.
-- Analyze button.
-- Dashboard-style result view.
-- Local-first or no-retention data policy for MVP.
+전체 문서는 `docs/INDEX.md` 참고. 핵심만 요약:
 
-## Why this project matters
+| 문서 | 용도 |
+|---|---|
+| `SPEC.md` | 제품 범위, 대상 사용자, 보안/프라이버시 경계, 완료 기준 |
+| `ARCHITECTURE.md` | 초기 기술 아키텍처, 분석 파이프라인, HOLD 조건 |
+| `VERIFICATION.md` | 진행률 게이트, 검증 루프, 문서/기능/프라이버시 체크 |
+| `docs/features/` | 기능 10개 각각의 목적·규칙·UI 계약·테스트 체크 |
+| `docs/design/` | 데이터 모델, 모듈 경계, UI 설계, 프로덕션 아키텍처, RAG/데이터 전략, 보안 위협 모델, 접근성 계획 |
+| `docs/integration/` | 분석 흐름, 프롬프트/서비스 분리, API 계약, 런타임 진화 |
+| `docs/library-decisions/` | 라이브러리 선택 기준, 전체 스택 결정, 기능별 매핑 |
+| `docs/operations/` | 운영 런북 |
+| `docs/DOCUMENTATION_AUDIT.md` | 문서 완성도 감사 — 구현 착수 가능 여부 게이트 |
 
-This project is useful for the creator's own job search and also works as a portfolio project. It demonstrates LLM/RAG usage, document parsing, skill extraction, scoring/ranking, prompt design, privacy-aware product design, dashboard UI, and practical problem solving.
+## 유지보수 원칙
 
-## Folder guide
+- 기능별 로직을 분리하고 `AnalysisOrchestrator`가 feature service를 조율한다.
+- 모듈 간에는 비정형 텍스트 대신 `docs/design/DATA_MODEL.md`의 공유 데이터 계약으로 전달한다.
+- UI 컴포넌트는 표시 전용이며 분석 로직을 갖지 않는다.
+- 상태를 갖거나 교체 가능하거나 독립 테스트가 필요한 로직만 class/service 경계를 쓴다. 그 외 단순 포맷팅/검증/UI 헬퍼는 순수 함수로 둔다.
 
-```text
-CareerDiff/
-  README.md
-  SPEC.md
-  ARCHITECTURE.md
-  VERIFICATION.md
-  app/
-  docs/
-    INDEX.md
-    design/
-    features/
-    integration/
-  prompts/
-  samples/
-```
+## 다음 작업
 
-## Document guide
-
-- `README.md`: project entrance document. It explains the purpose, MVP, folder map, and next work.
-- `SPEC.md`: product direction, target users, MVP scope, non-goals, privacy boundary, monetization ideas, and acceptance criteria.
-- `ARCHITECTURE.md`: initial technical architecture, analysis pipeline, schema direction, future integrations, and human-review HOLD conditions.
-- `VERIFICATION.md`: progress gates, verification loop, document checks, functional checks, privacy checks, and exit criteria.
-- `docs/INDEX.md`: full documentation index.
-- `docs/features/README.md`: feature-document rules and feature list.
-- `docs/features/01-job-description-input.md`: job description input rules, UI contract, and validation checks.
-- `docs/features/02-candidate-profile-input.md`: resume/career/project input rules and privacy checks.
-- `docs/features/03-job-requirement-extraction.md`: required/preferred skill extraction and job requirement structure.
-- `docs/features/04-candidate-evidence-extraction.md`: candidate evidence extraction rules and confidence handling.
-- `docs/features/05-evidence-matching.md`: strong, weak, missing, and risk matching logic.
-- `docs/features/06-fit-scoring.md`: explainable fit score dimensions and scoring boundaries.
-- `docs/features/07-resume-suggestions.md`: resume bullet, project description, ATS keyword, and STAR rewrite rules.
-- `docs/features/08-mini-project-recommendations.md`: 3 small project recommendations tied to missing evidence.
-- `docs/features/09-interview-preparation.md`: expected questions, weak areas, and 7-day preparation plan.
-- `docs/features/10-analysis-dashboard.md`: result dashboard sections and display-only UI boundaries.
-- `docs/design/DATA_MODEL.md`: shared TypeScript-style data contracts between features.
-- `docs/design/MODULE_BOUNDARIES.md`: source layout, class/service boundaries, and dependency direction.
-- `docs/design/UI_DESIGN.md`: first-screen UI, result dashboard layout, interaction principles, and privacy UI.
-- `docs/integration/ANALYSIS_FLOW.md`: how inputs, feature services, orchestrator, and dashboard connect.
-- `docs/integration/PROMPT_SERVICE_MAP.md`: which parts are LLM-backed, deterministic, and privacy-sensitive.
-- `prompts/README.md`: analyzer prompt goals and hard rules.
-- `samples/README.md`: synthetic sample data rules and sensitive-data restrictions.
-
-## Maintenance direction
-
-- Keep each feature's logic separate.
-- Share data through `docs/design/DATA_MODEL.md` instead of passing unstructured text across unrelated modules.
-- Let `AnalysisOrchestrator` coordinate feature services.
-- Keep UI components display-focused; UI should not own analysis logic.
-- Use class or service boundaries for analysis modules that are stateful, replaceable, or independently testable.
-- Use small pure functions for validation, formatting, and simple UI helpers.
-
-## Next work
-
-1. Confirm the MVP implementation stack: Next.js, TypeScript, and a mock-first analyzer.
-2. Scaffold the actual app structure under `app/` or replace it with a standard Next.js project layout.
-3. Create shared TypeScript types from `docs/design/DATA_MODEL.md`.
-4. Build a mock `CareerDiffAnalysisResult` so UI can be developed before LLM integration.
-5. Build the first usable analyzer screen: job description input, candidate profile input, analyze button, and privacy notice.
-6. Build the dashboard using mock data: score, requirements, matches, resume suggestions, mini projects, and interview prep.
-7. Add `AnalysisOrchestrator` and service class skeletons.
-8. Add tests for input validation, mock result rendering, and privacy boundaries.
-9. Connect an LLM provider only after the mock UI and data contracts are stable.
-
-## Current status
-
-- Product purpose and one-sentence use case are defined.
-- Security boundary, acceptance criteria, verification checks, and HOLD conditions are documented.
-- Feature-level design documents are split by responsibility.
-- Shared data model, module boundaries, UI design, and integration flow are documented.
-- Current progress gate: 40% in `VERIFICATION.md`.
-
-## Library decision documents
-
-- `docs/library-decisions/README.md`: dependency decision rules and document map.
-- `docs/library-decisions/SELECTION_CRITERIA.md`: criteria for choosing or rejecting libraries.
-- `docs/library-decisions/TECH_STACK_DECISIONS.md`: project-wide recommended stack and alternatives considered.
-- `docs/library-decisions/FEATURE_LIBRARY_MATRIX.md`: feature-to-library map.
-- `docs/library-decisions/features/`: per-feature implementation and library choice documents.
-
-## Production architecture
-
-The current feature-based structure should be kept if CareerDiff becomes a real service. The runtime architecture must evolve by adding auth, persistence, privacy controls, provider abstraction, background jobs, observability, and billing around the existing feature modules. See `docs/design/PRODUCTION_ARCHITECTURE.md` and `docs/integration/RUNTIME_EVOLUTION.md`.
-
-## AI data and RAG strategy
-
-CareerDiff's service value depends on structured, privacy-safe analysis data. The MVP should not add a vector database first. It should create stable structured data contracts now, then add embeddings/RAG later for saved evidence libraries, job taxonomies, GitHub project retrieval, and historical analysis lookup. See `docs/design/AI_DATA_STRATEGY.md` and `docs/integration/RAG_EMBEDDING_PLAN.md`.
-
-## RAG in the base design
-
-RAG is included in the base architecture through `RetrievalContext`, `RagContextProvider`, `EmbeddingProvider`, `VectorStore`, `ChunkBuilder`, and `RetrievalPolicy`. The first MVP can keep retrieval disabled while still building types and UI contracts that will support saved evidence, public skill taxonomy, GitHub evidence, and historical analysis retrieval later.
-
+1. MVP 구현 스택 확정 (Next.js + TypeScript + mock-first 분석기).
+2. `app/` 실제 구조 스캐폴딩.
+3. `DATA_MODEL.md` 기반 공유 TypeScript 타입 생성.
+4. Mock `CareerDiffAnalysisResult`로 LLM 연동 전에 UI부터 구축.
+5. 첫 사용 가능한 화면 구축: 채용공고 입력, 후보자 정보 입력, 분석 버튼, 프라이버시 안내.
+6. Mock 데이터 기반 대시보드 구축(점수/요건/매칭/이력서 제안/보완 프로젝트/면접 준비).
+7. `AnalysisOrchestrator`와 서비스 클래스 스켈레톤 추가.
+8. 입력 검증, mock 결과 렌더링, 프라이버시 경계에 대한 테스트 추가.
+9. Mock UI와 데이터 계약이 안정된 뒤에만 LLM provider 연동.
