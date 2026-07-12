@@ -7,7 +7,7 @@
 - **목적**: 나는 이직 준비 중에 CareerDiff로 채용공고와 내 이력서/프로젝트를 비교해서 부족한 역량, 이력서 수정안, 보완 프로젝트를 얻는다.
 - **입력**: 채용공고 텍스트, 이력서/커리어/프로젝트 설명 (붙여넣기)
 - **출력**: 적합도 점수, 강한/약한/누락 매칭, 이력서 재작성 제안, 역량 우선순위, 소규모 보완 프로젝트 3개, 7일 준비 플랜
-- **상태**: Mock 기반 MVP 완성 + LLM 연동 배관 완료 — 진행률 게이트 80% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 실제로 동작(단위 테스트 22개 + Playwright E2E 4개 전부 통과). 결과 내용은 한글. `OPENAI_API_KEY`가 없으면(기본 상태) `AnalysisOrchestrator`가 mock을 반환하고, 키가 설정되면 OpenAI Responses API로 실제 분석을 시도 — 이 저장소에는 실제 키가 없어 후자는 아직 실제 호출로 검증되지 않음(`.env.example` 참고).
+- **상태**: Mock 기반 UI/흐름은 완성 — 진행률 게이트 85% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 실제로 동작(단위 테스트 22개 + Playwright E2E 4개 전부 통과). 결과 내용은 한글. 다만 `AnalysisOrchestrator`는 실제 분석 로직 없이 "키 없으면 고정 mock 반환, 키 있으면 LLM 호출"만 하므로(`AnalysisOrchestrator.ts:55-60`) 지금은 UI 셸이지 실사용자 입력을 분석하지는 못한다. 유료 API 호출 전에 `prompts/MANUAL_ANALYSIS_PROMPT.md` + `prompts/WEB_PROJECT_USAGE.md`로 Claude/ChatGPT 웹에서 무료로 먼저 검증 중(비용 문제로 유료 API는 이 검증이 안정화된 뒤로 미룸).
 - **의의**: 본인 이직 준비용이자 포트폴리오 — LLM/RAG, 문서 파싱, 스킬 추출, 스코어링/랭킹, 프롬프트 설계, 프라이버시 인지 제품 설계, 대시보드 UI를 보여줌
 
 ## 스택
@@ -62,4 +62,4 @@ npm run test:e2e    # Playwright E2E — 프로덕션 빌드 기준으로 실행
 6. ~~Mock 데이터 기반 대시보드 구축~~ — 완료 (`app/src/features/analysis-dashboard/`: 점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비 6개 패널).
 7. ~~`AnalysisOrchestrator`와 API 라우트 추가~~ — 완료 (`app/src/core/analysis/AnalysisOrchestrator.ts`, `app/src/app/api/analyze/route.ts`). 아직 mock만 반환하며, 요청 검증은 Zod(`app/src/core/schemas/analyzeRequest.ts`).
 8. ~~테스트 확충~~ — 완료. 단위/컴포넌트 테스트 22개(오케스트레이터의 provider 분기 로직 포함, 가짜 provider로 검증해 실제 API 호출 없음) + Playwright E2E 4개(`app/e2e/analyzer.spec.ts`, 입력 검증·전체 분석 흐름·보완 프로젝트 정확히 3개·API 400 응답 확인). `requirement-extraction`/`evidence-extraction`/`evidence-matching`/`fit-scoring`/`resume-suggestions`/`mini-projects`/`interview-prep` 서비스 폴더(`docs/design/MODULE_BOUNDARIES.md`)는 실제 로직이 생기기 전까지 계속 비워둠.
-9. ~~LLM provider 연동~~ — 배관 완료, 실호출 미검증. `app/src/core/llm/OpenAiAnalysisProvider.ts`가 OpenAI Responses API + Structured Outputs(`docs/library-decisions/TECH_STACK_DECISIONS.md`)로 구현되어 있고, `AnalysisOrchestrator`가 `OPENAI_API_KEY` 유무로 mock/실분석을 분기한다. API 키 입력란은 `.env.example`에 빈 값으로만 존재하며 이 저장소 어디에도 실제 키는 없다. 실제 키로 한 번도 호출해 본 적이 없으므로, structured output 스키마가 OpenAI strict 모드 제약(모든 필드 required 취급 등)을 완전히 만족하는지는 실제 계정으로 검증 필요(`OpenAiAnalysisProvider.ts` 코드 주석 참고).
+9. LLM provider 연동 — **진행 중, 무료 수동 검증 단계**. `app/src/core/llm/OpenAiAnalysisProvider.ts`가 OpenAI Responses API + Structured Outputs(`docs/library-decisions/TECH_STACK_DECISIONS.md`)로 구현되어 있고, `AnalysisOrchestrator`가 `OPENAI_API_KEY` 유무로 mock/실분석을 분기한다. 유료 API 호출은 비용 문제로 보류하고, 대신 `prompts/MANUAL_ANALYSIS_PROMPT.md`(코드와 동일한 프롬프트+스키마의 복붙판)를 `prompts/WEB_PROJECT_USAGE.md` 절차에 따라 Claude/ChatGPT 웹 Project에서 무료로 먼저 검증한다. 이 수동 검증이 여러 입력 조합에서 체크리스트를 통과하면, 그때 실제 `OPENAI_API_KEY`로 `OpenAiAnalysisProvider`를 한 번 호출해 같은 기준으로 재확인한다(`OpenAiAnalysisProvider.ts` 코드 주석 참고).
