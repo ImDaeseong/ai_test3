@@ -2,10 +2,11 @@
 
 ## Actual Stack
 
-- Python 3.11+
+- Python 3.11+ (verified against 3.14)
 - Web MVP: stdlib `http.server` (`ThreadingHTTPServer`/`BaseHTTPRequestHandler`) — no Flask/FastAPI dependency
-- numpy, soundfile (optional DSP path; stdlib WAV fallback when absent)
-- optional: pyloudnorm for LUFS; demucs/pedalboard/librosa listed in `requirements-optional.txt` as deferred, unused MIR experiments
+- numpy, soundfile (optional DSP path; stdlib WAV fallback when absent) — `requirements.txt`
+- optional, wired into code (`requirements-optional.txt` tier 1): pyloudnorm for LUFS (`requirements.txt`); librosa as the preferred BPM/onset provider (see "Librosa BPM Provider" below); basic-pitch as the preferred audio-to-MIDI transcription provider (see "Notation Export Boundary"). Each is imported lazily behind a try/except, so its absence never breaks analysis — only librosa is installed in the verified `.venv` (0.11.0); basic-pitch is not.
+- future/deferred, no code integration yet (`requirements-optional.txt` tier 2): music21, demucs, pedalboard
 - Markdown/JSON report renderer (no HTML templating engine)
 
 ## Folder Structure
@@ -31,14 +32,14 @@ ai_test3/
 │  ├─ commercial/    (COMMERCIAL_READINESS.md, PRODUCTION_ARCHITECTURE.md, WEB_SECURITY.md, DATA_RETENTION.md, COPYRIGHT_POLICY.md)
 │  └─ features/      (score_generation.md)
 ├─ app/
-│  ├─ core/        (dataclasses/enums only)
-│  ├─ analyzers/    (audio + text/prompt feature extraction)
-│  ├─ scoring/      (criteria-file-linked scoring classes)
-│  ├─ reports/      (Markdown/JSON rendering)
-│  ├─ notation/     (MusicXML lead-sheet export; see Notation Export Boundary)
-│  ├─ services/     (orchestration used by cli and web)
+│  ├─ core/        (dataclasses/enums only; models.py)
+│  ├─ analyzers/    (audio.py: audio features incl. optional librosa BPM provider; text.py: prompt/lyrics parsing)
+│  ├─ scoring/      (criteria-file-linked scoring classes: base.py, engine.py, rubric.py, specialists.py)
+│  ├─ reports/      (markdown.py, korean_markdown.py, json_report.py rendering)
+│  ├─ notation/     (musicxml_writer.py: lead-sheet export; transcription.py: ScoreTranscriber optional basic-pitch/heuristic melody guide; see Notation Export Boundary)
+│  ├─ services/     (analysis_service.py: orchestration used by cli and web)
 │  ├─ cli/
-│  └─ web/          (stdlib http.server; calls AnalysisService only)
+│  └─ web/          (server.py: stdlib http.server, calls AnalysisService only; security.py: upload extension/signature/size validation)
 │     └─ static/vendor/  (vendored browser JS, e.g. OpenSheetMusicDisplay; no CDN calls)
 ├─ tests/
 ├─ uploads/    (gitignored, runtime only)
@@ -116,7 +117,7 @@ The first CLI MVP keeps UI and domain logic separated:
 - `app/reports`: Markdown/JSON rendering only.
 - `app/services`: orchestration layer used by CLI and future web UI.
 - `app/cli`: argument parsing and output paths only.
-- `app/web`: calls `AnalysisService` and must not contain analysis/scoring logic. It may serve vendored, build-free static JS assets (`app/web/static/vendor/`) for browser-side rendering (e.g. MusicXML notation); this is UI presentation, not analysis logic.
+- `app/web`: calls `AnalysisService` and must not contain analysis/scoring logic. It may serve vendored, build-free static JS assets (`app/web/static/vendor/`) for browser-side rendering (e.g. MusicXML notation); this is UI presentation, not analysis logic. Upload validation (extension allowlist, file-signature sniffing, size limits) lives in `app/web/security.py`, kept separate from `server.py`'s routing/rendering so the security policy has one file to review.
 
 ## Optional DSP Analysis Boundary
 

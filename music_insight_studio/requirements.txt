@@ -3,4 +3,5 @@
 numpy>=1.24.0
 soundfile>=0.12.0
 pyloudnorm>=0.1.1
-# librosa is not required by the current analyzer path; keep it experimental for later MIR work.
+# See requirements-optional.txt for optional providers (librosa, basic-pitch) that
+# improve BPM/melody accuracy when installed. The app works without them.

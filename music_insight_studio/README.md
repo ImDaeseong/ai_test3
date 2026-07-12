@@ -58,7 +58,7 @@ python -m venv .venv
 .\.venv\Scripts\pip.exe install -r requirements.txt
 ```
 
-DSP 정확도를 낮춘 대신 표준 라이브러리만으로도 WAV 분석은 동작하지만(`numpy`/`soundfile`/`pyloudnorm` 미설치 시 폴백), 위 설치를 권장합니다. `requirements-optional.txt`는 아직 이 분석 경로에서 쓰지 않는 실험적 MIR 패키지(librosa/demucs/pedalboard, `ARCHITECTURE.md` 참고) 목록이며 기본 설치에는 필요 없습니다.
+DSP 정확도를 낮춘 대신 표준 라이브러리만으로도 WAV 분석은 동작하지만(`numpy`/`soundfile`/`pyloudnorm` 미설치 시 폴백), 위 설치를 권장합니다. `requirements-optional.txt`는 기본 설치에는 필요 없는 선택 패키지 목록이며 2단으로 나뉩니다 — (1) 실제 코드에 연결된 provider(`librosa`: BPM 추정 우선순위 1순위, `basic-pitch`: 악보 채보 우선순위 1순위, 둘 다 미설치 시 내장 폴백으로 자동 대체)와 (2) 아직 코드 연결이 없는 향후 후보(`music21`/`demucs`/`pedalboard`). 자세한 내용은 `ARCHITECTURE.md`의 "Actual Stack"과 "Librosa BPM Provider" 참고.
 
 더블클릭으로 Web UI를 바로 열려면 `run.bat`을 실행하세요 (`.venv`가 있어야 합니다).
 
