@@ -6,6 +6,7 @@ import posixpath
 import re
 import shutil
 import sys
+import urllib.parse
 from dataclasses import dataclass
 from email.parser import BytesParser
 from email.policy import default
@@ -36,6 +37,7 @@ STATIC_FILES = {
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 SECURITY_POLICY = UploadSecurityPolicy()
+REPORT_FILENAMES = {"analysis_report.md", "analysis_report.ko.md", "analysis_report.json", "analysis_lead_sheet.musicxml"}
 VERDICT_LABELS = {
     Verdict.PASS: "진행 가능",
     Verdict.REVISE: "수정 권장",
@@ -242,17 +244,9 @@ def render_user_result(links: dict[str, str], verdict: Verdict, score: float | N
     verdict_label = VERDICT_LABELS.get(verdict, verdict.value)
     musicxml_link = links.get("musicxml")
     musicxml_html = ""
-    score_view_html = ""
     if musicxml_link:
-        escaped_link = html.escape(musicxml_link)
-        musicxml_html = f'<a href="{escaped_link}" onclick="return renderScoreView(this);">악보 MusicXML</a>'
-        score_view_html = f"""
-      <div class="score-note">악보는 분석 메타데이터 기반 구간 차트입니다(멜로디 채보 아님).</div>
-      <div class="score-view" data-musicxml-url="{escaped_link}" hidden>
-        <div class="score-notation"></div>
-        <h4>MusicXML 원문</h4>
-        <pre class="score-xml"></pre>
-      </div>"""
+        score_page_url = "/score?src=" + urllib.parse.quote(musicxml_link, safe="")
+        musicxml_html = f'<a href="{html.escape(score_page_url)}" target="_blank" rel="noopener">악보 MusicXML</a>'
     return f"""<section class="result">
       <div class="result-head">
         <div>
@@ -260,14 +254,87 @@ def render_user_result(links: dict[str, str], verdict: Verdict, score: float | N
           <p><strong>판단:</strong> {html.escape(verdict_label)} / <strong>점수:</strong> {html.escape(score_label)}</p>
         </div>
         <div class="links">
-          <a href="{html.escape(links["json"])}">JSON</a>
+          <a href="{html.escape(links["json"])}" target="_blank" rel="noopener">JSON</a>
           {musicxml_html}
         </div>
       </div>
       <article class="report-body">
         {render_markdown_preview(korean_report)}
-      </article>{score_view_html}
+      </article>
     </section>"""
+
+
+def parse_report_path(request_path: str) -> tuple[str, str] | None:
+    parts = [part for part in posixpath.normpath(request_path).split("/") if part]
+    if len(parts) != 3 or parts[0] != "reports":
+        return None
+    _, request_id, filename = parts
+    if not re.fullmatch(r"[a-f0-9]{12}", request_id) or filename not in REPORT_FILENAMES:
+        return None
+    return request_id, filename
+
+
+def render_score_page(musicxml_url: str) -> bytes:
+    escaped_url = html.escape(musicxml_url)
+    page = f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>악보 MusicXML</title>
+  <style>
+    :root {{ color-scheme: light; --ink:#202124; --muted:#5f6368; --line:#dadce0; --bg:#f8fafc; }}
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; font-family: Arial, "Malgun Gothic", sans-serif; color: var(--ink); background: var(--bg); }}
+    main {{ max-width: 960px; margin: 0 auto; padding: 24px 16px 44px; }}
+    h1 {{ font-size: 22px; margin: 0 0 4px; }}
+    .score-note {{ color: var(--muted); margin: 0 0 16px; }}
+    .score-view {{ padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); }}
+    .score-notation {{ overflow-x: auto; min-height: 24px; }}
+    .score-view h4 {{ margin: 16px 0 6px; font-size: 14px; }}
+    .score-xml {{ margin: 0; max-height: 420px; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; font-size: 12px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>악보 MusicXML</h1>
+    <p class="score-note">악보는 분석 메타데이터 기반 구간 차트입니다(멜로디 채보 아님).</p>
+    <div class="score-view" data-musicxml-url="{escaped_url}">
+      <div class="score-notation">악보 불러오는 중...</div>
+      <h4>MusicXML 원문</h4>
+      <pre class="score-xml"></pre>
+    </div>
+  </main>
+  <script src="/static/vendor/opensheetmusicdisplay.min.js"></script>
+  <script>
+    (function () {{
+      var scoreEl = document.querySelector('.score-view');
+      var notationEl = scoreEl.querySelector('.score-notation');
+      var xmlEl = scoreEl.querySelector('.score-xml');
+      var url = scoreEl.getAttribute('data-musicxml-url');
+      if (typeof opensheetmusicdisplay === 'undefined') {{
+        notationEl.textContent = '악보 렌더러를 불러오지 못했습니다.';
+        return;
+      }}
+      fetch(url)
+        .then(function (response) {{ return response.text(); }})
+        .then(function (xml) {{
+          xmlEl.textContent = xml;
+          notationEl.textContent = '';
+          var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(notationEl, {{ backend: 'svg' }});
+          return osmd.load(xml).then(function () {{
+            osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = 2;
+            osmd.render();
+          }});
+        }})
+        .catch(function () {{
+          notationEl.textContent = '악보를 표시하지 못했습니다. 아래 MusicXML 원문을 참고해 주세요.';
+        }});
+    }})();
+  </script>
+</body>
+</html>"""
+    return page.encode("utf-8")
 
 
 def render_home(error: str = "", result: str = "") -> bytes:
@@ -307,11 +374,6 @@ def render_home(error: str = "", result: str = "") -> bytes:
     .report-body li {{ margin: 6px 0; line-height: 1.5; }}
     .progress {{ margin-top: 18px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); }}
     button:disabled {{ opacity: 0.6; cursor: default; }}
-    .score-note {{ margin-top: 18px; color: var(--muted); font-size: 14px; }}
-    .score-view {{ margin-top: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); }}
-    .score-notation {{ overflow-x: auto; min-height: 24px; }}
-    .score-view h4 {{ margin: 16px 0 6px; font-size: 14px; }}
-    .score-xml {{ margin: 0; max-height: 260px; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; font-size: 12px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }}
     @media (max-width: 680px) {{ .grid, .result-head {{ grid-template-columns: 1fr; display: grid; }} }}
   </style>
 </head>
@@ -336,62 +398,12 @@ def render_home(error: str = "", result: str = "") -> bytes:
     </form>
     <div id="result-container">{error_html}{result}</div>
   </main>
-  <script src="/static/vendor/opensheetmusicdisplay.min.js"></script>
   <script>
     (function () {{
       var form = document.getElementById('analyze-form');
       var button = document.getElementById('analyze-button');
       var container = document.getElementById('result-container');
       var originalLabel = button.textContent;
-
-      window.renderScoreView = function (anchor) {{
-        var section = anchor.closest('.result');
-        var scoreEl = section ? section.querySelector('.score-view') : null;
-        if (!scoreEl) {{
-          return true;
-        }}
-        if (!scoreEl.hasAttribute('hidden')) {{
-          scoreEl.setAttribute('hidden', '');
-          return false;
-        }}
-        scoreEl.removeAttribute('hidden');
-        if (scoreEl.getAttribute('data-rendered') === 'true' || scoreEl.getAttribute('data-loading') === 'true') {{
-          return false;
-        }}
-        var notationEl = scoreEl.querySelector('.score-notation');
-        var xmlEl = scoreEl.querySelector('.score-xml');
-        var url = scoreEl.getAttribute('data-musicxml-url');
-        if (!url || !notationEl || !xmlEl) {{
-          return false;
-        }}
-        if (typeof opensheetmusicdisplay === 'undefined') {{
-          notationEl.textContent = '악보 렌더러를 불러오지 못했습니다.';
-          return false;
-        }}
-        scoreEl.setAttribute('data-loading', 'true');
-        notationEl.textContent = '악보 불러오는 중...';
-        fetch(url)
-          .then(function (response) {{ return response.text(); }})
-          .then(function (xml) {{
-            xmlEl.textContent = xml;
-            notationEl.textContent = '';
-            var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(notationEl, {{ backend: 'svg' }});
-            return osmd.load(xml).then(function () {{
-              osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = 2;
-              osmd.render();
-            }});
-          }})
-          .then(function () {{
-            scoreEl.setAttribute('data-rendered', 'true');
-          }})
-          .catch(function () {{
-            notationEl.textContent = '악보를 표시하지 못했습니다. 아래 MusicXML 원문을 참고해 주세요.';
-          }})
-          .then(function () {{
-            scoreEl.removeAttribute('data-loading');
-          }});
-        return false;
-      }};
 
       form.addEventListener('submit', function (event) {{
         event.preventDefault();
@@ -434,6 +446,9 @@ class MusicInsightHandler(BaseHTTPRequestHandler):
             return
         if request_path.startswith("/reports/"):
             self._send_report(request_path)
+            return
+        if request_path == "/score":
+            self._send_score_page(parts[1] if len(parts) > 1 else "")
             return
         if request_path in STATIC_FILES:
             self._send_static(request_path)
@@ -493,18 +508,21 @@ class MusicInsightHandler(BaseHTTPRequestHandler):
         with file_path.open("rb") as source:
             shutil.copyfileobj(source, self.wfile)
 
+    def _send_score_page(self, query_string: str) -> None:
+        query = urllib.parse.parse_qs(query_string)
+        src = (query.get("src") or [""])[0]
+        parsed = parse_report_path(src)
+        if not parsed or parsed[1] != "analysis_lead_sheet.musicxml":
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        self._send_html(render_score_page(src))
+
     def _send_report(self, request_path: str) -> None:
-        parts = [part for part in posixpath.normpath(request_path).split("/") if part]
-        if len(parts) != 3:
+        parsed = parse_report_path(request_path)
+        if not parsed:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
-        _, request_id, filename = parts
-        if not re.fullmatch(r"[a-f0-9]{12}", request_id):
-            self.send_error(HTTPStatus.NOT_FOUND)
-            return
-        if filename not in {"analysis_report.md", "analysis_report.ko.md", "analysis_report.json", "analysis_lead_sheet.musicxml"}:
-            self.send_error(HTTPStatus.NOT_FOUND)
-            return
+        request_id, filename = parsed
         report_path = self.paths.outputs_dir / request_id / filename
         if not report_path.exists():
             self.send_error(HTTPStatus.NOT_FOUND)

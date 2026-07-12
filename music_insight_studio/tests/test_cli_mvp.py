@@ -17,7 +17,7 @@ from app.core import AnalysisMode, TrackInput, Verdict
 from app.services import AnalysisService
 from app.notation import LeadSheetMusicXmlWriter, NoteEvent, TranscriptionResult
 from app.web.security import UploadSecurityPolicy, validate_audio_payload, validate_content_length
-from app.web.server import STATIC_FILES, WebPaths, UploadedAudio, UNSUPPORTED_AUDIO_MESSAGE, analyze_upload, is_allowed_audio, render_home, render_user_result, safe_filename
+from app.web.server import STATIC_FILES, WebPaths, UploadedAudio, UNSUPPORTED_AUDIO_MESSAGE, analyze_upload, is_allowed_audio, parse_report_path, render_home, render_score_page, render_user_result, safe_filename
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -361,7 +361,7 @@ class WebMvpTests(unittest.TestCase):
         self.assertNotIn("Korean Markdown", html_text)
         self.assertNotIn(">Markdown</a>", html_text)
 
-    def test_web_result_embeds_score_view_with_musicxml_url(self) -> None:
+    def test_web_result_links_open_in_new_tab_instead_of_inline(self) -> None:
         html_text = render_user_result(
             {
                 "markdown": "/reports/demo/analysis_report.md",
@@ -373,24 +373,34 @@ class WebMvpTests(unittest.TestCase):
             69.7,
             "# 음악 분석 리포트\n",
         )
-        self.assertIn('class="score-view"', html_text)
-        self.assertIn('data-musicxml-url="/reports/demo/analysis_lead_sheet.musicxml"', html_text)
-        self.assertIn('class="score-view" data-musicxml-url="/reports/demo/analysis_lead_sheet.musicxml" hidden', html_text)
-        self.assertIn('onclick="return renderScoreView(this);"', html_text)
-        self.assertIn('class="score-notation"', html_text)
-        self.assertIn('class="score-xml"', html_text)
+        self.assertIn('href="/reports/demo/analysis_report.json" target="_blank" rel="noopener"', html_text)
+        self.assertIn('href="/score?src=%2Freports%2Fdemo%2Fanalysis_lead_sheet.musicxml" target="_blank" rel="noopener"', html_text)
+        self.assertNotIn('class="score-view"', html_text)
+        self.assertNotIn('onclick="return renderScoreView(this);"', html_text)
 
-    def test_web_home_loads_vendored_score_renderer(self) -> None:
+    def test_web_home_does_not_load_score_renderer_inline(self) -> None:
+        # The score renderer now lives on the standalone /score page (new tab),
+        # not on the home page, so the home page should not pay its load cost.
         page = render_home().decode("utf-8")
+        self.assertNotIn('/static/vendor/opensheetmusicdisplay.min.js', page)
+        self.assertNotIn('score-notation', page)
+        self.assertNotIn('score-xml', page)
+
+    def test_score_page_loads_vendored_renderer_and_wraps_systems(self) -> None:
+        page = render_score_page("/reports/demo/analysis_lead_sheet.musicxml").decode("utf-8")
         self.assertIn('/static/vendor/opensheetmusicdisplay.min.js', page)
         self.assertIn('score-notation', page)
         self.assertIn('score-xml', page)
-
-    def test_web_home_configures_multi_system_score_wrap(self) -> None:
+        self.assertIn('data-musicxml-url="/reports/demo/analysis_lead_sheet.musicxml"', page)
         # Without this, OSMD squeezes every measure onto a single unreadable
         # line instead of wrapping into readable systems.
-        page = render_home().decode("utf-8")
         self.assertIn('RenderXMeasuresPerLineAkaSystem', page)
+
+    def test_score_route_rejects_paths_outside_reports_allowlist(self) -> None:
+        self.assertIsNone(parse_report_path("/reports/demo/../../etc/passwd"))
+        self.assertIsNone(parse_report_path("/reports/not-hex-id/analysis_lead_sheet.musicxml"))
+        self.assertIsNone(parse_report_path("/reports/0123456789ab/analysis_report.md.bak"))
+        self.assertEqual(parse_report_path("/reports/0123456789ab/analysis_lead_sheet.musicxml"), ("0123456789ab", "analysis_lead_sheet.musicxml"))
 
     def test_vendored_score_renderer_asset_is_present_on_disk(self) -> None:
         file_path, content_type = STATIC_FILES["/static/vendor/opensheetmusicdisplay.min.js"]

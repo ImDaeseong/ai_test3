@@ -61,7 +61,7 @@
 
 - Add basic MusicXML lead sheet/session chart export from existing analysis data. Done: CLI and Web both generate `analysis_lead_sheet.musicxml`.
 - Add confidence and limitation notes to every generated score. Done: every export includes a "Limitations" measure.
-- Show the score without requiring a download. Done: Web MVP renders it in-browser on demand (click "악보 MusicXML") using a locally vendored renderer, alongside the raw MusicXML text.
+- Show the score without requiring a download. Done: clicking "악보 MusicXML" opens a standalone `/score` page in a new tab (`target="_blank"`) that renders it with a locally vendored renderer, alongside the raw MusicXML text; the `JSON` link opens the same way, so both result links behave consistently and never replace the analysis result screen.
 - Scale section resolution to track length. Done: section count is duration-proportional (~15s/section, 4-24 range) instead of a fixed count.
 - Add melody extraction as a separate `ScoreTranscriber` boundary (`app/notation/transcription.py`, not part of `AudioAnalyzer`/`ScoringEngine`). Provider order: optional `basic-pitch` note events -> local numpy/soundfile autocorrelation heuristic melody guide -> section-energy chart fallback if no pitched notes are reliable. `basic-pitch` is not installed in the current `.venv`, so real-song exports currently use the heuristic guide, labeled "transcription guide" (not publication-ready notation) in the MusicXML output.
 - Later: add chord and beat/downbeat extraction for richer transcription.

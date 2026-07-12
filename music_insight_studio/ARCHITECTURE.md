@@ -136,7 +136,13 @@ The current stdlib `http.server` web layer is local-only. A commercial service s
 
 Score generation must be a separate export module, not part of the scoring engine. The initial feasible version is a MusicXML lead sheet/session chart based on current analysis metadata. Full melody/chord transcription is a later feature that requires additional pitch, onset, beat, and chord evidence. See `docs/features/score_generation.md`.
 
-Section count scales with track duration (`AudioAnalyzer.TARGET_SECTION_SECONDS = 15s`, clamped to 4-24 sections) instead of a fixed count, so the chart's resolution matches the song's length. The Web MVP renders this MusicXML in-browser on demand (click "악보 MusicXML") using a locally vendored renderer (`app/web/static/vendor/opensheetmusicdisplay.min.js`), showing both the rendered staff and the raw MusicXML text; no CDN request is made at runtime, consistent with `SECURITY_BOUNDARY.md`'s local-first policy.
+Section count scales with track duration (`AudioAnalyzer.TARGET_SECTION_SECONDS = 15s`, clamped to 4-24 sections) instead of a fixed count, so the chart's resolution matches the song's length. The Web MVP renders this MusicXML using a locally vendored renderer (`app/web/static/vendor/opensheetmusicdisplay.min.js`); no CDN request is made at runtime, consistent with `SECURITY_BOUNDARY.md`'s local-first policy.
+
+## 2026-07-12 Result Links Open in a New Tab
+
+The result screen's `JSON` and `악보 MusicXML` links previously behaved inconsistently: `JSON` navigated the current tab away from the analysis result, while `악보 MusicXML` expanded an inline panel below the result on the same page. Both now open in a new browser tab (`target="_blank" rel="noopener"`), keeping the original result screen intact.
+
+`악보 MusicXML` now points to a standalone `/score?src=<report-url>` page (`render_score_page`) instead of toggling an inline `.score-view` panel; that page loads the vendored OSMD renderer and fetches/renders the MusicXML on page load. The `src` query value is validated by `parse_report_path` (shared with the existing `/reports/<12-hex-id>/<allowlisted filename>` handler) and rejected with `404` unless it resolves to exactly `analysis_lead_sheet.musicxml` under a well-formed report id — confirmed both by a unit test (`test_score_route_rejects_paths_outside_reports_allowlist`) and a live browser request to `/score?src=/etc/passwd`, which returned `404`.
 
 ## 2026-07-12 BPM Estimation Update
 

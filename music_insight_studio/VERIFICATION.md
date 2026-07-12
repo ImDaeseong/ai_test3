@@ -121,7 +121,7 @@ Expected current environment signal:
 - libsndfile: `1.2.2`
 - MP3 codec: `True`
 - FLAC codec: `True`
-- unittest: `32 tests OK`
+- unittest: `33 tests OK`
 - each short-fixture CLI run: `verdict=REVISE score=59.7` and four report files (Markdown, Korean Markdown, JSON, MusicXML)
 
 ## Scoring Calibration Verification
@@ -205,6 +205,20 @@ Expected signal:
 
 - `ScoreTranscriber` tries `basic-pitch` first, then a numpy/soundfile autocorrelation heuristic melody guide, then falls back to the section-energy chart if no pitched notes are reliable.
 - `basic_pitch` is not installed in the current `.venv`; real-song CLI runs produce a MusicXML export containing `Heuristic melody guide` and the `transcription guide` limitation label, not `basic-pitch` note events.
+
+## Result Link Verification
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+.\.venv\Scripts\python.exe -m app.web.server --host 127.0.0.1 --port 8765
+```
+
+Expected signal:
+
+- `JSON` and `악보 MusicXML` both render as `<a ... target="_blank" rel="noopener">` in the result fragment; neither replaces the current tab.
+- `악보 MusicXML` links to `/score?src=<url-encoded report path>`, a standalone page (`render_score_page`) that loads the vendored OSMD renderer and fetches/renders the MusicXML on page load, instead of an inline toggle panel on the result screen.
+- `/score?src=` is validated by `parse_report_path` and returns `404` unless `src` resolves to a well-formed `/reports/<12-hex-id>/analysis_lead_sheet.musicxml` path. Confirmed live: `GET /score?src=/etc/passwd` -> `404`.
+- Confirmed with a real browser session (Playwright): upload -> both links open in new tabs, original result screen stays intact, the score tab renders actual notation (SVG) with 0 console errors, and the malicious `src` request above returns `404` in the browser too.
 
 ## Suno Style Suggestion Verification
 
