@@ -1,5 +1,0 @@
-﻿# Future/experimental MIR dependencies (see ARCHITECTURE.md "optional" list).
-# Not required by the current analyzer path (numpy+soundfile+pyloudnorm in requirements.txt).
-# librosa>=0.10.0    # experimental; current Python 3.14 path uses numpy+soundfile directly.
-# demucs             # stem separation, deferred (ROADMAP Phase 5).
-# pedalboard          # mastering preview effects, deferred (ROADMAP Phase 5).
