@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import html
@@ -17,6 +17,7 @@ from uuid import uuid4
 from app.analyzers import AudioAnalyzer
 from app.core import AnalysisMode, TrackInput, Verdict
 from app.services import AnalysisService
+from app.web.security import UploadSecurityPolicy, validate_audio_payload, validate_content_length
 
 
 ALLOWED_EXTENSIONS = AudioAnalyzer.SUPPORTED_EXTENSIONS
@@ -34,6 +35,7 @@ STATIC_FILES = {
 }
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
+SECURITY_POLICY = UploadSecurityPolicy()
 VERDICT_LABELS = {
     Verdict.PASS: "진행 가능",
     Verdict.REVISE: "수정 권장",
@@ -100,6 +102,7 @@ def parse_upload(content_type: str, body: bytes) -> UploadForm:
             if not is_allowed_audio(filename):
                 extension = Path(filename).suffix.lower() or "unknown"
                 raise ValueError(f"{UNSUPPORTED_AUDIO_MESSAGE} Received: {extension}")
+            validate_audio_payload(filename, payload, SECURITY_POLICY)
             audio = UploadedAudio(filename, payload)
         elif name == "mode":
             value = part.get_content().strip()
@@ -426,6 +429,9 @@ class MusicInsightHandler(BaseHTTPRequestHandler):
         if request_path == "/":
             self._send_html(render_home())
             return
+        if request_path == "/healthz":
+            self._send_text(b"ok", content_type="text/plain; charset=utf-8")
+            return
         if request_path.startswith("/reports/"):
             self._send_report(request_path)
             return
@@ -440,6 +446,7 @@ class MusicInsightHandler(BaseHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
+            validate_content_length(length, SECURITY_POLICY)
             body = self.rfile.read(length)
             form = parse_upload(self.headers.get("Content-Type", ""), body)
             links, verdict, score, korean_report = analyze_upload(
@@ -457,11 +464,20 @@ class MusicInsightHandler(BaseHTTPRequestHandler):
             self._send_html(error_fragment.encode("utf-8"), status=HTTPStatus.BAD_REQUEST)
 
     def _send_html(self, body: bytes, status: HTTPStatus = HTTPStatus.OK) -> None:
+        self._send_text(body, status=status, content_type="text/html; charset=utf-8")
+
+    def _send_text(self, body: bytes, status: HTTPStatus = HTTPStatus.OK, content_type: str = "text/plain; charset=utf-8") -> None:
         self.send_response(status)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        self._send_security_headers()
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_security_headers(self) -> None:
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Cache-Control", "no-store")
 
     def _send_static(self, request_path: str) -> None:
         file_path, content_type = STATIC_FILES[request_path]
@@ -472,6 +488,7 @@ class MusicInsightHandler(BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        self._send_security_headers()
         self.end_headers()
         with file_path.open("rb") as source:
             shutil.copyfileobj(source, self.wfile)
@@ -502,6 +519,7 @@ class MusicInsightHandler(BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        self._send_security_headers()
         self.end_headers()
         with report_path.open("rb") as source:
             shutil.copyfileobj(source, self.wfile)
@@ -535,6 +553,7 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
 
 

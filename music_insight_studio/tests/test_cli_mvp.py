@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import importlib.util
 import json
@@ -8,13 +8,15 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import wave
 from pathlib import Path
 
 from app.analyzers import AudioAnalyzer, TextAnalyzer
 from app.core import AnalysisMode, TrackInput, Verdict
 from app.services import AnalysisService
-from app.notation import LeadSheetMusicXmlWriter
+from app.notation import LeadSheetMusicXmlWriter, NoteEvent, TranscriptionResult
+from app.web.security import UploadSecurityPolicy, validate_audio_payload, validate_content_length
 from app.web.server import STATIC_FILES, WebPaths, UploadedAudio, UNSUPPORTED_AUDIO_MESSAGE, analyze_upload, is_allowed_audio, render_home, render_user_result, safe_filename
 
 
@@ -93,6 +95,50 @@ class CliMvpTests(unittest.TestCase):
         self.assertLess(scores["Technical Audio"].score or 100, 90)
         self.assertEqual(scores["Mix and Master"].verdict, Verdict.REVISE)
         self.assertLess(scores["Mix and Master"].score or 100, 70)
+
+
+    @unittest.skipUnless(has_optional_dsp(), "optional DSP unavailable in this environment")
+    def test_bpm_estimator_prefers_librosa_when_available(self) -> None:
+        import numpy as np
+
+        class FakeBeat:
+            @staticmethod
+            def beat_track(y, sr, hop_length, start_bpm, units):
+                return 111.5, np.arange(12)
+
+        class FakeLibrosa:
+            beat = FakeBeat()
+
+        analyzer = AudioAnalyzer()
+        y = np.zeros(22050 * 8, dtype=float)
+        rms = np.ones(160, dtype=float) * 0.1
+        with patch.dict(sys.modules, {"librosa": FakeLibrosa()}):
+            bpm, confidence = analyzer._estimate_bpm_from_audio_np(y, 22050, rms, np)
+        self.assertEqual(bpm, 111.5)
+        self.assertGreater(confidence, 0.05)
+    @unittest.skipUnless(has_optional_dsp(), "optional DSP unavailable in this environment")
+    def test_bpm_estimator_uses_onset_flux_for_pulse_timing(self) -> None:
+        import numpy as np
+
+        analyzer = AudioAnalyzer()
+        sample_rate = 22050
+        seconds = 12.0
+        bpm = 123.0
+        t = np.arange(int(seconds * sample_rate), dtype=float) / sample_rate
+        y = 0.04 * np.sin(2 * np.pi * 220 * t)
+        beat_interval = 60.0 / bpm
+        for beat in np.arange(0.0, seconds, beat_interval):
+            center = int(beat * sample_rate)
+            width = int(0.025 * sample_rate)
+            start = max(0, center - width)
+            end = min(len(y), center + width)
+            if end > start:
+                envelope = np.hanning(end - start)
+                y[start:end] += 0.8 * envelope
+        rms = analyzer._windowed_rms_np(y, sample_rate, np)
+        estimated_bpm, confidence = analyzer._estimate_bpm_from_audio_np(y, sample_rate, rms, np)
+        self.assertLess(abs(estimated_bpm - bpm), 3.0)
+        self.assertGreater(confidence, 0.1)
 
     def test_dynamic_range_uses_robust_percentiles(self) -> None:
         value = AudioAnalyzer._dynamic_range_db([0.000001, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28])
@@ -176,6 +222,16 @@ class CliMvpTests(unittest.TestCase):
 
 
 
+    def test_general_audio_without_lyrics_marks_lyrics_not_applicable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            audio_path = Path(tmp) / "sample.wav"
+            write_test_wav(audio_path)
+            report = AnalysisService().analyze(TrackInput(audio_path=audio_path, mode=AnalysisMode.GENERAL))
+        scores = {score.group: score for score in report.scores}
+        self.assertIsNone(scores["Lyrics and Hook"].score)
+        self.assertEqual(scores["Lyrics and Hook"].verdict, Verdict.NOT_APPLICABLE)
+        self.assertIn("lyrics not provided", scores["Lyrics and Hook"].evidence)
+
     def test_short_fixture_is_not_overrated_as_release_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             audio_path = Path(tmp) / "sample.wav"
@@ -225,6 +281,20 @@ class CliMvpTests(unittest.TestCase):
 
 
 class WebMvpTests(unittest.TestCase):
+    def test_upload_security_rejects_oversized_body_and_spoofed_audio(self) -> None:
+        policy = UploadSecurityPolicy(max_upload_bytes=16)
+        with self.assertRaisesRegex(ValueError, "too large"):
+            validate_content_length(17, policy)
+        with self.assertRaisesRegex(ValueError, "signature"):
+            validate_audio_payload("fake.wav", b"not a wave file", UploadSecurityPolicy())
+
+    def test_upload_security_accepts_real_wav_signature(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            audio_path = Path(tmp) / "sample.wav"
+            write_test_wav(audio_path)
+            payload = audio_path.read_bytes()
+        validate_audio_payload("sample.wav", payload, UploadSecurityPolicy())
+
     def test_web_upload_validation_allows_supported_audio_only(self) -> None:
         self.assertTrue(is_allowed_audio("demo.WAV"))
         self.assertTrue(is_allowed_audio("demo.flac"))
@@ -381,16 +451,38 @@ class CodecAnalysisTests(unittest.TestCase):
         self.assertGreater(features.duration_sec, 0.9)
         self.assertEqual(len(features.frequency_bands), 7)
 
+class FakeTranscriber:
+    def transcribe(self, audio_path: Path | str, bpm: float = 0.0) -> TranscriptionResult:
+        return TranscriptionResult("test-transcriber", [NoteEvent(0.0, 0.5, 69, 80, 0.9), NoteEvent(0.5, 1.0, 71, 80, 0.8)], [])
+
+
+class EmptyTranscriber:
+    def transcribe(self, audio_path: Path | str, bpm: float = 0.0) -> TranscriptionResult:
+        return TranscriptionResult("none", [], ["No stable pitched events found for melody guide."])
 
 
 class NotationExportTests(unittest.TestCase):
-    def test_musicxml_lead_sheet_export_uses_analysis_metadata(self) -> None:
+    def test_musicxml_transcription_export_writes_pitched_notes_when_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             audio_path = Path(tmp) / "sample.wav"
             out_dir = Path(tmp) / "out"
             write_test_wav(audio_path)
             report = AnalysisService().analyze(TrackInput(audio_path=audio_path, mode=AnalysisMode.GENERAL))
-            path = LeadSheetMusicXmlWriter().write(report, out_dir)
+            path = LeadSheetMusicXmlWriter(FakeTranscriber()).write(report, out_dir)
+            text = path.read_text(encoding="utf-8")
+        self.assertIn("Transcription Guide", text)
+        self.assertIn("test-transcriber", text)
+        self.assertIn("<pitch>", text)
+        self.assertIn("<step>A</step>", text)
+        self.assertIn("Automatic transcription guide only", text)
+
+    def test_musicxml_lead_sheet_export_uses_analysis_metadata_when_no_notes_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            audio_path = Path(tmp) / "sample.wav"
+            out_dir = Path(tmp) / "out"
+            write_test_wav(audio_path)
+            report = AnalysisService().analyze(TrackInput(audio_path=audio_path, mode=AnalysisMode.GENERAL))
+            path = LeadSheetMusicXmlWriter(EmptyTranscriber()).write(report, out_dir)
             self.assertTrue(path.exists())
             text = path.read_text(encoding="utf-8")
         self.assertIn("score-partwise", text)
@@ -400,6 +492,13 @@ class NotationExportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
+
+
+
+
 
 
 

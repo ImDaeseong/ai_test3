@@ -102,9 +102,11 @@ class EvaluationReport:
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
+        data["audio"]["duration_label"] = self.audio.duration_label
         data["track"]["audio_path"] = str(self.track.audio_path)
         data["track"]["mode"] = self.track.mode.value
         data["overall_verdict"] = self.overall_verdict.value
         for score in data["scores"]:
             score["verdict"] = score["verdict"].value
         return data
+

@@ -121,8 +121,8 @@ Expected current environment signal:
 - libsndfile: `1.2.2`
 - MP3 codec: `True`
 - FLAC codec: `True`
-- unittest: `20 tests OK`
-- each short-fixture CLI run: `verdict=REVISE score=57.5` and three report files
+- unittest: `32 tests OK`
+- each short-fixture CLI run: `verdict=REVISE score=59.7` and four report files (Markdown, Korean Markdown, JSON, MusicXML)
 
 ## Scoring Calibration Verification
 
@@ -135,7 +135,7 @@ Select-String -Path .\outputs\calibrated_wav\analysis_report.ko.md -Pattern "REV
 Expected short-fixture signal:
 
 - CLI verdict: `REVISE`
-- score: around `57.5`
+- score: around `59.7`
 - evidence includes `duration_too_short_for_music_judgment`
 
 ## Release-Length Verification
@@ -180,6 +180,31 @@ Expected simplified UI signal:
 - Web form renders file upload and `mode`.
 - Web form does not render `target`, `prompt`, or `lyrics` fields.
 - Web upload helper returns Korean report text for inline rendering.
+
+## Librosa BPM Provider Verification
+
+```powershell
+.\.venv\Scripts\python.exe -c "import importlib.util as u; print('librosa', bool(u.find_spec('librosa')))"
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Expected signal:
+
+- `test_bpm_estimator_prefers_librosa_when_available` passes using a fake `librosa` module patched into `sys.modules` (unit-level, does not require a real install).
+- If `librosa` is actually installed, `AudioAnalyzer._estimate_bpm_from_audio_np` calls `librosa.beat.beat_track` first and only falls back to the built-in spectral-flux estimator when `librosa` is missing, import fails, or returns confidence below `0.05`. Confirmed by direct comparison: a synthetic 120 BPM click track returns different BPM/confidence with `librosa` importable versus with its import blocked, showing both code paths actually execute (not just the mocked unit test).
+- Real 38-file mastered WAV batch (local set, not in this repo): 0 errors, 15 unique BPM values, confidence 0.83-0.90 with `librosa==0.11.0` installed.
+
+## Score Transcription Verification
+
+```powershell
+.\.venv\Scripts\python.exe -c "import importlib.util as u; print('basic_pitch', bool(u.find_spec('basic_pitch')))"
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+Expected signal:
+
+- `ScoreTranscriber` tries `basic-pitch` first, then a numpy/soundfile autocorrelation heuristic melody guide, then falls back to the section-energy chart if no pitched notes are reliable.
+- `basic_pitch` is not installed in the current `.venv`; real-song CLI runs produce a MusicXML export containing `Heuristic melody guide` and the `transcription guide` limitation label, not `basic-pitch` note events.
 
 ## Suno Style Suggestion Verification
 

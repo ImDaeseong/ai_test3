@@ -1,5 +1,20 @@
-﻿# Future/experimental MIR dependencies (see ARCHITECTURE.md "optional" list).
-# Not required by the current analyzer path (numpy+soundfile+pyloudnorm in requirements.txt).
-# librosa>=0.10.0    # experimental; current Python 3.14 path uses numpy+soundfile directly.
+﻿# Future/experimental MIR dependencies (see ARCHITECTURE.md optional list).
+# Not required for the local MVP path (numpy+soundfile+pyloudnorm in requirements.txt).
+
+# Best first upgrade for WAV/MP3/FLAC -> note events/MIDI.
+# basic-pitch is optional because it brings model/runtime dependencies and currently
+# supports Python versions up to the range documented by the upstream project.
+# basic-pitch>=0.4.0
+
+# Useful later for symbolic-score cleanup, quantization, MusicXML formatting,
+# and richer notation post-processing after note events are available.
+# music21>=9.0.0
+
+# Preferred optional BPM/onset provider. If installed, AudioAnalyzer uses librosa.beat.beat_track before the built-in spectral-flux fallback.
+# Also useful later for MIR feature extraction and pYIN-style monophonic pitch tracking.
+# librosa>=0.10.0
+
+# Deferred advanced processing.
 # demucs             # stem separation, deferred (ROADMAP Phase 5).
 # pedalboard          # mastering preview effects, deferred (ROADMAP Phase 5).
+

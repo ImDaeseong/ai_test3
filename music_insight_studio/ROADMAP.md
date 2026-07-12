@@ -11,7 +11,7 @@
 | 4: Comparison and Release Strategy | Not started |
 | 5: Advanced Audio Processing | Not started |
 | 6: Commercialization Readiness | Not started (planning docs only, see `docs/commercial/`) |
-| 7: Score Generation | Partially done (MusicXML lead sheet export + in-browser rendering; beat/onset/chord/melody extraction not started) |
+| 7: Score Generation | Partially done (MusicXML lead sheet export + in-browser rendering; optional-provider melody guide via `basic-pitch`/heuristic autocorrelation implemented; chord extraction not started) |
 
 ## Phase 0: Design
 
@@ -23,6 +23,7 @@
 - Build a command-line analyzer for one audio file.
 - Generate JSON and Markdown reports.
 - Add tests for file validation, audio feature extraction, and scoring rules.
+- BPM estimation now prefers optional `librosa.beat.beat_track` when installed, falling back to a built-in spectral-flux onset estimator, then an RMS-envelope estimator (`ARCHITECTURE.md` "Librosa BPM Provider"). Verified on 38 real mastered WAV files: 0 errors, 15 unique BPM values, confidence 0.83-0.90.
 
 ## Phase 2: Web MVP
 
@@ -62,4 +63,5 @@
 - Add confidence and limitation notes to every generated score. Done: every export includes a "Limitations" measure.
 - Show the score without requiring a download. Done: Web MVP renders it in-browser on demand (click "악보 MusicXML") using a locally vendored renderer, alongside the raw MusicXML text.
 - Scale section resolution to track length. Done: section count is duration-proportional (~15s/section, 4-24 range) instead of a fixed count.
-- Later: add beat/onset/chord/melody extraction for richer transcription.
+- Add melody extraction as a separate `ScoreTranscriber` boundary (`app/notation/transcription.py`, not part of `AudioAnalyzer`/`ScoringEngine`). Provider order: optional `basic-pitch` note events -> local numpy/soundfile autocorrelation heuristic melody guide -> section-energy chart fallback if no pitched notes are reliable. `basic-pitch` is not installed in the current `.venv`, so real-song exports currently use the heuristic guide, labeled "transcription guide" (not publication-ready notation) in the MusicXML output.
+- Later: add chord and beat/downbeat extraction for richer transcription.

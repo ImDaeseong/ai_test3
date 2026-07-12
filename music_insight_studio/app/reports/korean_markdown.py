@@ -263,6 +263,7 @@ class KoreanMarkdownReportWriter:
             "Precise melody and harmony review needs chords, MIDI, or deeper audio analysis.": "정밀한 멜로디/화성 평가는 코드, MIDI, 또는 더 깊은 오디오 분석이 필요합니다.",
             "Provide lyrics/prompt sections and chord progression to improve this score.": "점수를 보강하려면 가사/프롬프트 섹션과 코드 진행 정보를 추가하십시오.",
             "Lyrics were not provided, so hook, pronunciation, and language quality are limited.": "가사가 제공되지 않아 훅, 발음감, 언어 품질 평가는 제한적입니다.",
+            "Lyrics were not provided, so hook, pronunciation, and language quality are not scored from audio alone.": "가사가 제공되지 않아 훅, 발음감, 언어 품질은 음원만으로 점수화하지 않았습니다.",
             "The system does not infer lyric quality from audio alone.": "이 시스템은 음원만으로 가사 품질을 단정하지 않습니다.",
             "Provide lyrics or Suno Lyrics for a stronger lyricist review.": "더 정확한 작사가 관점 평가를 위해 가사 또는 Suno Lyrics를 제공하십시오.",
             "Production is estimated from section energy movement and prompt texture evidence.": "프로듀싱은 섹션별 에너지 변화와 프롬프트 질감 근거를 기준으로 추정했습니다.",
@@ -315,6 +316,7 @@ class KoreanMarkdownReportWriter:
             "brilliance_8k_16khz": "브릴리언스 8k-16kHz",
         }
         return labels.get(name, name)
+
 
 
 

@@ -137,3 +137,26 @@ The current stdlib `http.server` web layer is local-only. A commercial service s
 Score generation must be a separate export module, not part of the scoring engine. The initial feasible version is a MusicXML lead sheet/session chart based on current analysis metadata. Full melody/chord transcription is a later feature that requires additional pitch, onset, beat, and chord evidence. See `docs/features/score_generation.md`.
 
 Section count scales with track duration (`AudioAnalyzer.TARGET_SECTION_SECONDS = 15s`, clamped to 4-24 sections) instead of a fixed count, so the chart's resolution matches the song's length. The Web MVP renders this MusicXML in-browser on demand (click "악보 MusicXML") using a locally vendored renderer (`app/web/static/vendor/opensheetmusicdisplay.min.js`), showing both the rendered staff and the raw MusicXML text; no CDN request is made at runtime, consistent with `SECURITY_BOUNDARY.md`'s local-first policy.
+
+## 2026-07-12 BPM Estimation Update
+
+BPM estimation now uses a lightweight beat-tracking proxy in the optional DSP path:
+
+- Downsample/limit audio for local performance.
+- Build a spectral-flux onset envelope from short FFT frames.
+- Score autocorrelation tempo candidates with harmonic support and a mild tempo prior.
+- Fall back to RMS-envelope tempo estimation when onset confidence is low.
+
+This is still not a full beat tracker with downbeat, meter, and tempo-change handling, but it reduces coarse BPM grid locking on mastered WAV files.
+
+## 2026-07-12 Librosa BPM Provider
+
+Added an optional `librosa.beat.beat_track` provider ahead of the built-in spectral-flux estimator:
+
+1. `librosa.beat.beat_track` (used when `librosa` is installed and returns confidence >= 0.05)
+2. Built-in spectral-flux onset autocorrelation (previous section)
+3. RMS-envelope fallback
+
+`librosa` is documented as optional in `requirements-optional.txt`; the analyzer imports it lazily inside a try/except so its absence never breaks analysis. Verified directly (not just via the unit test's fake-librosa patch): a synthetic 120 BPM click track returns a different BPM/confidence pair with `librosa` importable (117.45 BPM, confidence 0.877) versus with the `librosa` import blocked (120.08 BPM, confidence 0.836), confirming both code paths actually execute.
+
+Re-running the 38-file real mastered WAV batch (local verification set, not checked into this repository) with `librosa` installed (0.11.0) gives **15 unique BPM values across 38 files, 0 errors, BPM confidence 0.83-0.90**. The previously recorded "12 to 37 unique BPM" figure for this update was not reproducible on re-verification and has been removed; 15/38 is the measured value as of this update.

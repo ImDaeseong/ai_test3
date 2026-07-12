@@ -97,3 +97,15 @@ Proceed in this order:
 ## Gate
 
 Commercial-readiness gate: HOLD for public launch, PASS for local portfolio/demo.
+
+## 2026-07-12 Local Hardening Update
+
+Implemented first commercial-direction hardening without replacing the local MVP server:
+
+- Added upload size validation.
+- Added extension allowlist plus audio file signature sniffing.
+- Added `/healthz` for local/process health checks.
+- Added basic response security headers: `X-Content-Type-Options`, `Referrer-Policy`, and `Cache-Control: no-store`.
+- Kept `AnalysisService` as the shared orchestration boundary for CLI, local web, and future production API/worker paths.
+
+This improves the local demo and makes the production migration boundary clearer, but it does not remove the public-launch HOLD. A paid/public service still needs FastAPI or equivalent, ASGI deployment, auth, quotas, object storage lifecycle policy, background jobs, malware/decoder isolation, and retention/delete/export controls.

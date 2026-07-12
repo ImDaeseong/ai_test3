@@ -105,3 +105,24 @@ app/
 - Export does not crash when BPM/key are unknown.
 - Export includes limitation notes.
 - Existing analysis tests still pass.
+
+## 2026-07-12 Implementation Update
+
+The score export now has a separate transcription boundary:
+
+- `ScoreTranscriber` first tries optional `basic-pitch` note events when the package is installed.
+- If `basic-pitch` is unavailable, it uses a local numpy/soundfile autocorrelation melody guide for rough pitched notes.
+- If no pitched events are reliable, `LeadSheetMusicXmlWriter` falls back to the older section-energy session chart.
+- The MusicXML output clearly labels generated notes as a transcription guide, not publication-ready sheet music.
+
+Library decision:
+
+- `basic-pitch` is the preferred first upgrade for audio-to-MIDI because it is built for automatic music transcription and returns note events/MIDI from audio.
+- `music21` is the preferred later score post-processing layer for quantization, notation cleanup, and richer MusicXML export.
+- `librosa.pyin` remains useful for monophonic pitch tracking, but it is weaker than a dedicated AMT model for polyphonic songs.
+
+Acceptance boundary:
+
+- For a full mixed/mastered WAV, automatic notation is still approximate.
+- Commercial UI must call this output `악보 가이드` or `transcription guide`, not `정확한 악보`.
+- A future production worker should cache model loading and run long audio transcription as a background job.

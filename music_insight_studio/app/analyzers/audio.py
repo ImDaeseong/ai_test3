@@ -21,6 +21,10 @@ class AudioAnalyzer:
     TARGET_SECTION_SECONDS = 15.0
     MIN_SECTIONS = 4
     MAX_SECTIONS = 24
+    BPM_ANALYSIS_RATE = 22050
+    MAX_BPM_ANALYSIS_SECONDS = 180.0
+    BPM_FFT_SIZE = 2048
+    BPM_HOP_SIZE = 512
     BAND_RANGES = {
         "sub_bass_20_60hz": (20, 60),
         "bass_60_250hz": (60, 250),
@@ -81,6 +85,7 @@ class AudioAnalyzer:
             warnings.append("Peak reaches full scale; check clipping or limiter ceiling before release.")
         elif peak >= 0.98:
             warnings.append("Peak is very close to full scale; leave more mastering headroom.")
+        bpm, bpm_confidence = self._estimate_bpm_from_audio_np(y, int(sample_rate), rms_values, np)
         return AudioFeatures(
             available=True,
             file_path=str(path),
@@ -93,8 +98,8 @@ class AudioAnalyzer:
             rms_std=rms_std,
             peak_amplitude=peak,
             dynamic_range_db=self._dynamic_range_db_np(rms_values, np),
-            bpm=self._estimate_bpm_np(rms_values, np)[0],
-            bpm_confidence=self._estimate_bpm_np(rms_values, np)[1],
+            bpm=bpm,
+            bpm_confidence=bpm_confidence,
             estimated_key=self._estimate_key_np(y, sample_rate, np),
             lufs_integrated=lufs,
             frequency_bands=self._frequency_bands_np(y, sample_rate, np),
@@ -106,7 +111,7 @@ class AudioAnalyzer:
     def _windowed_rms_np(y: Any, sample_rate: int, np: Any) -> Any:
         if len(y) == 0:
             return np.asarray([], dtype=float)
-        window = max(1, sample_rate // 10) if sample_rate else 1024
+        window = max(1, sample_rate // 20) if sample_rate else 1024
         values = []
         for start in range(0, len(y), window):
             chunk = y[start:start + window]
@@ -114,27 +119,135 @@ class AudioAnalyzer:
                 values.append(float(np.sqrt(np.mean(chunk * chunk))))
         return np.asarray(values, dtype=float)
 
+    def _estimate_bpm_from_audio_np(self, y: Any, sample_rate: int, rms_values: Any, np: Any) -> tuple[float, float]:
+        librosa_bpm, librosa_confidence = self._estimate_bpm_with_librosa_np(y, sample_rate, np)
+        if librosa_bpm > 0.0 and librosa_confidence >= 0.05:
+            return librosa_bpm, librosa_confidence
+        prepared, effective_rate = self._prepare_bpm_audio_np(y, sample_rate, np)
+        onset = self._spectral_flux_onset_np(prepared, effective_rate, np)
+        bpm, confidence = self._estimate_bpm_from_envelope_np(onset, effective_rate / self.BPM_HOP_SIZE, np)
+        if confidence >= 0.08:
+            return bpm, confidence
+        return self._estimate_bpm_from_envelope_np(rms_values, 20.0, np)
+
+    def _estimate_bpm_with_librosa_np(self, y: Any, sample_rate: int, np: Any) -> tuple[float, float]:
+        try:
+            import librosa
+        except Exception:
+            return 0.0, 0.0
+        try:
+            prepared, effective_rate = self._prepare_bpm_audio_np(y, sample_rate, np)
+            if len(prepared) < self.BPM_FFT_SIZE or effective_rate <= 0:
+                return 0.0, 0.0
+            tempo, beats = librosa.beat.beat_track(
+                y=prepared,
+                sr=effective_rate,
+                hop_length=self.BPM_HOP_SIZE,
+                start_bpm=120.0,
+                units="frames",
+            )
+            tempo_array = np.asarray(tempo, dtype=float).reshape(-1)
+            if tempo_array.size == 0:
+                return 0.0, 0.0
+            bpm = self._normalize_tempo_range(float(tempo_array[0]))
+            beat_count = len(beats) if beats is not None else 0
+            duration = len(prepared) / effective_rate
+            expected_beats = max(1.0, duration * bpm / 60.0)
+            coverage = min(1.0, beat_count / expected_beats)
+            confidence = max(0.05, min(0.95, 0.35 + coverage * 0.55)) if beat_count >= 2 else 0.05
+            return round(float(bpm), 2), confidence
+        except Exception:
+            return 0.0, 0.0
+    def _prepare_bpm_audio_np(self, y: Any, sample_rate: int, np: Any) -> tuple[Any, int]:
+        if len(y) == 0 or sample_rate <= 0:
+            return y, sample_rate
+        max_samples = int(self.MAX_BPM_ANALYSIS_SECONDS * sample_rate)
+        if len(y) > max_samples:
+            y = y[:max_samples]
+        if sample_rate <= self.BPM_ANALYSIS_RATE:
+            return y, sample_rate
+        factor = max(1, int(round(sample_rate / self.BPM_ANALYSIS_RATE)))
+        return y[::factor], int(round(sample_rate / factor))
+
+    def _spectral_flux_onset_np(self, y: Any, sample_rate: int, np: Any) -> Any:
+        if len(y) < self.BPM_FFT_SIZE or sample_rate <= 0:
+            return np.asarray([], dtype=float)
+        window = np.hanning(self.BPM_FFT_SIZE)
+        previous = None
+        values = []
+        for start in range(0, len(y) - self.BPM_FFT_SIZE, self.BPM_HOP_SIZE):
+            frame = y[start:start + self.BPM_FFT_SIZE]
+            spectrum = np.abs(np.fft.rfft(frame * window))
+            if previous is None:
+                values.append(0.0)
+            else:
+                diff = spectrum - previous
+                values.append(float(np.sum(diff[diff > 0.0])))
+            previous = spectrum
+        envelope = np.asarray(values, dtype=float)
+        if envelope.size < 8:
+            return envelope
+        envelope = np.maximum(envelope - float(np.percentile(envelope, 35)), 0.0)
+        peak = float(np.max(envelope))
+        return envelope / peak if peak > 1e-12 else envelope
+
     @staticmethod
-    def _estimate_bpm_np(rms_values: Any, np: Any) -> tuple[float, float]:
-        if rms_values.size < 8:
+    def _estimate_bpm_from_envelope_np(envelope: Any, frame_rate: float, np: Any) -> tuple[float, float]:
+        if envelope.size < 8 or frame_rate <= 0:
             return 0.0, 0.0
-        envelope = rms_values - float(np.mean(rms_values))
-        if float(np.max(np.abs(envelope))) <= 1e-9:
+        envelope = envelope - float(np.mean(envelope))
+        max_abs = float(np.max(np.abs(envelope)))
+        if max_abs <= 1e-9:
             return 0.0, 0.0
+        envelope = envelope / max_abs
         corr = np.correlate(envelope, envelope, mode="full")[len(envelope) - 1:]
-        frame_rate = 10.0
-        min_bpm, max_bpm = 60.0, 200.0
+        if corr.size < 4 or corr[0] <= 1e-12:
+            return 0.0, 0.0
+        min_bpm, max_bpm = 55.0, 210.0
         min_lag = max(1, int(frame_rate * 60.0 / max_bpm))
         max_lag = min(len(corr) - 1, int(frame_rate * 60.0 / min_bpm))
         if max_lag <= min_lag:
             return 0.0, 0.0
-        search = corr[min_lag:max_lag + 1]
-        best_offset = int(np.argmax(search))
-        lag = best_offset + min_lag
-        bpm = 60.0 * frame_rate / lag
-        confidence = float(search[best_offset] / (corr[0] + 1e-9)) if corr[0] else 0.0
-        return round(float(bpm), 2), max(0.0, min(1.0, confidence))
+        corr_norm = corr / (float(corr[0]) + 1e-12)
+        candidates = []
+        for lag in range(min_lag, max_lag + 1):
+            value = float(corr_norm[lag])
+            left = float(corr_norm[lag - 1]) if lag > 0 else value
+            right = float(corr_norm[lag + 1]) if lag + 1 < len(corr_norm) else value
+            if value < left or value < right:
+                continue
+            bpm = 60.0 * frame_rate / lag
+            harmonic = 0.0
+            if lag * 2 < len(corr_norm):
+                harmonic += 0.35 * max(0.0, float(corr_norm[lag * 2]))
+            if lag // 2 >= min_lag:
+                harmonic += 0.20 * max(0.0, float(corr_norm[lag // 2]))
+            tempo_prior = 1.0 - min(0.35, abs(bpm - 120.0) / 240.0)
+            candidates.append((value * tempo_prior + harmonic, lag, value))
+        if not candidates:
+            best_lag = int(np.argmax(corr_norm[min_lag:max_lag + 1])) + min_lag
+            candidates = [(float(corr_norm[best_lag]), best_lag, float(corr_norm[best_lag]))]
+        _, lag, raw_confidence = max(candidates, key=lambda item: item[0])
+        lag = float(lag)
+        lag_index = int(round(lag))
+        if min_lag < lag_index < max_lag:
+            left = float(corr_norm[lag_index - 1])
+            center = float(corr_norm[lag_index])
+            right = float(corr_norm[lag_index + 1])
+            denom = left - 2.0 * center + right
+            if abs(denom) > 1e-12:
+                lag += 0.5 * (left - right) / denom
+        bpm = 60.0 * frame_rate / lag if lag > 0 else 0.0
+        bpm = AudioAnalyzer._normalize_tempo_range(bpm)
+        return round(float(bpm), 2), max(0.0, min(1.0, raw_confidence))
 
+    @staticmethod
+    def _normalize_tempo_range(bpm: float) -> float:
+        while bpm < 70.0 and bpm > 0.0:
+            bpm *= 2.0
+        while bpm > 180.0:
+            bpm /= 2.0
+        return bpm
     @staticmethod
     def _estimate_key_np(y: Any, sample_rate: int, np: Any) -> str:
         if len(y) == 0 or sample_rate <= 0:
@@ -229,6 +342,7 @@ class AudioAnalyzer:
             warnings.append("Peak reaches full scale; check clipping or limiter ceiling before release.")
         elif peak >= 0.98:
             warnings.append("Peak is very close to full scale; leave more mastering headroom.")
+        bpm, bpm_confidence = self._estimate_bpm_from_audio_np(y, int(sample_rate), rms_values, np)
         return AudioFeatures(
             available=True,
             file_path=str(path),
@@ -280,7 +394,7 @@ class AudioAnalyzer:
     def _windowed_rms(samples: list[float], sample_rate: int) -> list[float]:
         if not samples:
             return []
-        window = max(1, sample_rate // 10) if sample_rate else 1024
+        window = max(1, sample_rate // 20) if sample_rate else 1024
         values = []
         for start in range(0, len(samples), window):
             chunk = samples[start:start + window]
@@ -328,5 +442,8 @@ class AudioAnalyzer:
             label = "High" if relative >= 0.75 else "Medium" if relative >= 0.35 else "Low"
             result.append(SectionEnergy(f"Part {index + 1}", start / sample_rate, end / sample_rate, rms, label))
         return result
+
+
+
 
 

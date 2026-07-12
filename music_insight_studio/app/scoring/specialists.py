@@ -15,6 +15,41 @@ from app.scoring.rubric import (
 )
 
 
+
+
+def section_energy_stats(audio) -> tuple[int, float, float]:
+    values = [section.mean_rms for section in audio.section_energies] if audio.available else []
+    if not values:
+        return 0, 0.0, 0.0
+    labels = len({section.energy_label for section in audio.section_energies})
+    low = min(values)
+    high = max(values)
+    contrast = (high - low) / high if high > 1e-9 else 0.0
+    avg = sum(values) / len(values)
+    movement = sum(abs(value - avg) for value in values) / len(values) / avg if avg > 1e-9 else 0.0
+    return labels, contrast, movement
+
+
+def lufs_release_score(lufs: float | None) -> float:
+    if lufs is None:
+        return 0.0
+    if -16.0 <= lufs <= -9.0:
+        return 8.0
+    if -18.0 <= lufs < -16.0 or -9.0 < lufs <= -7.0:
+        return 4.0
+    return -4.0
+
+
+def peak_headroom_score(peak: float) -> float:
+    if peak <= 0:
+        return 0.0
+    if peak <= 0.95:
+        return 12.0
+    if peak <= PEAK_HEADROOM_LIMIT:
+        return 8.0
+    if peak < 0.999:
+        return -8.0
+    return -18.0
 class TechnicalAudioScorer(BaseScorer):
     group = "Technical Audio"
     criteria_file = "docs/audio_analysis_scope.md"
@@ -23,36 +58,31 @@ class TechnicalAudioScorer(BaseScorer):
         audio = context.audio
         if not audio.available:
             return self.result(0, Verdict.HOLD, [audio.error or "No measurable audio features available."], "Audio evidence is unavailable, so technical scoring is on HOLD.", next_action="Use a readable WAV/MP3/FLAC file or install optional decoders.")
-        score = 45.0
+        score = 42.0
         if audio.duration_sec >= MIN_FULL_TRACK_DURATION_SEC:
-            score += 15
+            score += 14
         elif audio.duration_sec >= MIN_REVIEWABLE_DURATION_SEC:
-            score += 8
+            score += 7
         else:
             score -= 10
         if audio.rms_mean > MIN_SIGNAL_RMS:
-            score += 15
-        if audio.peak_amplitude < PEAK_HEADROOM_LIMIT:
-            score += 10
-        elif audio.peak_amplitude >= 0.999:
-            score -= 15
-        else:
-            score -= 8
-        if audio.dynamic_range_db >= MIN_DYNAMIC_RANGE_DB:
-            score += 10
+            score += min(14.0, audio.rms_mean / 0.18 * 14.0)
+        score += peak_headroom_score(audio.peak_amplitude)
+        score += min(12.0, max(0.0, (audio.dynamic_range_db - 2.0) / 8.0 * 12.0))
+        _, energy_contrast, energy_movement = section_energy_stats(audio)
         if audio.section_energies:
-            score += 5
-        if audio.lufs_integrated is not None and audio.frequency_bands:
-            score += 5
+            score += min(7.0, 3.0 + energy_contrast * 8.0 + energy_movement * 6.0)
+        score += lufs_release_score(audio.lufs_integrated)
+        if audio.frequency_bands:
+            score += 3.0
         score = cap_for_short_duration(clamp(score), audio.duration_sec, 65.0)
-        evidence = [duration_evidence(audio.duration_sec), f"duration={audio.duration_label}", f"rms={audio.rms_mean:.4f}", f"peak={audio.peak_amplitude:.3f}", f"bpm={audio.bpm:.2f}", f"key={audio.estimated_key}"]
+        evidence = [duration_evidence(audio.duration_sec), f"duration={audio.duration_label}", f"rms={audio.rms_mean:.4f}", f"peak={audio.peak_amplitude:.3f}", f"dynamic_range={audio.dynamic_range_db:.2f}dB", f"energy_contrast={energy_contrast:.2f}", f"energy_movement={energy_movement:.2f}", f"bpm={audio.bpm:.2f}", f"bpm_confidence={audio.bpm_confidence:.2f}", f"key={audio.estimated_key}"]
         if audio.peak_amplitude >= PEAK_HEADROOM_LIMIT:
             evidence.append("peak_headroom_risk")
         if audio.lufs_integrated is not None:
             evidence.append(f"lufs={audio.lufs_integrated:.2f}")
         uncertainty = "BPM/key/LUFS are computational estimates and need human listening confirmation." if audio.lufs_integrated is not None else "LUFS is unavailable unless pyloudnorm is installed."
         return self.result(score, verdict_from_score(score), evidence, "Audio evidence indicates the file is measurable and has usable signal quality.", uncertainty, "Use listening review or reference-track comparison before final release decisions.")
-
 
 class ComposerScorer(BaseScorer):
     group = "Composition"
@@ -62,9 +92,9 @@ class ComposerScorer(BaseScorer):
         audio = context.audio
         text = context.text
         score = 45.0
-        energy_variety = len({section.energy_label for section in audio.section_energies}) if audio.available else 0
-        if audio.available and len(audio.section_energies) >= 4 and energy_variety >= 2:
-            score += 20
+        energy_variety, energy_contrast, energy_movement = section_energy_stats(audio)
+        if audio.available and len(audio.section_energies) >= 4:
+            score += min(24.0, energy_variety * 5.0 + energy_contrast * 18.0 + energy_movement * 10.0)
         if text.section_names:
             score += 15
         if text.hook_candidates:
@@ -72,8 +102,7 @@ class ComposerScorer(BaseScorer):
         if audio.available and audio.duration_sec >= MIN_FULL_TRACK_DURATION_SEC:
             score += 5
         score = cap_for_short_duration(clamp(score), audio.duration_sec, 55.0)
-        return self.result(score, verdict_from_score(score), [duration_evidence(audio.duration_sec), f"sections={len(text.section_names)}", f"hook_candidates={len(text.hook_candidates)}", f"energy_label_variety={energy_variety}"], "Composition is estimated from section structure, energy movement, and hook evidence.", "Precise melody and harmony review needs chords, MIDI, or deeper audio analysis.", "Provide lyrics/prompt sections and chord progression to improve this score.")
-
+        return self.result(score, verdict_from_score(score), [duration_evidence(audio.duration_sec), f"sections={len(text.section_names)}", f"hook_candidates={len(text.hook_candidates)}", f"energy_label_variety={energy_variety}", f"energy_contrast={energy_contrast:.2f}", f"energy_movement={energy_movement:.2f}"], "Composition is estimated from section structure, energy movement, and hook evidence.", "Precise melody and harmony review needs chords, MIDI, or deeper audio analysis.", "Provide lyrics/prompt sections and chord progression to improve this score.")
 
 class LyricistScorer(BaseScorer):
     group = "Lyrics and Hook"
@@ -84,7 +113,7 @@ class LyricistScorer(BaseScorer):
             return self.result(None, Verdict.NOT_APPLICABLE, ["instrumental mode"], "Lyrics scoring is skipped in instrumental mode.")
         text = context.text
         if not text.has_lyrics:
-            return self.result(45, Verdict.REVISE, ["lyrics not provided"], "Lyrics were not provided, so hook, pronunciation, and language quality are limited.", "The system does not infer lyric quality from audio alone.", "Provide lyrics or Suno Lyrics for a stronger lyricist review.")
+            return self.result(None, Verdict.NOT_APPLICABLE, ["lyrics not provided"], "Lyrics were not provided, so hook, pronunciation, and language quality are not scored from audio alone.", "The system does not infer lyric quality from audio alone.", "Provide lyrics or Suno Lyrics for a stronger lyricist review.")
         score = 60.0
         if text.hook_candidates:
             score += 15
@@ -207,3 +236,9 @@ class MarketReleaseScorer(BaseScorer):
             score += 5
         score = cap_for_short_duration(clamp(score), audio.duration_sec, 45.0)
         return self.result(score, verdict_from_score(score), [duration_evidence(audio.duration_sec), f"target={context.target_platform}", f"duration={audio.duration_label}"], "Release fit is estimated from hook evidence, duration, energy points, and target platform.", "Views, playlist placement, and revenue are never guaranteed.", "For A/B comparison, add Hook, Visual, Channel Fit, and Personal Taste inputs.")
+
+
+
+
+
+
