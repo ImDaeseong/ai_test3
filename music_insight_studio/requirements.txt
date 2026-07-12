@@ -1,0 +1,6 @@
+﻿# Core MVP can run with the Python standard library for WAV fallback.
+# Install these for advanced audio analysis:
+numpy>=1.24.0
+soundfile>=0.12.0
+pyloudnorm>=0.1.1
+# librosa is not required by the current analyzer path; keep it experimental for later MIR work.
