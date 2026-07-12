@@ -4,10 +4,21 @@
 
 - Python 3.11+ (verified against 3.14)
 - Web MVP: stdlib `http.server` (`ThreadingHTTPServer`/`BaseHTTPRequestHandler`) — no Flask/FastAPI dependency
-- numpy, soundfile (optional DSP path; stdlib WAV fallback when absent) — `requirements.txt`
-- optional, wired into code (`requirements-optional.txt` tier 1): pyloudnorm for LUFS (`requirements.txt`); librosa as the preferred BPM/onset provider (see "Librosa BPM Provider" below); basic-pitch as the preferred audio-to-MIDI transcription provider (see "Notation Export Boundary"). Each is imported lazily behind a try/except, so its absence never breaks analysis — only librosa is installed in the verified `.venv` (0.11.0); basic-pitch is not.
-- future/deferred, no code integration yet (`requirements-optional.txt` tier 2): music21, demucs, pedalboard
 - Markdown/JSON report renderer (no HTML templating engine)
+
+### Dependency Table
+
+Every package below is technically optional in the sense that the app never crashes without it — each one is behind a lazy `try`/`except` import, and the code path just falls back to a lighter estimate. The two `requirements*.txt` files exist to separate "install this, it's the normal setup" from "install this only if you want a specific accuracy upgrade":
+
+| Package | Lives in | When present | When absent |
+|---|---|---|---|
+| `numpy`, `soundfile` | `requirements.txt` | Full DSP analysis path (BPM/key/frequency bands/etc.) | stdlib WAV-only fallback; MP3/FLAC analysis unavailable |
+| `pyloudnorm` | `requirements.txt` | LUFS is measured and included in the report | LUFS field is omitted from the report, everything else still runs |
+| `librosa` | `requirements-optional.txt` tier 1 (wired into code, uncommented) | `AudioAnalyzer` prefers `librosa.beat.beat_track` for BPM — see "Librosa BPM Provider" below. Installed and verified in this `.venv` (`0.11.0`). | Falls back to the built-in spectral-flux onset estimator, then RMS envelope |
+| `basic-pitch` | `requirements-optional.txt` tier 1 (wired into code, commented out) | `ScoreTranscriber` prefers real audio-to-MIDI note events — see "Notation Export Boundary" below | Falls back to a local numpy/soundfile autocorrelation melody guide, then a section-energy chart. Not installed in this `.venv`, so this is the current default. |
+| `music21`, `demucs`, `pedalboard` | `requirements-optional.txt` tier 2 (commented out, not referenced anywhere in `app/`) | N/A — no code calls these yet | No effect either way; listed only as future/deferred candidates (ROADMAP Phase 5, later score post-processing) |
+
+`requirements.txt` is what `README.md`'s Setup section installs by default. `requirements-optional.txt` is never installed automatically; a user has to run `pip install -r requirements-optional.txt` deliberately to pick up `librosa` (and, if uncommented, `basic-pitch`).
 
 ## Folder Structure
 
@@ -124,7 +135,7 @@ The first CLI MVP keeps UI and domain logic separated:
 `AudioAnalyzer` has two paths:
 
 - stdlib WAV fallback: always available, used by the CLI MVP and tests.
-- optional DSP path: enabled when `numpy` and `soundfile` are installed. It extracts BPM, estimated key, frequency bands, and optional LUFS when `pyloudnorm` is installed.
+- optional DSP path: enabled when `numpy` and `soundfile` are installed. See the Dependency Table above for what each package adds and its fallback when absent.
 
 MP3/FLAC decoding is intentionally dependent on optional audio packages. Without them, the analyzer returns a warning rather than crashing.
 
