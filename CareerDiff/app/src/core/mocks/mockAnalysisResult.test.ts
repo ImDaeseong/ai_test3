@@ -22,9 +22,15 @@ describe("mockAnalysisResult", () => {
     expect(mockAnalysisResult.matches.risks.length).toBeGreaterThan(0);
   });
 
-  it("provides at least one resume bullet, mini project, and interview question", () => {
+  it("provides at least one resume bullet and interview question", () => {
     expect(mockAnalysisResult.resumeSuggestions.bullets.length).toBeGreaterThan(0);
-    expect(mockAnalysisResult.miniProjects.length).toBeGreaterThan(0);
     expect(mockAnalysisResult.interviewPrep.questions.length).toBeGreaterThan(0);
+  });
+
+  it("recommends exactly 3 mini projects, each mapped to a target gap (docs/features/08)", () => {
+    expect(mockAnalysisResult.miniProjects).toHaveLength(3);
+    for (const project of mockAnalysisResult.miniProjects) {
+      expect(project.targetGaps.length).toBeGreaterThan(0);
+    }
   });
 });

@@ -100,6 +100,20 @@ export const mockAnalysisResult: CareerDiffAnalysisResult = {
       deliverables: ["Terraform config for an ECS service", "A short README explaining the architecture decisions", "A public repo link to add to the resume"],
       suggestedDurationDays: 5,
     },
+    {
+      title: "Add a small GraphQL layer in front of an existing REST API",
+      goal: "Turn strong REST API design experience into direct GraphQL evidence.",
+      targetGaps: ["GraphQL API design"],
+      deliverables: ["A GraphQL schema for 2-3 existing REST resources", "A short write-up comparing the REST and GraphQL versions"],
+      suggestedDurationDays: 3,
+    },
+    {
+      title: "Write and present a short internal tech talk or mentoring doc",
+      goal: "Create a concrete, referenceable mentoring/leadership artifact.",
+      targetGaps: ["Mentoring junior engineers"],
+      deliverables: ["A recorded or written walkthrough of a technical concept aimed at a junior engineer", "A one-paragraph summary to add to the resume"],
+      suggestedDurationDays: 2,
+    },
   ],
   interviewPrep: {
     questions: [

@@ -17,8 +17,8 @@
 
 Job Fit Analyzer입니다. 채용공고와 이력서/커리어/프로젝트 이력을 입력하면 채용 요건을 추출하고 후보자 증거와 매칭해 적합도 점수, 이력서 수정 제안, 소규모 보완 프로젝트 추천, 면접 준비 플랜을 생성합니다.
 
-- 상태: **문서 설계 완료, 앱 스캐폴딩 진행 중** — `app/`에 Next.js/TypeScript/Tailwind 프로젝트, `DATA_MODEL.md` 기반 공유 타입, mock `CareerDiffAnalysisResult`, 테스트 4개까지 구축(`CareerDiff/VERIFICATION.md` 기준 진행률 게이트 40%→60% 사이). 실제 화면·오케스트레이터·LLM 연동은 아직 없음.
-- 스택: Next.js(App Router) + TypeScript + Tailwind CSS, Zod, Vitest/Testing Library/Playwright. LLM/RAG 기반 분석, provider 연동 전 mock-first UI 원칙.
+- 상태: **Mock 기반 MVP 화면 동작** — 진행률 게이트 60%(`CareerDiff/VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수·요건·매칭·이력서 제안·보완 프로젝트 3개·면접 준비) 전체 흐름이 실제로 동작(Playwright 브라우저 검증, 콘솔 에러 0건). 단, 분석 자체는 아직 고정된 mock 데이터이고 LLM 연동은 없음.
+- 스택: Next.js(App Router) + TypeScript + Tailwind CSS, Zod(요청 검증), Vitest/Testing Library(단위·컴포넌트 테스트 15개)/Playwright(E2E, 아직 미작성). LLM/RAG 기반 분석, provider 연동 전 mock-first UI 원칙.
 - 이 프로젝트가 보여주는 것: `music_insight_studio`보다 더 격식을 갖춘 문서 체계 — 기능별 문서(`docs/features/`), 전용 라이브러리 결정 체계(`docs/library-decisions/`), 모듈 경계 규칙(`docs/design/MODULE_BOUNDARIES.md`), 구현 시작 가능 여부를 판단하는 날짜별 문서 감사(`docs/DOCUMENTATION_AUDIT.md`).
 - 시작점: `CareerDiff/README.md`, 전체 문서 지도는 `CareerDiff/docs/INDEX.md`.
 

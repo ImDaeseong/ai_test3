@@ -7,7 +7,7 @@
 - **목적**: 나는 이직 준비 중에 CareerDiff로 채용공고와 내 이력서/프로젝트를 비교해서 부족한 역량, 이력서 수정안, 보완 프로젝트를 얻는다.
 - **입력**: 채용공고 텍스트, 이력서/커리어/프로젝트 설명 (붙여넣기)
 - **출력**: 적합도 점수, 강한/약한/누락 매칭, 이력서 재작성 제안, 역량 우선순위, 소규모 보완 프로젝트 3개, 7일 준비 플랜
-- **상태**: 문서 설계 완료, 앱 스캐폴딩 진행 중 — 진행률 게이트 40%→60% 사이 (`VERIFICATION.md`). `app/`에 Next.js/TypeScript/Tailwind 프로젝트, `DATA_MODEL.md`/`API_CONTRACT.md` 기반 공유 타입, mock `CareerDiffAnalysisResult`, 테스트 4개까지 구축됨. 실제 화면·오케스트레이터·LLM 연동은 아직 없음.
+- **상태**: Mock 기반 MVP 화면 동작 — 진행률 게이트 60% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 mock 데이터로 실제 동작. 브라우저 검증(Playwright) 완료, 콘솔 에러 0건. `AnalysisOrchestrator`는 아직 mock만 반환하며, LLM 연동은 없음.
 - **의의**: 본인 이직 준비용이자 포트폴리오 — LLM/RAG, 문서 파싱, 스킬 추출, 스코어링/랭킹, 프롬프트 설계, 프라이버시 인지 제품 설계, 대시보드 UI를 보여줌
 
 ## 스택
@@ -52,9 +52,9 @@ npm run lint
 1. ~~MVP 구현 스택 확정 (Next.js + TypeScript + mock-first 분석기)~~ — 완료.
 2. ~~`app/` 실제 구조 스캐폴딩~~ — 완료 (`create-next-app`, App Router + `src/` + Tailwind).
 3. ~~`DATA_MODEL.md` 기반 공유 TypeScript 타입 생성~~ — 완료 (`app/src/core/types/`, `API_CONTRACT.md`의 요청/응답 타입 포함).
-4. ~~Mock `CareerDiffAnalysisResult`로 LLM 연동 전에 UI부터 구축~~ — mock 데이터·검증 테스트까지 완료 (`app/src/core/mocks/`). UI는 아직.
-5. 첫 사용 가능한 화면 구축: 채용공고 입력, 후보자 정보 입력, 분석 버튼, 프라이버시 안내.
-6. Mock 데이터 기반 대시보드 구축(점수/요건/매칭/이력서 제안/보완 프로젝트/면접 준비).
-7. `AnalysisOrchestrator`와 서비스 클래스 스켈레톤 추가.
-8. 입력 검증, mock 결과 렌더링, 프라이버시 경계에 대한 테스트 추가(Playwright E2E 포함 — 브라우저 바이너리는 아직 미설치, `npx playwright install` 필요).
-9. Mock UI와 데이터 계약이 안정된 뒤에만 LLM provider 연동.
+4. ~~Mock `CareerDiffAnalysisResult`로 LLM 연동 전에 UI부터 구축~~ — 완료 (`app/src/core/mocks/`).
+5. ~~첫 사용 가능한 화면 구축~~ — 완료 (`app/src/app/page.tsx`: 채용공고 입력, 후보자 정보 입력, 분석 버튼, 프라이버시 안내).
+6. ~~Mock 데이터 기반 대시보드 구축~~ — 완료 (`app/src/features/analysis-dashboard/`: 점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비 6개 패널).
+7. ~~`AnalysisOrchestrator`와 API 라우트 추가~~ — 완료 (`app/src/core/analysis/AnalysisOrchestrator.ts`, `app/src/app/api/analyze/route.ts`). 아직 mock만 반환하며, 요청 검증은 Zod(`app/src/core/schemas/analyzeRequest.ts`).
+8. 테스트 확충 — 단위/컴포넌트 테스트 15개 존재(오케스트레이터, 입력 검증, 대시보드 렌더링). Playwright E2E는 브라우저 바이너리 미설치 상태(`npx playwright install` 필요), 아직 작성 안 함. `requirement-extraction`/`evidence-extraction`/`evidence-matching`/`fit-scoring`/`resume-suggestions`/`mini-projects`/`interview-prep` 서비스 폴더(`docs/design/MODULE_BOUNDARIES.md`)는 실제 로직이 생기기 전까지 비워둠(빈 스텁 생성 안 함).
+9. Mock UI와 데이터 계약이 안정된 뒤에만 LLM provider 연동 — 아직 시작 전.

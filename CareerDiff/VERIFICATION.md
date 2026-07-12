@@ -16,9 +16,11 @@
 
 ## Current gate
 
-40%, moving toward 60%: Project analysis and all planning documents remain complete (see the 40% description below). Implementation has started under `app/` but is not yet "complete" in the 60% sense — only `README.md`'s "다음 작업" steps 1-4 are done (Next.js/TypeScript/Tailwind scaffold, shared types transcribed from `docs/design/DATA_MODEL.md` and `docs/integration/API_CONTRACT.md`, a mock `CareerDiffAnalysisResult`, and passing tests for it). Steps 5-9 (input screens, dashboard, `AnalysisOrchestrator`, broader test coverage, LLM integration) are not started, so none of the "Functional checks for implementation phase" below pass yet.
+60%: `README.md`'s "다음 작업" steps 1-7 are done — Next.js/TypeScript/Tailwind scaffold, shared types transcribed from `docs/design/DATA_MODEL.md` and `docs/integration/API_CONTRACT.md`, a mock `CareerDiffAnalysisResult`, the input screens, the mock-data dashboard, `AnalysisOrchestrator`, and the `/api/analyze` route (Zod-validated). Steps 8 (broader/E2E test coverage) and 9 (LLM integration) are not started.
 
-Verified 2026-07-12: `npm run typecheck`, `npm run test` (4/4 passing), `npm run build`, and `npm run lint` all pass in `app/`.
+Important caveat: all "Functional checks for implementation phase" below now pass, but against the **mock pipeline**, not real analysis — `AnalysisOrchestrator.analyze()` validates the request and always returns the same static mock result regardless of input content. Do not read this gate as "real job-fit analysis works." Moving past 60% toward 80%/100% requires either real extraction/matching/scoring services or an explicit decision to ship the mock-only version.
+
+Verified 2026-07-12 (browser session via Playwright, not just unit tests): filled in a real job description and candidate profile, clicked 분석하기, confirmed the dashboard rendered all 6 sections (score, requirements, matches, resume suggestions, exactly 3 mini projects, interview prep) with 0 console errors; confirmed `POST /api/analyze` returns 200 with a valid request and 400 with an empty one; confirmed `npm run typecheck`, `npm run test` (15/15 passing), `npm run build`, and `npm run lint` all pass in `app/`.
 
 40% (prior state, still true): Project analysis is complete and risks are identified. Purpose, security boundary, acceptance criteria, verification commands, HOLD conditions, feature design, library decisions, production architecture, RAG/data strategy, security threat model, AI evaluation plan, API contract, accessibility/i18n plan, operations runbook, and documentation audit are defined.
 
