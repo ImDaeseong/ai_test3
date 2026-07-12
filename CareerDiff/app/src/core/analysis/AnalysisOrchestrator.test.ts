@@ -1,39 +1,91 @@
 import { describe, expect, it } from "vitest";
+import type { LlmAnalysisProvider } from "@/core/llm/LlmAnalysisProvider";
 import { mockAnalysisResult } from "@/core/mocks/mockAnalysisResult";
-import { AnalysisOrchestrator, AnalysisOrchestratorValidationError } from "./AnalysisOrchestrator";
+import { careerDiffAnalysisResultSchema } from "@/core/schemas/analysisResult";
+import { AnalysisOrchestrator, AnalysisOrchestratorValidationError, AnalysisProviderError } from "./AnalysisOrchestrator";
 
-describe("AnalysisOrchestrator", () => {
+const validRequest = {
+  jobDescription: "a".repeat(40),
+  candidateProfile: "b".repeat(40),
+};
+
+/** Never makes a real network call — a test double for LlmAnalysisProvider. */
+class FakeLlmProvider implements LlmAnalysisProvider {
+  constructor(
+    private readonly configured: boolean,
+    private readonly result: () => Promise<import("@/core/types").CareerDiffAnalysisResult>,
+  ) {}
+
+  isConfigured(): boolean {
+    return this.configured;
+  }
+
+  generate(): Promise<import("@/core/types").CareerDiffAnalysisResult> {
+    return this.result();
+  }
+}
+
+describe("AnalysisOrchestrator (default provider, no API key in this environment)", () => {
   const orchestrator = new AnalysisOrchestrator();
-  const validRequest = {
-    jobDescription: "a".repeat(40),
-    candidateProfile: "b".repeat(40),
-  };
 
-  it("rejects a request with an empty job description", () => {
-    expect(() => orchestrator.analyze({ jobDescription: "", candidateProfile: "b".repeat(40) })).toThrow(
+  it("rejects a request with an empty job description", async () => {
+    await expect(orchestrator.analyze({ jobDescription: "", candidateProfile: "b".repeat(40) })).rejects.toThrow(
       AnalysisOrchestratorValidationError,
     );
   });
 
-  it("rejects a request with a too-short candidate profile", () => {
-    expect(() => orchestrator.analyze({ jobDescription: "a".repeat(40), candidateProfile: "short" })).toThrow(
+  it("rejects a request with a too-short candidate profile", async () => {
+    await expect(orchestrator.analyze({ jobDescription: "a".repeat(40), candidateProfile: "short" })).rejects.toThrow(
       AnalysisOrchestratorValidationError,
     );
   });
 
-  it("rejects a non-object request body", () => {
-    expect(() => orchestrator.analyze(null)).toThrow(AnalysisOrchestratorValidationError);
-    expect(() => orchestrator.analyze("not json")).toThrow(AnalysisOrchestratorValidationError);
+  it("rejects a non-object request body", async () => {
+    await expect(orchestrator.analyze(null)).rejects.toThrow(AnalysisOrchestratorValidationError);
+    await expect(orchestrator.analyze("not json")).rejects.toThrow(AnalysisOrchestratorValidationError);
   });
 
-  it("returns the stable mock result for a valid request (mock-first)", () => {
-    const result = orchestrator.analyze(validRequest);
+  it("returns the stable mock result when no LLM provider is configured", async () => {
+    const result = await orchestrator.analyze(validRequest);
     expect(result).toEqual(mockAnalysisResult);
   });
 
-  it("returns MVP retrieval defaults regardless of input", () => {
-    const result = orchestrator.analyze(validRequest);
+  it("returns MVP retrieval defaults regardless of input", async () => {
+    const result = await orchestrator.analyze(validRequest);
     expect(result.retrievalContext.enabled).toBe(false);
     expect(result.retrievalContext.provider).toBe("none");
+  });
+});
+
+describe("AnalysisOrchestrator (dependency-injected fake provider, no real API calls)", () => {
+  it("ignores a configured provider's generate() result if isConfigured() is false", async () => {
+    const provider = new FakeLlmProvider(false, async () => {
+      throw new Error("generate() must not be called when the provider reports unconfigured.");
+    });
+    const orchestrator = new AnalysisOrchestrator(provider);
+    const result = await orchestrator.analyze(validRequest);
+    expect(result).toEqual(mockAnalysisResult);
+  });
+
+  it("uses the provider's result when isConfigured() is true", async () => {
+    const providerResult = { ...mockAnalysisResult, summary: "provider-backed result" };
+    const provider = new FakeLlmProvider(true, async () => providerResult);
+    const orchestrator = new AnalysisOrchestrator(provider);
+    const result = await orchestrator.analyze(validRequest);
+    expect(result.summary).toBe("provider-backed result");
+  });
+
+  it("wraps a configured provider's failure as AnalysisProviderError instead of falling back to mock", async () => {
+    const provider = new FakeLlmProvider(true, async () => {
+      throw new Error("upstream timeout");
+    });
+    const orchestrator = new AnalysisOrchestrator(provider);
+    await expect(orchestrator.analyze(validRequest)).rejects.toThrow(AnalysisProviderError);
+  });
+});
+
+describe("mockAnalysisResult vs careerDiffAnalysisResultSchema", () => {
+  it("validates against the same schema used to build the LLM structured-output request", () => {
+    expect(() => careerDiffAnalysisResultSchema.parse(mockAnalysisResult)).not.toThrow();
   });
 });

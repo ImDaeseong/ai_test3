@@ -16,11 +16,13 @@
 
 ## Current gate
 
-60%: `README.md`'s "다음 작업" steps 1-7 are done — Next.js/TypeScript/Tailwind scaffold, shared types transcribed from `docs/design/DATA_MODEL.md` and `docs/integration/API_CONTRACT.md`, a mock `CareerDiffAnalysisResult`, the input screens, the mock-data dashboard, `AnalysisOrchestrator`, and the `/api/analyze` route (Zod-validated). Steps 8 (broader/E2E test coverage) and 9 (LLM integration) are not started.
+80%: All 9 "다음 작업" steps in `README.md` have at least a first pass — steps 1-8 are fully done (scaffold, shared types, mock result, input screens, mock-data dashboard, `AnalysisOrchestrator`, `/api/analyze`, unit + E2E test coverage), and step 9 (LLM integration) has real, type-checked, unit-tested plumbing (`OpenAiAnalysisProvider`, Structured Outputs schema, key-presence branching) but has never been exercised against the real OpenAI API in this repo.
 
-Important caveat: all "Functional checks for implementation phase" below now pass, but against the **mock pipeline**, not real analysis — `AnalysisOrchestrator.analyze()` validates the request and always returns the same static mock result regardless of input content. Do not read this gate as "real job-fit analysis works." Moving past 60% toward 80%/100% requires either real extraction/matching/scoring services or an explicit decision to ship the mock-only version.
+Important caveat, unchanged in spirit from the 60% note: all "Functional checks for implementation phase" below pass **with no `OPENAI_API_KEY` configured**, i.e. against the mock pipeline. `AnalysisOrchestrator` now branches on `OPENAI_API_KEY`'s presence — unset (the default, and the only state ever run in this repo) returns the stable mock result; set, it calls `OpenAiAnalysisProvider`, which has not been run with a real key. Do not read this gate as "real LLM-backed job-fit analysis has been verified." Moving to 100% requires either running the real provider once against a live account and confirming its output validates against `careerDiffAnalysisResultSchema`, or an explicit decision to ship the mock-only version and close out step 9 as descoped.
 
-Verified 2026-07-12 (browser session via Playwright, not just unit tests): filled in a real job description and candidate profile, clicked 분석하기, confirmed the dashboard rendered all 6 sections (score, requirements, matches, resume suggestions, exactly 3 mini projects, interview prep) with 0 console errors; confirmed `POST /api/analyze` returns 200 with a valid request and 400 with an empty one; confirmed `npm run typecheck`, `npm run test` (15/15 passing), `npm run build`, and `npm run lint` all pass in `app/`.
+Verified 2026-07-12: unit/component tests 22/22 (Vitest — includes `AnalysisOrchestrator` branching against a dependency-injected fake `LlmAnalysisProvider`, never a real network call, plus a schema round-trip test asserting the mock validates against `careerDiffAnalysisResultSchema`); Playwright E2E 4/4 (`app/e2e/analyzer.spec.ts` — privacy notice visible, analyze button gating, full flow renders all 6 dashboard sections with exactly 3 mini project cards and 0 console errors, empty request returns `400`/`VALIDATION_ERROR`); `npm run typecheck`, `npm run build`, `npm run lint` all pass.
+
+Found and fixed during this round: (1) the mock result only had 1 mini project, violating docs/features/08's "exactly 3" rule — added 2 more, each mapped to a real gap; (2) `vitest.setup.ts` never registered Testing Library's per-test DOM cleanup, so a second component test file's `render()` calls accumulated stale DOM and made a text query match multiple elements — fixed by registering `afterEach(cleanup)`; (3) `next dev` (Turbopack) fails to hydrate under this environment's Playwright Chromium (input events reach the DOM but React never attaches, so no re-render ever happens) while a production build (`next build && next start`) hydrates correctly in the same browser — confirmed directly by checking for `__react*` fiber keys on DOM elements before/after, not just symptom-guessing; worked around by pointing `playwright.config.ts`'s `webServer` at a production build instead of `next dev`. Manual interactive testing via `npm run dev` in a normal browser was unaffected.
 
 40% (prior state, still true): Project analysis is complete and risks are identified. Purpose, security boundary, acceptance criteria, verification commands, HOLD conditions, feature design, library decisions, production architecture, RAG/data strategy, security threat model, AI evaluation plan, API contract, accessibility/i18n plan, operations runbook, and documentation audit are defined.
 
@@ -55,18 +57,15 @@ Verified 2026-07-12 (browser session via Playwright, not just unit tests): fille
 - No persistent storage is used unless explicitly added and documented.
 - Sample files do not contain real personal data.
 
-## Suggested commands once app exists
+## Verification commands
 
 ```powershell
+cd app
+npm run typecheck
 npm run lint
-npm run test
+npm run test        # Vitest unit/component tests
 npm run build
-```
-
-If Playwright is added:
-
-```powershell
-npm run test:e2e
+npm run test:e2e    # Playwright — runs against a production build, see README.md "알려진 이슈"
 ```
 
 ## Exit criteria for MVP loop

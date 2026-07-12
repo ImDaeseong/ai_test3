@@ -1,5 +1,7 @@
+import type { LlmAnalysisProvider } from "@/core/llm/LlmAnalysisProvider";
+import { OpenAiAnalysisProvider } from "@/core/llm/OpenAiAnalysisProvider";
 import { mockAnalysisResult } from "@/core/mocks/mockAnalysisResult";
-import { analyzeRequestSchema, type AnalyzeRequestInput } from "@/core/schemas/analyzeRequest";
+import { analyzeRequestSchema } from "@/core/schemas/analyzeRequest";
 import type { CareerDiffAnalysisResult } from "@/core/types";
 
 export class AnalysisOrchestratorValidationError extends Error {
@@ -12,6 +14,14 @@ export class AnalysisOrchestratorValidationError extends Error {
   }
 }
 
+/** A configured LLM provider failed while generating an analysis. */
+export class AnalysisProviderError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AnalysisProviderError";
+  }
+}
+
 /**
  * Coordinates one job-fit analysis request.
  *
@@ -20,24 +30,36 @@ export class AnalysisOrchestratorValidationError extends Error {
  * allowed to request RetrievalContext. Only the API route should call this
  * class; it must not be imported directly by UI components.
  *
- * Mock-first (docs/integration/ANALYSIS_FLOW.md "Mock-first implementation
- * rule"): no extraction/matching/scoring/LLM services exist yet, so
- * `analyze()` validates the request and always returns the stable mock
- * result. When real services exist, replace the body of
- * `runMockPipeline` with real calls — callers and the return type stay
- * the same.
+ * Mock-first with an optional LLM key (docs/integration/ANALYSIS_FLOW.md
+ * "Mock-first implementation rule" + docs/library-decisions/TECH_STACK_DECISIONS.md):
+ * - No API key configured (the default — nothing in this repo sets one):
+ *   always returns the stable mock result. This is the expected state for
+ *   local development and for anyone who clones the repo without an
+ *   OpenAI account.
+ * - API key configured (OPENAI_API_KEY, see .env.example): calls the real
+ *   provider. A failure there is a real error, not silently masked by
+ *   falling back to mock data — see AnalysisProviderError.
+ *
+ * The provider is injected (defaulting to OpenAiAnalysisProvider) so
+ * tests can exercise both branches without ever making a real API call.
  */
 export class AnalysisOrchestrator {
-  analyze(rawInput: unknown): CareerDiffAnalysisResult {
+  constructor(private readonly llmProvider: LlmAnalysisProvider = new OpenAiAnalysisProvider()) {}
+
+  async analyze(rawInput: unknown): Promise<CareerDiffAnalysisResult> {
     const parsed = analyzeRequestSchema.safeParse(rawInput);
     if (!parsed.success) {
       throw new AnalysisOrchestratorValidationError(parsed.error.issues.map((issue) => issue.message));
     }
-    return this.runMockPipeline(parsed.data);
-  }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- input is intentionally unused until real extraction/matching/scoring services exist
-  private runMockPipeline(input: AnalyzeRequestInput): CareerDiffAnalysisResult {
-    return mockAnalysisResult;
+    if (!this.llmProvider.isConfigured()) {
+      return mockAnalysisResult;
+    }
+
+    try {
+      return await this.llmProvider.generate(parsed.data);
+    } catch (error) {
+      throw new AnalysisProviderError(error instanceof Error ? error.message : "LLM analysis failed.");
+    }
   }
 }

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { AnalysisOrchestrator, AnalysisOrchestratorValidationError } from "@/core/analysis/AnalysisOrchestrator";
+import {
+  AnalysisOrchestrator,
+  AnalysisOrchestratorValidationError,
+  AnalysisProviderError,
+} from "@/core/analysis/AnalysisOrchestrator";
 import type { AnalyzeResponse, ApiErrorResponse } from "@/core/types";
 
 // Per docs/integration/ANALYSIS_FLOW.md: only this route calls AnalysisOrchestrator.
@@ -18,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = orchestrator.analyze(body);
+    const result = await orchestrator.analyze(body);
     const response: AnalyzeResponse = {
       result,
       privacy: {
@@ -33,6 +37,13 @@ export async function POST(request: Request) {
       return NextResponse.json<ApiErrorResponse>(
         { error: { code: "VALIDATION_ERROR", message: error.issues.join(" "), retryable: false } },
         { status: 400 },
+      );
+    }
+    if (error instanceof AnalysisProviderError) {
+      // Do not log error.message here — it may echo provider-side details derived from raw input.
+      return NextResponse.json<ApiErrorResponse>(
+        { error: { code: "ANALYSIS_FAILED", message: "AI 분석에 실패했습니다. 잠시 후 다시 시도해 주세요.", retryable: true } },
+        { status: 502 },
       );
     }
     return NextResponse.json<ApiErrorResponse>(

@@ -7,7 +7,7 @@
 - **목적**: 나는 이직 준비 중에 CareerDiff로 채용공고와 내 이력서/프로젝트를 비교해서 부족한 역량, 이력서 수정안, 보완 프로젝트를 얻는다.
 - **입력**: 채용공고 텍스트, 이력서/커리어/프로젝트 설명 (붙여넣기)
 - **출력**: 적합도 점수, 강한/약한/누락 매칭, 이력서 재작성 제안, 역량 우선순위, 소규모 보완 프로젝트 3개, 7일 준비 플랜
-- **상태**: Mock 기반 MVP 화면 동작 — 진행률 게이트 60% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 mock 데이터로 실제 동작. 브라우저 검증(Playwright) 완료, 콘솔 에러 0건. `AnalysisOrchestrator`는 아직 mock만 반환하며, LLM 연동은 없음.
+- **상태**: Mock 기반 MVP 완성 + LLM 연동 배관 완료 — 진행률 게이트 60% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 실제로 동작(단위 테스트 22개 + Playwright E2E 4개 전부 통과). 결과 내용은 한글. `OPENAI_API_KEY`가 없으면(기본 상태) `AnalysisOrchestrator`가 mock을 반환하고, 키가 설정되면 OpenAI Responses API로 실제 분석을 시도 — 이 저장소에는 실제 키가 없어 후자는 아직 실제 호출로 검증되지 않음(`.env.example` 참고).
 - **의의**: 본인 이직 준비용이자 포트폴리오 — LLM/RAG, 문서 파싱, 스킬 추출, 스코어링/랭킹, 프롬프트 설계, 프라이버시 인지 제품 설계, 대시보드 UI를 보여줌
 
 ## 스택
@@ -17,12 +17,17 @@
 ```powershell
 cd app
 npm install
-npm run dev        # http://localhost:3000
+npm run dev        # http://localhost:3000 — mock 결과만 (기본, 키 불필요)
 npm run typecheck
-npm run test
+npm run test        # 단위/컴포넌트 테스트 (Vitest)
 npm run build
 npm run lint
+npm run test:e2e    # Playwright E2E — 프로덕션 빌드 기준으로 실행됨(아래 참고)
 ```
+
+실제 LLM 분석을 켜려면 `.env.example`을 `.env.local`로 복사하고 `OPENAI_API_KEY`를 채운다. 비워두면(기본 상태) mock 결과로 동작한다.
+
+**알려진 이슈**: 이 개발 환경에서 Next.js 16.2.10 Turbopack `next dev` 서버가 Playwright Chromium과 조합될 때 하이드레이션이 되지 않는 현상을 확인했다(입력 이벤트는 DOM에 반영되지만 React가 전혀 리렌더링하지 않음 — `npm run dev`로 직접 브라우저에서 수동 조작할 때는 재현되지 않았다). 그래서 `playwright.config.ts`의 E2E `webServer`는 `next dev` 대신 `npm run build && npm run start`로 프로덕션 서버를 띄우도록 설정했다.
 
 ## 문서 지도
 
@@ -56,5 +61,5 @@ npm run lint
 5. ~~첫 사용 가능한 화면 구축~~ — 완료 (`app/src/app/page.tsx`: 채용공고 입력, 후보자 정보 입력, 분석 버튼, 프라이버시 안내).
 6. ~~Mock 데이터 기반 대시보드 구축~~ — 완료 (`app/src/features/analysis-dashboard/`: 점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비 6개 패널).
 7. ~~`AnalysisOrchestrator`와 API 라우트 추가~~ — 완료 (`app/src/core/analysis/AnalysisOrchestrator.ts`, `app/src/app/api/analyze/route.ts`). 아직 mock만 반환하며, 요청 검증은 Zod(`app/src/core/schemas/analyzeRequest.ts`).
-8. 테스트 확충 — 단위/컴포넌트 테스트 15개 존재(오케스트레이터, 입력 검증, 대시보드 렌더링). Playwright E2E는 브라우저 바이너리 미설치 상태(`npx playwright install` 필요), 아직 작성 안 함. `requirement-extraction`/`evidence-extraction`/`evidence-matching`/`fit-scoring`/`resume-suggestions`/`mini-projects`/`interview-prep` 서비스 폴더(`docs/design/MODULE_BOUNDARIES.md`)는 실제 로직이 생기기 전까지 비워둠(빈 스텁 생성 안 함).
-9. Mock UI와 데이터 계약이 안정된 뒤에만 LLM provider 연동 — 아직 시작 전.
+8. ~~테스트 확충~~ — 완료. 단위/컴포넌트 테스트 22개(오케스트레이터의 provider 분기 로직 포함, 가짜 provider로 검증해 실제 API 호출 없음) + Playwright E2E 4개(`app/e2e/analyzer.spec.ts`, 입력 검증·전체 분석 흐름·보완 프로젝트 정확히 3개·API 400 응답 확인). `requirement-extraction`/`evidence-extraction`/`evidence-matching`/`fit-scoring`/`resume-suggestions`/`mini-projects`/`interview-prep` 서비스 폴더(`docs/design/MODULE_BOUNDARIES.md`)는 실제 로직이 생기기 전까지 계속 비워둠.
+9. ~~LLM provider 연동~~ — 배관 완료, 실호출 미검증. `app/src/core/llm/OpenAiAnalysisProvider.ts`가 OpenAI Responses API + Structured Outputs(`docs/library-decisions/TECH_STACK_DECISIONS.md`)로 구현되어 있고, `AnalysisOrchestrator`가 `OPENAI_API_KEY` 유무로 mock/실분석을 분기한다. API 키 입력란은 `.env.example`에 빈 값으로만 존재하며 이 저장소 어디에도 실제 키는 없다. 실제 키로 한 번도 호출해 본 적이 없으므로, structured output 스키마가 OpenAI strict 모드 제약(모든 필드 required 취급 등)을 완전히 만족하는지는 실제 계정으로 검증 필요(`OpenAiAnalysisProvider.ts` 코드 주석 참고).
