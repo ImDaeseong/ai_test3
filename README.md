@@ -17,7 +17,7 @@
 
 Job Fit Analyzer입니다. 채용공고와 이력서/커리어/프로젝트 이력을 입력하면 채용 요건을 추출하고 후보자 증거와 매칭해 적합도 점수, 이력서 수정 제안, 소규모 보완 프로젝트 추천, 면접 준비 플랜을 생성합니다.
 
-- 상태: **Mock MVP 완성 + LLM 연동 배관 완료** — 진행률 게이트 80%(`CareerDiff/VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수·요건·매칭·이력서 제안·보완 프로젝트 3개·면접 준비) 전체 흐름이 실제로 동작(단위 테스트 22개 + Playwright E2E 4개 전부 통과, 결과 내용 한글화 완료). `OPENAI_API_KEY`가 없으면(기본 상태, 이 저장소의 유일한 상태) mock을 반환하고 키가 있으면 OpenAI Responses API로 실분석을 시도하도록 분기만 구현 — 실제 키로는 아직 한 번도 호출해보지 않음(`.env.example`은 빈 값).
+- 상태: **Mock 기반 UI/흐름 완성, LLM 실분석은 무료 검증 진행 중** — 진행률 게이트 85%(`CareerDiff/VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수·요건·매칭·이력서 제안·보완 프로젝트 3개·면접 준비) 전체 흐름이 실제로 동작(단위 테스트 22개 + Playwright E2E 4개 전부 통과, 결과 내용 한글화 완료). `AnalysisOrchestrator`는 실제 분석 로직 없이 "키 없으면 고정 mock 반환, 키 있으면 LLM 호출"만 분기하므로, 유료 API 호출 전에 `CareerDiff/prompts/MANUAL_ANALYSIS_PROMPT.md`로 Claude/ChatGPT 웹에서 같은 프롬프트·스키마를 먼저 무료로 검증 중(비용 문제로 유료 API 연동은 이 검증이 안정화된 뒤로 미룸 — 근거: `CareerDiff/docs/library-decisions/TECH_STACK_DECISIONS.md`의 "2026-07-13 decision").
 - 스택: Next.js(App Router) + TypeScript + Tailwind CSS, Zod(요청/응답 검증), Vitest/Testing Library(단위·컴포넌트 테스트)/Playwright(E2E). LLM/RAG 기반 분석, provider 연동 전 mock-first UI 원칙.
 - 이 프로젝트가 보여주는 것: `music_insight_studio`보다 더 격식을 갖춘 문서 체계 — 기능별 문서(`docs/features/`), 전용 라이브러리 결정 체계(`docs/library-decisions/`), 모듈 경계 규칙(`docs/design/MODULE_BOUNDARIES.md`), 구현 시작 가능 여부를 판단하는 날짜별 문서 감사(`docs/DOCUMENTATION_AUDIT.md`).
 - 시작점: `CareerDiff/README.md`, 전체 문서 지도는 `CareerDiff/docs/INDEX.md`.
