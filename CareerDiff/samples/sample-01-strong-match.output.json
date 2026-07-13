@@ -1,0 +1,120 @@
+{
+  "fitScore": {
+    "total": 68,
+    "categories": [
+      { "label": "Required skills", "score": 90, "reason": "React, TypeScript, CI/CD(GitHub Actions) all directly evidenced in resume projects." },
+      { "label": "Preferred skills", "score": 20, "reason": "No Playwright/Cypress or Sentry/monitoring evidence in resume." },
+      { "label": "Domain fit", "score": 80, "reason": "Frontend web app work matches domain; no backend/infra mismatch." }
+    ]
+  },
+  "summary": "Strong match on required skills (React, TypeScript, CI/CD), but resume shows no evidence of E2E testing (Playwright/Cypress) or frontend monitoring (Sentry), both listed as preferred but weighted heavily in the job's responsibilities.",
+  "jobRequirements": {
+    "requiredSkills": [
+      { "label": "React", "category": "skill", "confidence": "high" },
+      { "label": "TypeScript", "category": "skill", "confidence": "high" },
+      { "label": "CI/CD pipeline (e.g. GitHub Actions)", "category": "tooling", "confidence": "high" },
+      { "label": "Responsive web / accessibility (WCAG)", "category": "skill", "confidence": "medium" }
+    ],
+    "preferredSkills": [
+      { "label": "Playwright or Cypress E2E testing", "category": "testing", "confidence": "high" },
+      { "label": "Frontend monitoring (Sentry)", "category": "monitoring", "confidence": "high" },
+      { "label": "Design system operation experience", "category": "skill", "confidence": "medium" }
+    ],
+    "domain": [
+      { "label": "Frontend web application development", "category": "domain", "confidence": "high" }
+    ],
+    "seniority": "mid-level (3+ years implied by required experience)",
+    "collaboration": [
+      { "label": "Design system component collaboration", "category": "collaboration", "confidence": "medium" }
+    ],
+    "deliveryExpectations": [
+      { "label": "E2E test authoring and CI pipeline maintenance", "category": "delivery", "confidence": "high" },
+      { "label": "Performance/error monitoring setup", "category": "delivery", "confidence": "medium" }
+    ]
+  },
+  "candidateEvidence": {
+    "skills": [
+      { "label": "React", "sourceSnippet": "커머스 플랫폼 리뉴얼 (React, TypeScript, 2년)", "confidence": "high" },
+      { "label": "TypeScript", "sourceSnippet": "React + TypeScript로 재구축", "confidence": "high" },
+      { "label": "GitHub Actions", "sourceSnippet": "GitHub Actions로 빌드/배포 파이프라인 구성", "confidence": "high" }
+    ],
+    "projects": [
+      { "label": "커머스 플랫폼 리뉴얼", "sourceSnippet": "상품 목록/상세 페이지를 React + TypeScript로 재구축", "confidence": "high" },
+      { "label": "사내 어드민 도구 개발", "sourceSnippet": "재사용 가능한 UI 컴포넌트 라이브러리 구축 및 팀 내 공유", "confidence": "high" }
+    ],
+    "responsibilities": [
+      { "label": "반응형/접근성 대응", "sourceSnippet": "반응형 레이아웃 적용, Lighthouse 접근성 점수 90+ 유지", "confidence": "high" }
+    ],
+    "achievements": [
+      { "label": "Lighthouse 접근성 90+ 유지", "sourceSnippet": "Lighthouse 접근성 점수 90+ 유지", "confidence": "high" }
+    ],
+    "collaboration": [
+      { "label": "컴포넌트 라이브러리 팀 공유", "sourceSnippet": "재사용 가능한 UI 컴포넌트 라이브러리 구축 및 팀 내 공유", "confidence": "medium" }
+    ]
+  },
+  "matches": {
+    "strong": [
+      { "requirement": "React", "status": "strong", "reason": "2년간 React 기반 프로젝트 직접 수행.", "evidenceSnippet": "React + TypeScript로 재구축" },
+      { "requirement": "TypeScript", "status": "strong", "reason": "핵심 프로젝트가 TypeScript 기반.", "evidenceSnippet": "React + TypeScript로 재구축" },
+      { "requirement": "CI/CD pipeline", "status": "strong", "reason": "GitHub Actions 파이프라인 직접 구성 경험.", "evidenceSnippet": "GitHub Actions로 빌드/배포 파이프라인 구성" }
+    ],
+    "weak": [
+      { "requirement": "Design system operation experience", "status": "weak", "reason": "컴포넌트 라이브러리 구축 경험은 있으나 '운영' 단계(버저닝, 거버넌스 등) 근거는 없음.", "evidenceSnippet": "재사용 가능한 UI 컴포넌트 라이브러리 구축 및 팀 내 공유" }
+    ],
+    "missing": [
+      { "requirement": "Playwright or Cypress E2E testing", "status": "missing", "reason": "이력서 어디에도 E2E 테스트 도구 사용 근거 없음." },
+      { "requirement": "Frontend monitoring (Sentry)", "status": "missing", "reason": "에러 트래킹/모니터링 관련 언급 없음." }
+    ],
+    "risks": [
+      { "requirement": "성능 모니터링 체계 구축 책임", "status": "risk", "reason": "채용 공고의 핵심 담당 업무 중 하나이나 후보자 경험에 대응 근거 없음." }
+    ]
+  },
+  "resumeSuggestions": {
+    "bullets": [
+      "GitHub Actions 기반 CI/CD 파이프라인을 구성하여 배포 자동화 및 빌드 안정성을 확보함 (기존 문구 유지, 정량화 여지 있으면 배포 빈도/실패율 수치 추가 권장)",
+      "React + TypeScript로 상품 목록/상세 페이지를 재구축하고 Lighthouse 접근성 90점 이상을 유지함"
+    ],
+    "projectDescriptions": [
+      "사내 어드민 도구 개발: React 기반 재사용 컴포넌트 라이브러리를 구축하고 Storybook으로 문서화하여 팀 내 컴포넌트 재사용률을 높임"
+    ],
+    "skillPriority": ["React", "TypeScript", "GitHub Actions(CI/CD)", "접근성(WCAG)"],
+    "atsKeywords": ["React", "TypeScript", "CI/CD", "GitHub Actions", "반응형 웹", "접근성", "Storybook"]
+  },
+  "miniProjects": [
+    {
+      "title": "Playwright 기반 E2E 테스트 스위트 구축",
+      "goal": "채용 공고가 요구하는 E2E 테스트 및 CI 통합 역량을 3일 내 실증",
+      "targetGaps": ["Playwright or Cypress E2E testing", "CI 파이프라인 내 테스트 자동화"],
+      "deliverables": ["기존 프로젝트 A(커머스 플랫폼) 대상 Playwright 테스트 3~5개", "GitHub Actions에 테스트 스텝 통합 및 리포트 아티팩트 업로드"],
+      "suggestedDurationDays": 3
+    },
+    {
+      "title": "프론트엔드 에러 모니터링 도입",
+      "goal": "Sentry 등 모니터링 도구를 실제 프로젝트에 연동해 본 경험을 확보",
+      "targetGaps": ["Frontend monitoring (Sentry)"],
+      "deliverables": ["Sentry SDK 연동", "에러율 대시보드 스크린샷", "간단한 알림 설정 문서"],
+      "suggestedDurationDays": 2
+    }
+  ],
+  "interviewPrep": {
+    "questions": [
+      "E2E 테스트를 도입해 본 적이 있는지, 없다면 어떻게 학습할 계획인지?",
+      "프론트엔드 에러를 어떻게 모니터링하고 대응할 것인지?",
+      "GitHub Actions CI/CD 파이프라인을 어떻게 구성했는지 구체적으로 설명해달라."
+    ],
+    "weakAreas": ["E2E 테스트/Playwright", "프론트엔드 모니터링"],
+    "sevenDayPlan": [
+      "1-2일차: Playwright 튜토리얼 및 기존 프로젝트에 테스트 3개 작성",
+      "3일차: GitHub Actions에 테스트 스텝 통합",
+      "4-5일차: Sentry 연동 및 에러 대시보드 구성",
+      "6일차: 모의 인터뷰 질문 답변 정리",
+      "7일차: 이력서 불릿 업데이트 및 최종 점검"
+    ]
+  },
+  "metadata": {
+    "schemaVersion": "1.0",
+    "promptVersion": "PROJECT_TEST_INSTRUCTIONS.md-v1",
+    "retrievalUsed": false,
+    "persisted": false
+  }
+}
