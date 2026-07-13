@@ -1,0 +1,92 @@
+{
+  "fitScore": {
+    "total": 12,
+    "categories": [
+      { "label": "Required skills", "score": 5, "reason": "No Python, Airflow, Spark, or SQL evidence; candidate background is iOS/Swift." },
+      { "label": "Domain fit", "score": 15, "reason": "iOS mobile development and data engineering are largely non-overlapping domains." },
+      { "label": "Transferable signals", "score": 20, "reason": "REST API integration and general engineering discipline transfer weakly, but do not substitute for pipeline/data-infra experience." }
+    ]
+  },
+  "summary": "This is a near-total domain mismatch. The job requires Python, Airflow, Spark, SQL, and AWS data infrastructure experience for a data engineering role. The candidate's actual background is 2 years of iOS app development (Swift/SwiftUI/Core Data) with no evidence of data pipeline, distributed processing, or cloud data warehouse work.",
+  "jobRequirements": {
+    "requiredSkills": [
+      { "label": "Python", "category": "skill", "confidence": "high" },
+      { "label": "Airflow", "category": "tooling", "confidence": "high" },
+      { "label": "Spark", "category": "tooling", "confidence": "high" },
+      { "label": "SQL (advanced)", "category": "skill", "confidence": "high" },
+      { "label": "AWS data infrastructure (Redshift/S3)", "category": "tooling", "confidence": "high" }
+    ],
+    "preferredSkills": [
+      { "label": "dbt", "category": "tooling", "confidence": "medium" }
+    ],
+    "domain": [
+      { "label": "Data engineering / data platform", "category": "domain", "confidence": "high" }
+    ],
+    "seniority": "mid-level (3+ years implied)",
+    "collaboration": [],
+    "deliveryExpectations": [
+      { "label": "Batch pipeline design and operation", "category": "delivery", "confidence": "high" },
+      { "label": "Data warehouse operation", "category": "delivery", "confidence": "high" }
+    ]
+  },
+  "candidateEvidence": {
+    "skills": [
+      { "label": "Swift / SwiftUI", "sourceSnippet": "SwiftUI 기반 화면 개발, Core Data로 로컬 캐싱 구현", "confidence": "high" },
+      { "label": "REST API integration", "sourceSnippet": "REST API 연동, 푸시 알림 구현", "confidence": "high" }
+    ],
+    "projects": [
+      { "label": "소셜 커머스 iOS 앱", "sourceSnippet": "SwiftUI 기반 화면 개발, Core Data로 로컬 캐싱 구현", "confidence": "high" },
+      { "label": "사내 재고관리 앱", "sourceSnippet": "REST API 연동, 푸시 알림 구현", "confidence": "high" }
+    ],
+    "responsibilities": [
+      { "label": "App Store 배포 및 크래시 대응", "sourceSnippet": "App Store 배포 및 크래시 리포트 대응", "confidence": "high" }
+    ],
+    "achievements": [],
+    "collaboration": []
+  },
+  "matches": {
+    "strong": [],
+    "weak": [
+      { "requirement": "REST API 연동 경험 (일반 엔지니어링 역량)", "status": "weak", "reason": "API 연동 경험은 있으나 데이터 파이프라인/ETL 맥락과는 무관.", "evidenceSnippet": "REST API 연동, 푸시 알림 구현" }
+    ],
+    "missing": [
+      { "requirement": "Python", "status": "missing", "reason": "이력서에 Python 사용 근거 없음, Swift만 사용." },
+      { "requirement": "Airflow", "status": "missing", "reason": "배치 파이프라인 도구 경험 근거 없음." },
+      { "requirement": "Spark", "status": "missing", "reason": "분산 데이터 처리 경험 근거 없음." },
+      { "requirement": "AWS data infrastructure (Redshift/S3)", "status": "missing", "reason": "클라우드 데이터 인프라 운영 경험 근거 없음." }
+    ],
+    "risks": [
+      { "requirement": "직무 도메인 불일치", "status": "risk", "reason": "iOS 앱 개발과 데이터 엔지니어링은 핵심 기술 스택이 거의 겹치지 않아, 단기간 준비만으로는 격차를 메우기 어려움." }
+    ]
+  },
+  "resumeSuggestions": {
+    "bullets": [
+      "REST API 연동 및 백엔드 통신 경험을 강조 (데이터 엔지니어링 경험으로 재포장하지 않음)"
+    ],
+    "projectDescriptions": [
+      "사내 재고관리 앱: REST API 연동 및 푸시 알림 기능 구현 (데이터 처리 파이프라인 아님을 명확히 유지)"
+    ],
+    "skillPriority": ["REST API 연동", "Swift/SwiftUI(참고용, 직무 무관)"],
+    "atsKeywords": ["REST API", "iOS", "Swift"]
+  },
+  "miniProjects": [
+    {
+      "title": "Python + SQL 기초 데이터 파이프라인",
+      "goal": "데이터 엔지니어링 직무 지원을 위한 최소 기초 역량 실증",
+      "targetGaps": ["Python", "SQL", "Airflow"],
+      "deliverables": ["공개 데이터셋을 Python으로 정제", "PostgreSQL에 적재하는 간단한 ETL 스크립트", "Airflow로 일 배치 스케줄링 구성"],
+      "suggestedDurationDays": 7
+    }
+  ],
+  "interviewPrep": {
+    "questions": ["iOS 개발에서 데이터 엔지니어링으로 전환하려는 이유는?", "Python/SQL 학습 계획은 어떻게 되는지?"],
+    "weakAreas": ["Python", "Airflow", "Spark", "AWS 데이터 인프라"],
+    "sevenDayPlan": ["1-2일차: Python 기초 및 SQL 복습", "3-4일차: Airflow 튜토리얼", "5일차: 소규모 ETL 프로젝트 구현", "6-7일차: 도메인 전환 스토리 정리 및 인터뷰 준비"]
+  },
+  "metadata": {
+    "schemaVersion": "1.0",
+    "promptVersion": "PROJECT_TEST_INSTRUCTIONS.md-v2",
+    "retrievalUsed": false,
+    "persisted": false
+  }
+}
