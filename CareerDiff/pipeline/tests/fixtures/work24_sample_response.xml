@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wantedRoot>
+  <total>2</total>
+  <wanted>
+    <id>D2410250001</id>
+    <title>백엔드 개발자 채용</title>
+    <company>가상기관 X</company>
+    <region>서울 강남구</region>
+    <career>경력무관</career>
+    <education>대졸이상</education>
+    <sal>회사내규에 따름</sal>
+    <jobCategory>정보통신</jobCategory>
+    <regDt>2026-07-01</regDt>
+    <closeDt>2026-07-31</closeDt>
+  </wanted>
+  <wanted>
+    <id>D2410250002</id>
+    <title>데이터 분석가 채용</title>
+    <company>가상기관 Y</company>
+    <region>경기 성남시</region>
+    <career>3년이상</career>
+    <education>학력무관</education>
+    <sal>3,500만원 이상</sal>
+    <jobCategory>사업지원</jobCategory>
+    <regDt>2026-07-05</regDt>
+    <closeDt>2026-08-05</closeDt>
+  </wanted>
+</wantedRoot>

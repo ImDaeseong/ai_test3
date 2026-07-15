@@ -41,3 +41,21 @@ CareerDiff documentation is split by purpose so the project does not lose direct
 - `docs/integration/API_CONTRACT.md`: first API request/response/error contracts.
 - `docs/design/ACCESSIBILITY_I18N_PLAN.md`: accessibility and Korean/English readiness plan.
 - `docs/operations/OPERATIONS_RUNBOOK.md`: monitoring, incident, backup, restore, and release checklist.
+- `docs/integration/AIRFLOW_PIPELINE_PLAN.md`: `pipeline/` learning Airflow pipeline scope, security boundary, verification criteria.
+- `docs/integration/PIPELINE_ROLLOUT_PLAN.md`: `pipeline/` phase-by-phase rollout order and the manual-verify-before-automate gate.
+
+## AI feature verification (cost/safety gates)
+
+Design docs describe what the product is. This section tracks whether each AI-dependent feature
+(anything that can call a paid API or touch real external data) has passed free/local
+verification yet — see `prompts/PROMPT_VERIFICATION_REGISTRY.md` first.
+
+- `prompts/PROMPT_VERIFICATION_REGISTRY.md`: **start here** — registry of every paid-API/real-data
+  AI feature in the project, its free verification path, and current status.
+- `prompts/README.md`: analyzer prompt design principles (what the prompt must require).
+- `prompts/web-project/`: everything meant to be pasted/uploaded into a Claude/ChatGPT Projects
+  web UI, kept separate from the design/tracking docs above.
+  - `prompts/web-project/MANUAL_ANALYSIS_PROMPT.md`: copy-paste prompt + schema, kept identical to
+    `app/src/core/llm/buildAnalysisPrompt.ts` + `app/src/core/schemas/analysisResult.ts`.
+  - `prompts/web-project/WEB_PROJECT_USAGE.md`: Claude/ChatGPT Projects setup + manual
+    verification checklist (no paid API call needed).

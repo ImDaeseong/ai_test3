@@ -1,0 +1,7 @@
+data/work/
+logs/
+.pytest_tmp/
+.pytest_cache/
+__pycache__/
+*.pyc
+.env

@@ -1,0 +1,12 @@
+{
+  "postingId": "sample-003",
+  "source": "synthetic_sample",
+  "title": "데이터 엔지니어 (Airflow/Spark)",
+  "company": "가상회사 C",
+  "postedAt": "2026-07-08",
+  "rawHtml": "<p>배치 파이프라인과   데이터 웨어하우스를 운영합니다.  </p><ul><li>필수: Python, Airflow, SQL</li><li>우대: Spark, Kafka</li></ul>",
+  "requiredSkills": ["Python", "Airflow", "SQL"],
+  "preferredSkills": ["Spark", "Kafka"],
+  "domain": ["데이터 엔지니어링"],
+  "seniority": "3년 이상"
+}

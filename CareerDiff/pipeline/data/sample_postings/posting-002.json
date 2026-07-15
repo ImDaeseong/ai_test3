@@ -1,0 +1,12 @@
+{
+  "postingId": "sample-002",
+  "source": "synthetic_sample",
+  "title": "프론트엔드 개발자 (React/Next.js)",
+  "company": "가상회사 B",
+  "postedAt": "2026-07-05",
+  "rawHtml": "<p>React와 Next.js 기반 대시보드를 개발합니다.</p><ul><li>필수: React, TypeScript, Tailwind CSS</li><li>우대: Playwright, 접근성(a11y) 경험</li></ul>",
+  "requiredSkills": ["React", "TypeScript", "Tailwind CSS"],
+  "preferredSkills": ["Playwright", "Accessibility"],
+  "domain": ["프론트엔드", "대시보드"],
+  "seniority": "2년 이상"
+}
