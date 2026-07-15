@@ -342,7 +342,6 @@ class AudioAnalyzer:
             warnings.append("Peak reaches full scale; check clipping or limiter ceiling before release.")
         elif peak >= 0.98:
             warnings.append("Peak is very close to full scale; leave more mastering headroom.")
-        bpm, bpm_confidence = self._estimate_bpm_from_audio_np(y, int(sample_rate), rms_values, np)
         return AudioFeatures(
             available=True,
             file_path=str(path),

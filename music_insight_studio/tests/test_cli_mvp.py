@@ -434,6 +434,24 @@ class OptionalDspFallbackTests(unittest.TestCase):
         self.assertIn("Estimated key:", text)
         self.assertIn("LUFS integrated:", text)
 
+    def test_stdlib_wav_fallback_runs_without_numpy_available(self) -> None:
+        # Regression test: _analyze_wav_fallback previously crashed with
+        # NameError (referenced undefined `y`/`np` copy-pasted from the
+        # numpy-based analysis path) whenever numpy/soundfile were actually
+        # unavailable. Force that path explicitly so this is caught
+        # regardless of whether numpy happens to be installed in the
+        # environment running this test.
+        with tempfile.TemporaryDirectory() as tmp:
+            audio_path = Path(tmp) / "sample.wav"
+            write_test_wav(audio_path)
+            with patch.object(AudioAnalyzer, "_has_optional_dsp", return_value=False):
+                features = AudioAnalyzer().analyze(audio_path)
+        self.assertTrue(features.available, features.error)
+        self.assertEqual(features.error, "")
+        self.assertEqual(features.bpm, 0.0)
+        self.assertEqual(features.estimated_key, "unknown")
+        self.assertIn("optional dsp dependencies", " ".join(features.warnings).lower())
+
 
 class CodecAnalysisTests(unittest.TestCase):
     @unittest.skipUnless(has_optional_dsp() and codec_available("FLAC"), "FLAC codec unavailable in this environment")
