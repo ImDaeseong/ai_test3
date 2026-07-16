@@ -45,7 +45,10 @@ class ScoreTranscriber:
 
     MIN_MIDI = 36
     MAX_MIDI = 84
-    MAX_EVENTS = 96
+    # Worst-case event count for the heuristic path is MAX_HEURISTIC_SECONDS / min hop
+    # (0.12s, see _estimate_note_events), ~750 events; 400 covers realistic 60-180bpm
+    # tempos (hop floor of 0.5s-0.33s) without truncating before the analysis window ends.
+    MAX_EVENTS = 400
     HEURISTIC_SAMPLE_RATE = 11025
     MAX_HEURISTIC_SECONDS = 90.0
 
@@ -108,11 +111,17 @@ class ScoreTranscriber:
             y = np.mean(data, axis=1).astype(float)
             if y.size == 0 or sample_rate <= 0:
                 return TranscriptionResult("heuristic", warnings=["Audio file has no samples for melody guide."])
+            total_duration_sec = y.size / sample_rate
             y, effective_rate, limited = self._prepare_heuristic_audio(y, int(sample_rate), np)
             note_events = self._estimate_note_events(y, effective_rate, float(bpm or 0.0), np)
+            covered_sec = note_events[-1].end_sec if note_events else 0.0
             warnings = ["Heuristic melody guide only; install basic-pitch for polyphonic audio-to-MIDI transcription."]
-            if limited:
-                warnings.append(f"Heuristic melody guide analyzes the first {self.MAX_HEURISTIC_SECONDS:.0f}s at {self.HEURISTIC_SAMPLE_RATE} Hz for local performance.")
+            if limited or covered_sec < total_duration_sec - 1.0:
+                warnings.append(
+                    f"Heuristic melody guide covers 0:00-{covered_sec:.0f}s of {total_duration_sec:.0f}s total "
+                    f"(~{self.MAX_HEURISTIC_SECONDS:.0f}s local-performance cap); the rest of the track is not "
+                    "transcribed. Install basic-pitch or run a background job for full-track coverage."
+                )
             return TranscriptionResult("heuristic", note_events, warnings if note_events else ["No stable pitched events found for melody guide."])
         except Exception as exc:  # pragma: no cover - codec/environment dependent
             return TranscriptionResult("none", warnings=[f"Heuristic melody guide failed: {exc}"])
@@ -150,8 +159,6 @@ class ScoreTranscriber:
             midi = int(round(69 + 12 * math.log2(freq / 440.0)))
             if self.MIN_MIDI <= midi <= self.MAX_MIDI:
                 events.append(NoteEvent(start / sample_rate, min(len(y), start + hop) / sample_rate, midi, 72, confidence))
-            if len(events) >= self.MAX_EVENTS * 2:
-                break
         return self._merge_repeated_notes(events)[: self.MAX_EVENTS]
 
     @staticmethod

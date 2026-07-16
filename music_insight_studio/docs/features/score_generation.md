@@ -126,3 +126,38 @@ Acceptance boundary:
 - For a full mixed/mastered WAV, automatic notation is still approximate.
 - Commercial UI must call this output `악보 가이드` or `transcription guide`, not `정확한 악보`.
 - A future production worker should cache model loading and run long audio transcription as a background job.
+
+## 2026-07-17 Verification Fix: heuristic coverage was truncated below its own stated window
+
+Verification against 44 real mastered WAVs (`C:\Users\cs930\Downloads\wav_마스터링\작업완료`, 1:30-3:20 each)
+found `ScoreTranscriber`'s heuristic path stopped collecting note events at `MAX_EVENTS=96` well before
+reaching the `MAX_HEURISTIC_SECONDS=90` window it advertised in its own warning text — average coverage was
+33% of track duration (min 23%, max 54%), while the score's warning claimed "first 90s" regardless.
+
+Fix in `app/notation/transcription.py`:
+
+- Raised `MAX_EVENTS` from 96 to 400 (sized for the worst-case event rate across realistic 60-180bpm hop
+  intervals over the 90s window) and removed the redundant early `break` in `_estimate_note_events` — the
+  loop was already bounded by the pre-truncated 90s audio buffer, so the count-based break only hurt coverage.
+- The heuristic-path warning now reports the actual covered duration (`0:00-{covered}s of {total}s`) instead
+  of a hardcoded "first 90s" claim, so it stays honest even if the window constant changes later.
+
+Re-verification after the fix (same 44 files): average coverage rose to 48.5% (min 41%, max 59%), which now
+matches the arithmetic of a 90s cap over ~150-200s tracks — i.e. coverage is limited only by the documented
+window, not by a hidden secondary truncation.
+
+Known tradeoff: isolated `ScoreTranscriber.transcribe()` time rose from ~0.35s to ~0.43s per file (warm,
+same 44 files), because the loop no longer exits early within the 90s window. This is the real cost of
+actually scanning the window the warning already claimed to scan, and it is small in absolute terms.
+
+Correction (verified after an initial mis-measurement): a first pass wrongly attributed a ~2-3s-to-10.6s
+per-file slowdown to this fix. Isolating `AnalysisService.analyze()` from `write_reports()` across 8 real
+files showed `analyze()` (librosa-based BPM/LUFS/etc., untouched by this fix) alone averages ~9.4s/file,
+while `write_reports()` (transcription + all four report writers) averages ~0.4s/file both before and after
+this change. The multi-second-per-file cost is pre-existing `AudioAnalyzer` cost, unrelated to score
+generation — do not re-attribute it to this fix again.
+
+Extending `MAX_HEURISTIC_SECONDS` to cover full-length tracks synchronously was intentionally not done here
+— it conflicts with the "background job" acceptance boundary above and would add real, proportional latency
+to the (already small) transcription step. If full-track coverage is wanted, do it as the background-job
+worker already called for, not as a bigger synchronous constant.

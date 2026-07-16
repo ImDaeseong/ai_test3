@@ -77,6 +77,7 @@ class AudioAnalyzer:
         rms_mean = float(np.mean(rms_values)) if rms_values.size else 0.0
         rms_std = float(np.std(rms_values)) if rms_values.size else 0.0
         peak = float(np.max(np.abs(y))) if y.size else 0.0
+        spectrum, freqs = self._full_spectrum_np(y, sample_rate, np)
         lufs, lufs_warning = self._try_lufs(y, sample_rate)
         warnings = []
         if lufs_warning:
@@ -100,9 +101,9 @@ class AudioAnalyzer:
             dynamic_range_db=self._dynamic_range_db_np(rms_values, np),
             bpm=bpm,
             bpm_confidence=bpm_confidence,
-            estimated_key=self._estimate_key_np(y, sample_rate, np),
+            estimated_key=self._estimate_key_np(spectrum, freqs, np),
             lufs_integrated=lufs,
-            frequency_bands=self._frequency_bands_np(y, sample_rate, np),
+            frequency_bands=self._frequency_bands_np(spectrum, freqs, np),
             section_energies=self._section_energies_np(y, sample_rate, np),
             warnings=warnings,
         )
@@ -249,27 +250,31 @@ class AudioAnalyzer:
             bpm /= 2.0
         return bpm
     @staticmethod
-    def _estimate_key_np(y: Any, sample_rate: int, np: Any) -> str:
+    def _full_spectrum_np(y: Any, sample_rate: int, np: Any) -> tuple[Any, Any]:
         if len(y) == 0 or sample_rate <= 0:
-            return "unknown"
-        windowed = y * np.hanning(len(y))
-        spectrum = np.abs(np.fft.rfft(windowed))
+            return np.asarray([], dtype=float), np.asarray([], dtype=float)
+        spectrum = np.abs(np.fft.rfft(y * np.hanning(len(y))))
         freqs = np.fft.rfftfreq(len(y), d=1.0 / sample_rate)
+        return spectrum, freqs
+
+    @staticmethod
+    def _estimate_key_np(spectrum: Any, freqs: Any, np: Any) -> str:
+        if spectrum.size == 0:
+            return "unknown"
+        mask = (freqs >= 80.0) & (freqs <= 2000.0) & (spectrum > 0)
+        if not mask.any():
+            return "unknown"
+        midi = np.round(69 + 12 * np.log2(freqs[mask] / 440.0)).astype(int)
         pitch_classes = np.zeros(12, dtype=float)
-        for freq, mag in zip(freqs, spectrum):
-            if 80.0 <= freq <= 2000.0 and mag > 0:
-                midi = int(round(69 + 12 * np.log2(freq / 440.0)))
-                pitch_classes[midi % 12] += float(mag)
+        np.add.at(pitch_classes, midi % 12, spectrum[mask])
         if not pitch_classes.any():
             return "unknown"
         names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         return names[int(np.argmax(pitch_classes))]
 
-    def _frequency_bands_np(self, y: Any, sample_rate: int, np: Any) -> dict[str, float]:
-        if len(y) == 0 or sample_rate <= 0:
+    def _frequency_bands_np(self, spectrum: Any, freqs: Any, np: Any) -> dict[str, float]:
+        if spectrum.size == 0:
             return {}
-        spectrum = np.abs(np.fft.rfft(y * np.hanning(len(y))))
-        freqs = np.fft.rfftfreq(len(y), d=1.0 / sample_rate)
         bands = {}
         for name, (low, high) in self.BAND_RANGES.items():
             mask = (freqs >= low) & (freqs < high)
