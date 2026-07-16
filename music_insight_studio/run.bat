@@ -11,9 +11,11 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 echo Starting Music Insight Studio...
-echo Open http://127.0.0.1:8765 in your browser.
+echo Opening http://127.0.0.1:8765 in your browser.
 echo Press Ctrl+C in this window to stop the server.
 echo.
+
+start "" cmd /c "timeout /t 2 /nobreak >nul & start "" "http://127.0.0.1:8765""
 
 ".venv\Scripts\python.exe" -m app.web.server --host 127.0.0.1 --port 8765
 
