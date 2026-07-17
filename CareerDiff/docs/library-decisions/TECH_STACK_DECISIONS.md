@@ -44,8 +44,8 @@
 
 **Decision**: instead of adding RAG or LangChain/LangGraph (neither reduces cost — see the table above), validate the exact same prompt and JSON schema for free using an existing Claude.ai / ChatGPT web subscription:
 
-- `../../prompts/web-project/MANUAL_ANALYSIS_PROMPT.md` — a copy-paste version of `buildAnalysisPrompt.ts` + `analysisResult.ts`'s zod schema, kept in sync by hand with the code.
-- `../../prompts/web-project/WEB_PROJECT_USAGE.md` — Claude/ChatGPT Project setup steps and a manual JSON-output verification checklist (schema-shape, exactly 3 mini projects, Korean output, no fabricated evidence, `retrievalContext`/`metadata` flags correct).
+- `../../ai-prompts/claude-projects-test/MANUAL_ANALYSIS_PROMPT.md` — a copy-paste version of `buildAnalysisPrompt.ts` + `analysisResult.ts`'s zod schema, kept in sync by hand with the code.
+- `../../ai-prompts/claude-projects-test/WEB_PROJECT_USAGE.md` — Claude/ChatGPT Project setup steps and a manual JSON-output verification checklist (schema-shape, exactly 3 mini projects, Korean output, no fabricated evidence, `retrievalContext`/`metadata` flags correct).
 
 This mirrors an already-proven pattern from `ai_test1/music_lyric`'s web-project prompt docs (prompt-first, no API cost, human runs it and reads the result).
 

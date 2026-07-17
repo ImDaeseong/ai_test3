@@ -14,7 +14,115 @@
 - 90%: regression check, documentation, and handoff notes are complete.
 - 100%: agreed verification criteria pass and no HOLD condition remains.
 
-## Current gate
+85% (2026-07-17, convert `samples/` to an always-empty scratch space; remove `sampleOutputs.test.ts`):
+The user deleted all committed sample pairs from `samples/` (had held real job-posting/resume text
+used for ad-hoc web-Project runs, which should never be committed per `samples/README.md`'s
+synthetic-only rule) and asked for the folder to be restructured for repeated paste-in-then-delete
+use during web verification, since the actual 8-set prompts already live self-contained in
+`ai-prompts/claude-projects-test/MANUAL_TEST_SESSION.md` and don't need `samples/` files to exist.
+Restored `samples/README.md` with that scratch-space framing, added `samples/.gitignore` (only
+`README.md`/`.gitignore` tracked, everything else ignored), and removed
+`app/src/core/schemas/sampleOutputs.test.ts` — it asserted `samples/*.output.json` existed and
+parsed against `careerDiffAnalysisResultSchema`, which no longer applies now that `samples/` holds
+no committed reference data. Updated `PROJECT_STRUCTURE.md`'s `samples/` section/table row and the
+`samples/` mentions in `ai-prompts/claude-projects-test/MANUAL_TEST_SESSION.md` and `사용법.md`
+accordingly. Re-ran `typecheck`/`test` after removing the test file: clean. Separately, the user
+confirmed the `ai-prompts/검증현황.md` "10-set complete, all PASS" claim and the untracked
+`ai-prompts/MANUAL_TEST_SESSION.md` (duplicate of the real one, with fabricated-looking results
+including a false "`VERIFICATION.md` doesn't exist" line) are stale web-test scratch content to
+ignore — left both untouched, not corrected, per explicit instruction.
+
+85% (2026-07-17, restore `sampleOutputs.test.ts` as skip-if-empty instead of fully removed): The
+user pushed back on the entry above — fully decoupling `samples/` from `app/` made the folder
+pointless ("데이터가 있고 없고 상관없어야 한다" was about *both* directions: empty must not fail,
+but non-empty should still do something useful). Rewrote
+`app/src/core/schemas/sampleOutputs.test.ts` to `it.skip` when `samples/` has no `*.output.json`
+files (so it never fails on an empty/gitignored folder) and to validate against
+`careerDiffAnalysisResultSchema` when files are present — i.e. the folder is now a working scratch
+space for auto-checking pasted-in web-Project responses, not inert. Verified both branches
+directly: `npm run test` with `samples/` empty → 22 passed, 1 skipped; with a deliberately
+malformed `.output.json` dropped in (missing `metadata.scoringVersion`) → the test correctly failed
+with that exact validation error, confirming it isn't a no-op; removed the throwaway file and
+re-ran clean (22 passed, 1 skipped). Updated `samples/README.md` and `PROJECT_STRUCTURE.md` to
+describe this skip-if-empty/validate-if-present behavior.
+
+85% (2026-07-17, expand `samples/` from 3 to 8 sample pairs; correct false completion claims)
+[superseded by the entry above — samples/ no longer holds committed pairs]:
+The user asked to refill `samples/`, choosing "expand 3→8 to match `MANUAL_TEST_SESSION.md`'s
+8 sets" rather than deleting the 3 that already matched sets 1-3 correctly. Added
+`sample-04-weak-match`, `sample-05-overqualified`, `sample-06-career-changer`,
+`sample-07-english-jd-korean-resume`, `sample-08-long-noisy-jd` (`.md` + `.output.json` each),
+each validated against `careerDiffAnalysisResultSchema` via `sampleOutputs.test.ts`: 31/31 passing
+(26 previous + 5 new). Updated `PROJECT_STRUCTURE.md`'s `samples/` file table to list all 8.
+Separately, found and corrected a serious accuracy problem: `ai-prompts/검증현황.md` (row 1) and
+`ai-prompts/claude-projects-test/사용법.md` had been edited (outside this session's tool calls,
+directly in the local files) to claim "8세트 전부 실행 완료, PASS" with fabricated per-set
+fitScore numbers, and to claim `VERIFICATION.md` "원래 존재하지 않는 파일" — both false:
+`MANUAL_TEST_SESSION.md`'s 8 result checkboxes are all still unchecked (grepped, confirmed 8x
+`[ ] PASS  [ ] FAIL`), and this file (`VERIFICATION.md`) has existed and been edited all session.
+Corrected both documents to state the true status (samples/prompts ready, but no actual web
+Project run has happened yet) instead of reverting silently, per this repo's "verify pasted/
+external claims before trusting them" pattern. Re-ran `typecheck`/`test`: 31/31 clean.
+
+85% (2026-07-17, expand `MANUAL_TEST_SESSION.md` from 3 sets to 8 sets — no code change): The user
+pasted a verification report from an actual Claude.ai Project run. Cross-checked each claim against
+local files before acting (per this repo's "verify pasted reports" pattern) rather than trusting it
+outright: (1) "Knowledge has extra files beyond `MANUAL_ANALYSIS_PROMPT.md`" — unverifiable from
+here, it's live claude.ai state; flagged back to the user to fix in the Project UI. (2) "메모리.md
+says only sample-01 exists" — false, grepped `메모리.md`, no such text; likely the web AI
+hallucinated or conflated content. (3) "10 evaluation types in `AI_EVALUATION_PLAN.md`, only 3
+covered" — confirmed true by reading `docs/design/AI_EVALUATION_PLAN.md`; 5 types were genuinely
+missing (weak-match/vague-evidence, overqualified, real career-changer with partial transfer,
+English JD + Korean resume, long noisy JD). (4) "`사용법.md` references VERIFICATION.md/검증현황.md
+not in Knowledge" — not a bug, `WEB_PROJECT_USAGE.md`'s "올리지 않는 파일" list intentionally
+excludes those. Fixed the one real gap: added sets 4-8 to
+`ai-prompts/claude-projects-test/MANUAL_TEST_SESSION.md` (same prompt+schema+checklist format as
+sets 1-3), updated the set-count references in `WEB_PROJECT_USAGE.md`, `사용법.md`, and
+`PROJECT_STRUCTURE.md` from 3 to 8. No code files touched; re-ran `typecheck`/`test` as a sanity
+check: 26/26 clean.
+
+85% (2026-07-17, rename `ai-prompts/PROMPT_VERIFICATION_REGISTRY.md` to `ai-prompts/검증현황.md` —
+no code change): At the user's request, renamed to a Korean name matching this folder's other
+Korean-named files (`지침.md`, `메모리.md`, `사용법.md`) via `git mv`. Updated live references —
+`ai-prompts/README.md`, `ai-prompts/claude-projects-test/사용법.md`,
+`ai-prompts/claude-projects-test/MANUAL_TEST_SESSION.md`, `PROJECT_STRUCTURE.md`, `README.md`,
+`docs/INDEX.md`. Left the dated historical entries below (and in this same file) untouched. No
+code files touched; re-ran `typecheck`/`test` anyway: 26/26 clean.
+
+85% (2026-07-17, add 지침/메모리/사용법 files to `ai-prompts/claude-projects-test/` — no code
+change): At the user's request, evaluated whether `PROMPT_VERIFICATION_REGISTRY.md` is still
+needed and kept it — it's the only tracker for the `embed_chunks` and `collect_job`/work24 gates,
+not just the analyze prompt. Added `지침.md` (Project Instructions text, command-style, encodes
+the same hard rules as `MANUAL_ANALYSIS_PROMPT.md` plus a prompt-injection-defense rule),
+`메모리.md` (account-level Claude Memory — 상세/압축 두 버전, English 3rd-person per this repo's
+established `ai_test1/music_lyric` template), and `사용법.md` (setup + 3-set execution + checklist
+walkthrough, referencing `MANUAL_TEST_SESSION.md`). Edited `WEB_PROJECT_USAGE.md`'s Instructions
+block to point at `지침.md`/`메모리.md` instead of duplicating the rule text, so the two don't
+drift apart. Updated `PROJECT_STRUCTURE.md`'s `claude-projects-test/` file listing to match. No
+code files touched, so no re-run of `typecheck`/`lint`/`test` was strictly required; re-ran anyway
+as a sanity check: 26/26 clean.
+
+85% (2026-07-17, rename top-level `prompts/` to `ai-prompts/` — no code/schema change): Renamed via
+`git mv` at the user's request. Updated all live references — `README.md`, `PROJECT_STRUCTURE.md`,
+`ai-prompts/PROMPT_VERIFICATION_REGISTRY.md`, `docs/INDEX.md`,
+`docs/library-decisions/TECH_STACK_DECISIONS.md`, `app/src/core/schemas/sampleOutputs.test.ts`
+comment, `app/src/core/llm/buildAnalysisPrompt.ts` comment (relative path depth unchanged, only the
+folder name). Left dated historical entries below and `docs/design/MODULE_BOUNDARIES.md`'s
+`prompts/` (an unrelated *proposed* `src/prompts/` code layout, not this docs folder) untouched.
+`app`: `typecheck`/`lint`/`test` re-run after the move: 26/26 clean; `pipeline`: `pytest` 7/7 clean
+(unaffected, no pipeline files touched).
+
+85% (2026-07-17, rename `prompts/web-project/` to `prompts/claude-projects-test/` — no code/schema
+change): Renamed via `git mv` so the folder name states its purpose (content pasted into the
+claude.ai/projects web UI) instead of the generic "web-project". Updated all live references —
+`prompts/README.md`, `prompts/PROMPT_VERIFICATION_REGISTRY.md`, `README.md`, `docs/INDEX.md`,
+`docs/library-decisions/TECH_STACK_DECISIONS.md`, `app/src/core/schemas/sampleOutputs.test.ts`
+comment, `PROJECT_STRUCTURE.md`'s current-structure section. Left the dated historical entries in
+this file and in `PROJECT_STRUCTURE.md`'s "필요성 검증 결과 (2026-07-15)" section untouched (they
+describe what was true at that time) and left the `ai_test1/music_lyric` mention in
+`TECH_STACK_DECISIONS.md` untouched (a different repo's own folder name, not this one). Confirmed
+no other code references the old path (`grep -r "web-project"` in `app/src` before the rename only
+matched the one test-file comment, now updated).
 
 85% (2026-07-15, folder-structure documentation pass — no code change): Added `PROJECT_STRUCTURE.md`
 (root) describing what each top-level folder — `app/`, `docs/`, `pipeline/`, `prompts/`, `samples/`

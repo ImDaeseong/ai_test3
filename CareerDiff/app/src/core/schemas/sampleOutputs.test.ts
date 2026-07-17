@@ -1,20 +1,23 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { careerDiffAnalysisResultSchema } from "./analysisResult";
 
 /**
- * samples/*.output.json are hand-authored reference outputs used for manual web-prompt grading
- * (prompts/web-project/WEB_PROJECT_USAGE.md). They previously drifted out of sync with this schema (missing
- * retrievalContext/metadata, fewer than 3 miniProjects) without any automated check catching it.
+ * samples/*.output.json is a scratch space (ai-prompts/claude-projects-test/사용법.md) where the
+ * user pastes ad-hoc web-Project outputs to check them against the schema. It is gitignored and
+ * normally empty, so this suite must pass with zero files and only validate whatever is dropped in.
  */
 const samplesDir = path.resolve(__dirname, "../../../../samples");
-const sampleFiles = readdirSync(samplesDir).filter((f) => f.endsWith(".output.json"));
+const sampleFiles = existsSync(samplesDir)
+  ? readdirSync(samplesDir).filter((f) => f.endsWith(".output.json"))
+  : [];
 
 describe("samples/*.output.json", () => {
-  it("found at least one sample output file to check", () => {
-    expect(sampleFiles.length).toBeGreaterThan(0);
-  });
+  if (sampleFiles.length === 0) {
+    it.skip("no sample output files present — nothing to validate", () => {});
+    return;
+  }
 
   for (const file of sampleFiles) {
     it(`${file} validates against careerDiffAnalysisResultSchema`, () => {

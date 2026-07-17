@@ -48,14 +48,14 @@ CareerDiff documentation is split by purpose so the project does not lose direct
 
 Design docs describe what the product is. This section tracks whether each AI-dependent feature
 (anything that can call a paid API or touch real external data) has passed free/local
-verification yet — see `prompts/PROMPT_VERIFICATION_REGISTRY.md` first.
+verification yet — see `ai-prompts/검증현황.md` first.
 
-- `prompts/PROMPT_VERIFICATION_REGISTRY.md`: **start here** — registry of every paid-API/real-data
+- `ai-prompts/검증현황.md`: **start here** — registry of every paid-API/real-data
   AI feature in the project, its free verification path, and current status.
-- `prompts/README.md`: analyzer prompt design principles (what the prompt must require).
-- `prompts/web-project/`: everything meant to be pasted/uploaded into a Claude/ChatGPT Projects
+- `ai-prompts/README.md`: analyzer prompt design principles (what the prompt must require).
+- `ai-prompts/claude-projects-test/`: everything meant to be pasted/uploaded into a Claude/ChatGPT Projects
   web UI, kept separate from the design/tracking docs above.
-  - `prompts/web-project/MANUAL_ANALYSIS_PROMPT.md`: copy-paste prompt + schema, kept identical to
+  - `ai-prompts/claude-projects-test/MANUAL_ANALYSIS_PROMPT.md`: copy-paste prompt + schema, kept identical to
     `app/src/core/llm/buildAnalysisPrompt.ts` + `app/src/core/schemas/analysisResult.ts`.
-  - `prompts/web-project/WEB_PROJECT_USAGE.md`: Claude/ChatGPT Projects setup + manual
+  - `ai-prompts/claude-projects-test/WEB_PROJECT_USAGE.md`: Claude/ChatGPT Projects setup + manual
     verification checklist (no paid API call needed).

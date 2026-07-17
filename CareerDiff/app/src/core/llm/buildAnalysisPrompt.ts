@@ -2,13 +2,13 @@ import type { AnalyzeRequestInput } from "@/core/schemas/analyzeRequest";
 
 /**
  * Builds the analyzer prompt sent to the LLM provider.
- * Source of truth for goals/hard rules: ../../../../prompts/README.md —
+ * Source of truth for goals/hard rules: ../../../../ai-prompts/README.md —
  * keep both in sync when either changes.
  */
 export function buildAnalysisPrompt(input: AnalyzeRequestInput): string {
   return `You compare a job description and a candidate profile without inventing experience.
 
-Hard rules (prompts/README.md):
+Hard rules (ai-prompts/README.md):
 - Do not fabricate candidate experience.
 - If evidence is missing, say it is missing.
 - Prefer concrete text that can be copied directly into a resume.

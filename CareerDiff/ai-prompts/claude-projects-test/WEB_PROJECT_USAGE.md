@@ -10,27 +10,18 @@
 
 ```text
 Project Name: CareerDiff
-Project Instructions: (아래 텍스트를 그대로 붙여넣는다)
+Project Instructions: 지침.md 내용 전체를 그대로 붙여넣는다
+Knowledge 첨부: MANUAL_ANALYSIS_PROMPT.md
+계정 메모리(Settings → Memory): 메모리.md 참고
 ```
 
-Instructions에 넣을 문구:
-
-```text
-너는 CareerDiff의 분석 엔진 역할이다. 사용자가 채용공고와 이력서/커리어 텍스트를 주면,
-MANUAL_ANALYSIS_PROMPT.md에 정의된 규칙과 JSON 스키마를 그대로 따라 결과를 생성한다.
-스키마의 키를 빠뜨리거나 추가하지 않는다. 모든 자연어 필드는 한국어로 작성한다.
-```
-
-Knowledge에 첨부: `MANUAL_ANALYSIS_PROMPT.md`
+지침 전문과 계정 메모리 문구는 각각 `지침.md` / `메모리.md`에 있다 — 두 곳에 같은 규칙을 따로
+유지하면 서로 어긋날 수 있어 여기서는 중복하지 않는다. 상세 실행 절차는 `사용법.md` 참고.
 
 ## ChatGPT Project 설정
 
-ChatGPT는 화면에 따라 별도 지침 입력칸이 없을 수 있다. 그럴 때는 새 채팅 첫 메시지로 아래를 보낸다.
-
-```text
-너는 CareerDiff의 분석 엔진 역할이다. 아래 첨부한 MANUAL_ANALYSIS_PROMPT.md의 규칙과
-JSON 스키마를 그대로 따라 결과를 생성해줘. 이후 내가 채용공고/이력서를 주면 그 형식으로만 답해줘.
-```
+ChatGPT는 화면에 따라 별도 지침 입력칸이 없을 수 있다. 그럴 때는 새 채팅 첫 메시지로 `지침.md`
+내용을 그대로 보낸다.
 
 프로젝트 파일로 첨부: `MANUAL_ANALYSIS_PROMPT.md`
 
@@ -65,4 +56,4 @@ VERIFICATION.md, ARCHITECTURE.md, SPEC.md  (내부 관리 문서)
 
 ## 유료 API 단계로 넘어가는 기준
 
-이 수동 검증을 여러 채용공고/이력서 조합(최소 3세트 이상 권장 — 예: 백엔드/프론트엔드/신입 등 성격이 다른 조합)으로 반복해서 위 체크리스트를 안정적으로 통과하면, 그때 `OPENAI_API_KEY`를 발급받아 `OpenAiAnalysisProvider`를 실제로 한 번 호출해 같은 체크리스트로 재확인한다. 이 문서와 `MANUAL_ANALYSIS_PROMPT.md`의 규칙이 `buildAnalysisPrompt.ts`와 어긋나 있으면 그 시점에 먼저 동기화한다.
+이 수동 검증을 `MANUAL_TEST_SESSION.md`의 8세트(`AI_EVALUATION_PLAN.md`의 10개 평가 유형 중 8개 커버)로 반복해서 위 체크리스트를 안정적으로 통과하면, 그때 `OPENAI_API_KEY`를 발급받아 `OpenAiAnalysisProvider`를 실제로 한 번 호출해 같은 체크리스트로 재확인한다. 이 문서와 `MANUAL_ANALYSIS_PROMPT.md`의 규칙이 `buildAnalysisPrompt.ts`와 어긋나 있으면 그 시점에 먼저 동기화한다.
