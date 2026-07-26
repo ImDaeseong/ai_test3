@@ -1,6 +1,6 @@
 # CareerDiff — Folder Structure
 
-레포 최상위 5개 폴더(`app/`, `docs/`, `pipeline/`, `ai-prompts/`, `samples/`)가 각각 무엇이고 왜
+레포 최상위 4개 폴더(`app/`, `docs/`, `jobkorea-ai/`, `ai-prompts/`)가 각각 무엇이고 왜
 필요한지 정리한 문서다. 각 폴더는 성격이 다르므로 섞지 않는다 — 무엇을 확인하려는지에 따라 아래
 표에서 폴더를 먼저 찾는다.
 
@@ -8,9 +8,8 @@
 | --- | --- | --- |
 | `app/` | 실제 제품(Next.js) | ✅ 이것 자체가 제품 |
 | `docs/` | 설계·기획 문서 | 코드는 아니지만 구현 기준의 출처 |
-| `pipeline/` | 별도 학습용 Airflow 파이프라인 | ❌ `app/`과 독립, 포트폴리오용 서브프로젝트 |
+| `jobkorea-ai/` | 잡코리아 공개 채용정보 수집·분류 FastAPI 서브프로젝트 | ❌ `app/`과 독립, 포트폴리오용 서브프로젝트 |
 | `ai-prompts/` | 분석 프롬프트 설계 + 무료 웹 검증 자료 | 코드는 아니지만 `OpenAiAnalysisProvider`의 원본 |
-| `samples/` | 웹 검증용 임시 데이터 공간(항상 빈 상태로 커밋) | ⚪ 비어있으면 무영향, `.output.json`을 넣으면 `test`가 자동 검증 |
 
 ## `app/` — 제품 코드
 
@@ -31,27 +30,28 @@ Next.js(App Router) + TypeScript로 만든 실제 CareerDiff 웹앱. `SPEC.md`�
 | --- | --- |
 | `docs/features/` | 기능 10개 각각의 목적·규칙·UI 계약·테스트 체크 |
 | `docs/design/` | 데이터 모델, 모듈 경계, UI 설계, 프로덕션 아키텍처, RAG/데이터 전략, 보안 위협 모델, 접근성 |
-| `docs/integration/` | 분석 흐름, API 계약, 파이프라인 계획(`AIRFLOW_PIPELINE_PLAN.md`, `PIPELINE_ROLLOUT_PLAN.md`) |
+| `docs/integration/` | 분석 흐름, API 계약 |
 | `docs/library-decisions/` | 라이브러리 선택 기준·전체 스택 결정·기능별 매핑(`features/*.md`) |
 | `docs/operations/` | 운영 런북 |
 | `docs/INDEX.md`, `docs/DOCUMENTATION_AUDIT.md` | 문서 전체 지도, 문서 완성도 감사 |
 
 **필요성**: 장식용 문서가 아니라 실제로 구현/리뷰 기준으로 계속 참조됨 — 예를 들어
 `docs/features/08-mini-project-recommendations.md`의 "정확히 3개" 규칙 위반을 코드(mock 결과)와
-`samples/*.output.json` 양쪽에서 실제로 잡아낸 이력이 있음. 필요함, 유지.
+앱 스키마 테스트에서 실제로 잡아낸 이력이 있음. 필요함, 유지.
 
-## `pipeline/` — 학습용 Airflow 데이터 파이프라인 (별도 서브프로젝트)
+## `jobkorea-ai/` — 잡코리아 채용정보 수집·분류 (별도 서브프로젝트)
 
-`app/`과 완전히 분리된 포트폴리오용 서브프로젝트. 채용공고 수집(목업/고용24 API)→정제→청크화→
-임베딩→VectorDB 저장→RAG 인덱스 갱신→알림을 Airflow DAG로 재현한다. 실제 잡코리아 크롤링은
-영구 HOLD(ToS·판례 검토 완료).
+`app/`과 완전히 분리된 포트폴리오용 서브프로젝트. 잡코리아의 **공개** 채용목록(`/recruit/joblist`)과
+공개 공고 상세(`/Recruit/GI_Read`)만 대상으로 저빈도 수집 후 관심 키워드로 선별·분류해 FastAPI로
+제공한다. 로그인·CAPTCHA·접근 제한 우회는 하지 않는다. 기존 `pipeline/`(합성 데이터 기반 Airflow
+학습용 파이프라인, 실제 크롤링 영구 HOLD)을 대체하기로 결정(2026-07-24) — 실제 공개 페이지 크롤링으로
+전환하는 의도적 선택이며, 실 운영 전 잡코리아 이용약관·robots.txt를 직접 재확인해야 한다.
 
-- 코드: `dags/`, `tasks/`(collect/clean/chunk/embed/store/index/notify + work24 클라이언트), `tests/`.
-- 문서: `pipeline/README.md`(실행법), `docs/integration/AIRFLOW_PIPELINE_PLAN.md`(범위·보안 경계),
-  `docs/integration/PIPELINE_ROLLOUT_PLAN.md`(Phase 0~5 진행 순서).
-- **필요성**: `app/` 동작에는 불필요(독립 실행). 사용자가 명시적으로 요청한 별도 학습/포트폴리오
-  산출물이라 존재 이유가 다르다. `pytest` 7/7 통과로 실제로 동작함을 확인함. `app/`과 섞이지 않도록
-  의도적으로 최상위에 분리해 둠 — `app/`에 합치지 않는다.
+- 코드: `app/`(FastAPI), `scripts/`(collect_jobs, build_trend_report), `tests/`.
+- 문서: `jobkorea-ai/README.md`(설치·실행·API·수집 원칙).
+- **필요성**: `app/`(Next.js 제품) 동작에는 불필요(독립 실행). 사용자가 명시적으로 요청한 별도 학습/
+  포트폴리오 산출물이라 존재 이유가 다르다. `app/`과 섞이지 않도록 의도적으로 최상위에 분리해 둠 —
+  `app/`에 합치지 않는다.
 
 ## `ai-prompts/` — 프롬프트 설계 + 무료 검증 자료
 
@@ -78,28 +78,13 @@ ai-prompts/
   둘로 갈라졌었다(오래된 스키마가 `retrievalContext`/`metadata`/`id` 필드 없이 방치됨) — 삭제하고 이
   단일 트랙으로 통합함.
 
-## `samples/` — 임시 검증 공간 (항상 비어있는 상태로 커밋됨)
-
-세트별 프롬프트 원문은 `ai-prompts/claude-projects-test/MANUAL_TEST_SESSION.md`에 이미 완성돼
-있으므로, 이 폴더는 고정된 기준 파일을 담아두는 곳이 아니라 웹 Project(Claude/ChatGPT)에서 세트를
-돌릴 때 데이터를 잠깐 붙여넣었다가 검증 후 지우는 스크래치 공간이다. `README.md`와 `.gitignore`만
-커밋되고 그 외 내용물은 전부 git에서 제외된다.
-
-- 비어있으면 `app/src/core/schemas/sampleOutputs.test.ts`가 skip되어 `test`/`build`에 아무 영향이
-  없다. 웹 Project 응답을 `*.output.json`으로 저장하면 같은 테스트가 자동으로
-  `careerDiffAnalysisResultSchema`에 맞는지 검증한다(2026-07-17, 이전엔 8세트 고정 샘플 파일을
-  항상 커밋해두는 방식이었으나, "데이터 있고 없고 상관없이 프로젝트에 영향 없어야 한다"는 요구에
-  맞춰 skip-if-empty 방식으로 바꿈).
-- 실제 이력서·회사 데이터를 붙여넣어 테스트해도 되지만, 검증이 끝나면 반드시 지운다
-  (`samples/README.md` 규칙).
-
 ## 필요성 검증 결과 (2026-07-15)
 
-5개 폴더 전부 실사용 근거가 있음을 확인했다. 불필요하다고 판단해 제거한 것:
+현재 폴더의 실사용 근거를 확인했다. 불필요하다고 판단해 제거한 것:
 
 - `prompts/PROJECT_TEST_INSTRUCTIONS.md`, 최상위 `web-project/`(구 버전) — 어디서도 링크되지 않는
   고아 문서였고 스키마가 낡아 있었음. 삭제 완료, `prompts/web-project/`로 단일화.
 
-남은 5개 폴더 중 앱 실행에 직접 필요한 것은 `app/`뿐이고, 나머지 4개(`docs/`, `pipeline/`,
-`ai-prompts/`, `samples/`)는 "설계 근거·검증 절차·회귀 테스트 데이터·별도 포트폴리오 산출물"로서
+남은 4개 폴더 중 앱 실행에 직접 필요한 것은 `app/`뿐이고, 나머지 3개(`docs/`, `jobkorea-ai/`,
+`ai-prompts/`)는 "설계 근거·검증 절차·별도 포트폴리오 산출물"로서
 각각 독립적인 존재 이유가 있어 유지한다.

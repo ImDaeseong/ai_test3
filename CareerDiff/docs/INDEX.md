@@ -41,8 +41,6 @@ CareerDiff documentation is split by purpose so the project does not lose direct
 - `docs/integration/API_CONTRACT.md`: first API request/response/error contracts.
 - `docs/design/ACCESSIBILITY_I18N_PLAN.md`: accessibility and Korean/English readiness plan.
 - `docs/operations/OPERATIONS_RUNBOOK.md`: monitoring, incident, backup, restore, and release checklist.
-- `docs/integration/AIRFLOW_PIPELINE_PLAN.md`: `pipeline/` learning Airflow pipeline scope, security boundary, verification criteria.
-- `docs/integration/PIPELINE_ROLLOUT_PLAN.md`: `pipeline/` phase-by-phase rollout order and the manual-verify-before-automate gate.
 
 ## AI feature verification (cost/safety gates)
 

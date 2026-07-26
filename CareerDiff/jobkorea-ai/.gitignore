@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+
+# scraped listing data + candidate-matched trend reports (personal, not for the public repo)
+jobkorea.db
+reports/

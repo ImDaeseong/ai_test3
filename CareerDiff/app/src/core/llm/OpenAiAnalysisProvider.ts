@@ -8,6 +8,59 @@ import type { LlmAnalysisProvider } from "./LlmAnalysisProvider";
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 
+type JsonSchema = Record<string, unknown>;
+
+/**
+ * OpenAI strict structured outputs require every object property to appear in
+ * `required`. Domain-level optional fields are represented as required,
+ * nullable properties for the provider, then normalized back to absent fields
+ * before the regular Zod result schema validates the response.
+ */
+export function toOpenAiStrictSchema(schema: JsonSchema): JsonSchema {
+  const result = structuredClone(schema);
+
+  function visit(node: unknown) {
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+    if (!node || typeof node !== "object") return;
+
+    const objectNode = node as JsonSchema;
+    const properties = objectNode.properties;
+    if (properties && typeof properties === "object" && !Array.isArray(properties)) {
+      const propertyMap = properties as Record<string, unknown>;
+      const previouslyRequired = new Set(Array.isArray(objectNode.required) ? objectNode.required : []);
+
+      for (const [key, propertySchema] of Object.entries(propertyMap)) {
+        visit(propertySchema);
+        if (!previouslyRequired.has(key)) {
+          propertyMap[key] = { anyOf: [propertySchema, { type: "null" }] };
+        }
+      }
+      objectNode.required = Object.keys(propertyMap);
+    }
+
+    for (const [key, value] of Object.entries(objectNode)) {
+      if (key !== "properties") visit(value);
+    }
+  }
+
+  visit(result);
+  return result;
+}
+
+export function omitNullObjectFields(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(omitNullObjectFields);
+  if (!value || typeof value !== "object") return value;
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, child]) => child !== null)
+      .map(([key, child]) => [key, omitNullObjectFields(child)]),
+  );
+}
+
 /**
  * OpenAI Responses API + Structured Outputs
  * (docs/library-decisions/TECH_STACK_DECISIONS.md).
@@ -19,14 +72,11 @@ const DEFAULT_MODEL = "gpt-4o-mini";
  * implementation rule").
  *
  * Not yet exercised against the real API in this repo: no OPENAI_API_KEY
- * is configured in this environment, so this path has only been verified
- * by type-checking and by dependency-injecting a fake provider in tests
- * (see AnalysisOrchestrator.test.ts). Before relying on this in
- * production, run it once with a real key and confirm the response
- * actually validates against careerDiffAnalysisResultSchema — OpenAI's
- * strict JSON schema mode has constraints (e.g. it treats every property
- * as required) that z.toJSONSchema()'s default output may not fully
- * satisfy for the `.optional()` fields in that schema.
+ * is configured in this environment. Tests cover provider selection and
+ * conversion of domain-optional fields into OpenAI's required+nullable
+ * strict-schema representation. Before production, run one consented,
+ * synthetic request with a real key and confirm the response validates
+ * against careerDiffAnalysisResultSchema.
  */
 export class OpenAiAnalysisProvider implements LlmAnalysisProvider {
   isConfigured(): boolean {
@@ -40,7 +90,7 @@ export class OpenAiAnalysisProvider implements LlmAnalysisProvider {
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const model = process.env.OPENAI_MODEL || DEFAULT_MODEL;
-    const jsonSchema = z.toJSONSchema(careerDiffAnalysisResultSchema);
+    const jsonSchema = toOpenAiStrictSchema(z.toJSONSchema(careerDiffAnalysisResultSchema));
 
     const response = await client.responses.create({
       model,
@@ -55,7 +105,7 @@ export class OpenAiAnalysisProvider implements LlmAnalysisProvider {
       },
     });
 
-    const raw: unknown = JSON.parse(response.output_text);
+    const raw: unknown = omitNullObjectFields(JSON.parse(response.output_text));
     return careerDiffAnalysisResultSchema.parse(raw);
   }
 }

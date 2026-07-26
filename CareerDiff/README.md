@@ -7,8 +7,8 @@
 - **목적**: 나는 이직 준비 중에 CareerDiff로 채용공고와 내 이력서/프로젝트를 비교해서 부족한 역량, 이력서 수정안, 보완 프로젝트를 얻는다.
 - **입력**: 채용공고 텍스트, 이력서/커리어/프로젝트 설명 (붙여넣기)
 - **출력**: 적합도 점수, 강한/약한/누락 매칭, 이력서 재작성 제안, 역량 우선순위, 소규모 보완 프로젝트 3개, 7일 준비 플랜
-- **상태**: Mock 기반 UI/흐름은 완성 — 진행률 게이트 85% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 실제로 동작(단위 테스트 26개 + Playwright E2E 4개 전부 통과). 결과 내용은 한글. 다만 `AnalysisOrchestrator`는 실제 분석 로직 없이 "키 없으면 고정 mock 반환, 키 있으면 LLM 호출"만 하므로(`AnalysisOrchestrator.ts:55-60`) 지금은 UI 셸이지 실사용자 입력을 분석하지는 못한다. 유료 API 호출 전에 `ai-prompts/claude-projects-test/MANUAL_ANALYSIS_PROMPT.md` + `ai-prompts/claude-projects-test/WEB_PROJECT_USAGE.md`로 Claude/ChatGPT 웹에서 무료로 먼저 검증 중(비용 문제로 유료 API는 이 검증이 안정화된 뒤로 미룸).
-- **폴더 구조**: `app`/`docs`/`pipeline`/`ai-prompts`/`samples` 각 폴더의 역할과 필요성 검증은 [`PROJECT_STRUCTURE.md`](./PROJECT_STRUCTURE.md) 참고.
+- **상태**: Mock 기반 UI/흐름은 완성 — 진행률 게이트 85% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 실제로 동작(단위/컴포넌트 테스트 24개 통과 + 샘플 부재 테스트 1개 스킵 + Playwright E2E 4개 통과). 결과 내용은 한글. 다만 `AnalysisOrchestrator`는 실제 분석 로직 없이 "키 없으면 고정 mock 반환, 키 있으면 LLM 호출"만 하므로(`AnalysisOrchestrator.ts:55-60`) 지금은 UI 셸이지 실사용자 입력을 분석하지는 못한다. 유료 API 호출 전에 `ai-prompts/claude-projects-test/MANUAL_ANALYSIS_PROMPT.md` + `ai-prompts/claude-projects-test/WEB_PROJECT_USAGE.md`로 Claude/ChatGPT 웹에서 무료로 먼저 검증 중(비용 문제로 유료 API는 이 검증이 안정화된 뒤로 미룸).
+- **폴더 구조**: `app`/`docs`/`jobkorea-ai`/`ai-prompts` 각 폴더의 역할과 필요성 검증은 [`PROJECT_STRUCTURE.md`](./PROJECT_STRUCTURE.md) 참고.
 - **의의**: 본인 이직 준비용이자 포트폴리오 — LLM/RAG, 문서 파싱, 스킬 추출, 스코어링/랭킹, 프롬프트 설계, 프라이버시 인지 제품 설계, 대시보드 UI를 보여줌
 
 ## 스택
@@ -62,16 +62,14 @@ Projects)나 로컬 검증으로 먼저 확인하기 전까지 유료/실전 경
 | `ai-prompts/검증현황.md` | **시작점** — 프로젝트 전체 AI 기능 목록 + 무료 검증 상태 + 유료 전환 조건 |
 | `ai-prompts/README.md` | 분석기 프롬프트가 지켜야 할 목표/규칙(설계 원칙) |
 | `ai-prompts/claude-projects-test/` | **웹사이트 Projects에 그대로 붙여넣거나 업로드할 내용만 모은 폴더**(`MANUAL_ANALYSIS_PROMPT.md` + `WEB_PROJECT_USAGE.md`) — 설계/추적 문서와 분리 |
-| `docs/integration/AIRFLOW_PIPELINE_PLAN.md` | `pipeline/` 학습용 Airflow 파이프라인 범위·보안 경계·검증 기준 |
-| `docs/integration/PIPELINE_ROLLOUT_PLAN.md` | `pipeline/` 진행 순서(Phase 0~5)와 "수동 검증 후 자동화" 게이트 |
+| `jobkorea-ai/README.md` | `jobkorea-ai/` 잡코리아 채용정보 수집·분류 서브프로젝트 설치·실행·수집 원칙 |
 
-## 학습용 Airflow 파이프라인 (`pipeline/`)
+## 잡코리아 채용정보 수집·분류 (`jobkorea-ai/`)
 
-`app/` 제품과는 분리된 별도 서브프로젝트. 채용공고 수집(목업 데이터, 향후 고용24 Open API)→정제→청크화→
-임베딩→VectorDB 저장(SQLite)→RAG 인덱스 갱신→알림을 Airflow DAG로 재현해 RAG 데이터 파이프라인 운영
-자동화를 학습·포트폴리오화한다. 실제 잡코리아 크롤링은 하지 않는다(ToS·판례 검토 완료, 영구 HOLD —
-`docs/integration/AIRFLOW_PIPELINE_PLAN.md`). 진행 순서와 다음 단계(고용24 API 수동 검증 게이트)는
-`docs/integration/PIPELINE_ROLLOUT_PLAN.md`, 실행 방법은 `pipeline/README.md` 참고.
+`app/` 제품과는 분리된 별도 서브프로젝트. 잡코리아의 공개 채용목록/공개 공고 상세 페이지만 저빈도로
+수집해 관심 키워드로 선별·분류하고 FastAPI로 제공한다. 로그인·CAPTCHA·접근 제한은 우회하지 않으며,
+실제 운영 전 잡코리아 이용약관·robots.txt를 직접 확인해야 한다(기존 `pipeline/`의 합성 데이터
+기반 Airflow 파이프라인을 대체, 2026-07-24). 실행 방법은 `jobkorea-ai/README.md` 참고.
 
 ## 유지보수 원칙
 
@@ -89,5 +87,5 @@ Projects)나 로컬 검증으로 먼저 확인하기 전까지 유료/실전 경
 5. ~~첫 사용 가능한 화면 구축~~ — 완료 (`app/src/app/page.tsx`: 채용공고 입력, 후보자 정보 입력, 분석 버튼, 프라이버시 안내).
 6. ~~Mock 데이터 기반 대시보드 구축~~ — 완료 (`app/src/features/analysis-dashboard/`: 점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비 6개 패널).
 7. ~~`AnalysisOrchestrator`와 API 라우트 추가~~ — 완료 (`app/src/core/analysis/AnalysisOrchestrator.ts`, `app/src/app/api/analyze/route.ts`). 아직 mock만 반환하며, 요청 검증은 Zod(`app/src/core/schemas/analyzeRequest.ts`).
-8. ~~테스트 확충~~ — 완료. 단위/컴포넌트 테스트 22개(오케스트레이터의 provider 분기 로직 포함, 가짜 provider로 검증해 실제 API 호출 없음) + Playwright E2E 4개(`app/e2e/analyzer.spec.ts`, 입력 검증·전체 분석 흐름·보완 프로젝트 정확히 3개·API 400 응답 확인). `requirement-extraction`/`evidence-extraction`/`evidence-matching`/`fit-scoring`/`resume-suggestions`/`mini-projects`/`interview-prep` 서비스 폴더(`docs/design/MODULE_BOUNDARIES.md`)는 실제 로직이 생기기 전까지 계속 비워둠.
+8. ~~테스트 확충~~ — 완료. 단위/컴포넌트 테스트 24개 통과 + 샘플 부재 테스트 1개 스킵(오케스트레이터의 provider 분기와 OpenAI strict-schema 변환 포함, 실제 API 호출 없음) + Playwright E2E 4개(`app/e2e/analyzer.spec.ts`, 입력 검증·전체 분석 흐름·보완 프로젝트 정확히 3개·API 400 응답 확인). `requirement-extraction`/`evidence-extraction`/`evidence-matching`/`fit-scoring`/`resume-suggestions`/`mini-projects`/`interview-prep` 서비스 폴더(`docs/design/MODULE_BOUNDARIES.md`)는 실제 로직이 생기기 전까지 계속 비워둠.
 9. LLM provider 연동 — **진행 중, 무료 수동 검증 단계**. `app/src/core/llm/OpenAiAnalysisProvider.ts`가 OpenAI Responses API + Structured Outputs(`docs/library-decisions/TECH_STACK_DECISIONS.md`)로 구현되어 있고, `AnalysisOrchestrator`가 `OPENAI_API_KEY` 유무로 mock/실분석을 분기한다. 유료 API 호출은 비용 문제로 보류하고, 대신 `ai-prompts/claude-projects-test/MANUAL_ANALYSIS_PROMPT.md`(코드와 동일한 프롬프트+스키마의 복붙판)를 `ai-prompts/claude-projects-test/WEB_PROJECT_USAGE.md` 절차에 따라 Claude/ChatGPT 웹 Project에서 무료로 먼저 검증한다. 이 수동 검증이 여러 입력 조합에서 체크리스트를 통과하면, 그때 실제 `OPENAI_API_KEY`로 `OpenAiAnalysisProvider`를 한 번 호출해 같은 기준으로 재확인한다(`OpenAiAnalysisProvider.ts` 코드 주석 참고).

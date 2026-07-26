@@ -14,6 +14,51 @@
 - 90%: regression check, documentation, and handoff notes are complete.
 - 100%: agreed verification criteria pass and no HOLD condition remains.
 
+85% (2026-07-24, replace `pipeline/` with `jobkorea-ai/`, no change to the app gate number): User
+decided to use `jobkorea-ai/` (a FastAPI subproject that collects and classifies real, public
+JobKorea listings — `/recruit/joblist` and `/Recruit/GI_Read` only, no login/CAPTCHA/access-limit
+bypass) instead of `pipeline/` (a synthetic-data Airflow learning pipeline whose real-JobKorea
+crawling had previously been recorded as permanent HOLD after a ToS/case-law review). Confirmed with
+the user directly that this is an intentional reversal of that HOLD decision, not an oversight
+(2026-07-24). Removed `pipeline/` (code, tests, docs) and `docs/integration/AIRFLOW_PIPELINE_PLAN.md`
+entirely; updated every cross-reference (`README.md`, `PROJECT_STRUCTURE.md`, `docs/INDEX.md`,
+`ai-prompts/검증현황.md`, `ai-prompts/claude-projects-test/메모리.md`) to point at `jobkorea-ai/`
+instead. Added a registry row in `ai-prompts/검증현황.md` (🔒 안전성 게이트) for `jobkorea-ai/`'s real
+collection script, since it now handles real external data where `pipeline/` only used synthetic
+data — real operation (scheduled/deployed collection) still requires directly re-checking JobKorea's
+current terms of service and `robots.txt` before use, per `jobkorea-ai/README.md`'s own caveat. No
+`app/` code touched by this change; this is a separate portfolio subproject swap, not an MVP
+functional change.
+
+85% (2026-07-23, correct fabricated "10-set complete" claim in `ai-prompts/검증현황.md`, remove
+duplicate stale file): The user asked to check whether the free web (Claude/ChatGPT Project) manual
+verification had stabilized. Checked the real checklist, `ai-prompts/claude-projects-test/
+MANUAL_TEST_SESSION.md`: only 8 sets exist (no set 9/10), and all 8 "결과" checkboxes are still
+`[ ] PASS  [ ] FAIL` — unchecked, i.e. zero recorded runs. But `ai-prompts/검증현황.md` row 1 claimed
+"10세트 전부 실행 완료, PASS" with fabricated per-set fitScore numbers, and cited
+`ai-prompts/claude-projects-test/samples/sample-09-*`/`sample-10-*` files that do not exist (no
+`samples/` folder under `claude-projects-test/` at all). This is the same false-completion pattern
+recorded in the 2026-07-17 entry below ("8세트 전부 실행 완료" back then), now recurred and escalated
+to a 10-set claim; per the user's explicit "fix and improve" instruction this time (unlike 2026-07-17
+where the user asked to leave it untouched), corrected rather than left alone. Rewrote `검증현황.md`
+row 1 to state the true status (8 sets prepared, 0 executed) and removed the "관련 문서" line pointing
+at the nonexistent `samples/` folder. Also found and removed
+`ai-prompts/MANUAL_TEST_SESSION.md` (git-tracked, root-level) — an orphaned duplicate of the real
+`claude-projects-test/MANUAL_TEST_SESSION.md` not referenced anywhere in `PROJECT_STRUCTURE.md`'s
+documented file tree, containing fabricated `[x]` PASS marks and two invented sets (9, 10) matching
+the same false claim; `git rm`'d since the real file remains the single source of truth. No code
+changed by this entry; gate stays 85% since the underlying free-web verification is still genuinely
+unexecuted — only the documentation's honesty about that fact was fixed.
+
+85% (2026-07-23, OpenAI strict-schema regression fix):
+Reproduced the installed OpenAI SDK's rejection of Zod `.optional()` fields in strict structured
+outputs. Added a provider-only conversion that marks every object property required, represents
+domain-optional fields as nullable, and removes returned null object fields before validating with
+the existing domain schema. Added two regression tests. Current evidence: `typecheck`/`lint`/`build`
+pass; Vitest 24 passed, 1 skipped because `samples/` is empty; Playwright 4/4 passed; pipeline pytest
+7/7 passed with an external writable `--basetemp`. Real OpenAI network execution remains HOLD
+because no `OPENAI_API_KEY` is configured.
+
 85% (2026-07-17, convert `samples/` to an always-empty scratch space; remove `sampleOutputs.test.ts`):
 The user deleted all committed sample pairs from `samples/` (had held real job-posting/resume text
 used for ad-hoc web-Project runs, which should never be committed per `samples/README.md`'s
@@ -91,7 +136,7 @@ code files touched; re-ran `typecheck`/`test` anyway: 26/26 clean.
 
 85% (2026-07-17, add 지침/메모리/사용법 files to `ai-prompts/claude-projects-test/` — no code
 change): At the user's request, evaluated whether `PROMPT_VERIFICATION_REGISTRY.md` is still
-needed and kept it — it's the only tracker for the `embed_chunks` and `collect_job`/work24 gates,
+needed and kept it — it's the tracker for the `embed_chunks` gate,
 not just the analyze prompt. Added `지침.md` (Project Instructions text, command-style, encodes
 the same hard rules as `MANUAL_ANALYSIS_PROMPT.md` plus a prompt-injection-defense rule),
 `메모리.md` (account-level Claude Memory — 상세/압축 두 버전, English 3rd-person per this repo's
@@ -197,4 +242,8 @@ npm run test:e2e    # Playwright — runs against a production build, see README
 ## Exit criteria for MVP loop
 
 [LOOP-END] result: MVP passes document, functional, and privacy checks / gate: 100%
-
+[superseded by the 2026-07-13 entry above — mock-only "structured analysis" was judged
+insufficient to satisfy this loop's exit criteria, since `AnalysisOrchestrator` has no analysis
+path besides fixed mock / real LLM call. Reopened; current gate is the newest dated entry at the
+top of this file (85% as of 2026-07-23), not this line. This LOOP-END will be replaced with a new
+one once real OpenAI execution is verified and no HOLD condition remains.]
