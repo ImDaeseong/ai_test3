@@ -31,11 +31,6 @@ CareerDiff documentation is split by purpose so the project does not lose direct
 - `docs/integration/ANALYSIS_FLOW.md`: how feature services connect.
 - `docs/integration/PROMPT_SERVICE_MAP.md`: prompt/service responsibility split.
 
-- `docs/design/PRODUCTION_ARCHITECTURE.md`: final target structure for real service launch.
-- `docs/integration/RUNTIME_EVOLUTION.md`: phase-by-phase migration from MVP to production service.
-- `docs/design/AI_DATA_STRATEGY.md`: data layers, privacy rules, vectorization strategy, and service data value.
-- `docs/integration/RAG_EMBEDDING_PLAN.md`: when and how to add embeddings, vector search, and RAG.
-- `docs/DOCUMENTATION_AUDIT.md`: current design-document audit and remaining launch-readiness gaps.
 - `docs/design/SECURITY_THREAT_MODEL.md`: security assets, trust boundaries, prompt-injection risks, and controls.
 - `docs/design/AI_EVALUATION_PLAN.md`: synthetic evaluation set and regression criteria for LLM/RAG behavior.
 - `docs/integration/API_CONTRACT.md`: first API request/response/error contracts.
@@ -49,11 +44,12 @@ Design docs describe what the product is. This section tracks whether each AI-de
 verification yet — see `ai-prompts/검증현황.md` first.
 
 - `ai-prompts/검증현황.md`: **start here** — registry of every paid-API/real-data
-  AI feature in the project, its free verification path, and current status.
+  AI feature in the project, its verification path, and current status.
 - `ai-prompts/README.md`: analyzer prompt design principles (what the prompt must require).
-- `ai-prompts/claude-projects-test/`: everything meant to be pasted/uploaded into a Claude/ChatGPT Projects
-  web UI, kept separate from the design/tracking docs above.
-  - `ai-prompts/claude-projects-test/MANUAL_ANALYSIS_PROMPT.md`: copy-paste prompt + schema, kept identical to
-    `app/src/core/llm/buildAnalysisPrompt.ts` + `app/src/core/schemas/analysisResult.ts`.
-  - `ai-prompts/claude-projects-test/WEB_PROJECT_USAGE.md`: Claude/ChatGPT Projects setup + manual
-    verification checklist (no paid API call needed).
+- `ai-prompts/job-collection-manual/`: manual, human-in-the-loop job-posting collection (replaces
+  the removed `jobkorea-ai/` crawler) — a separate concern from the JD-fit analysis feature below.
+
+**2026-08-01**: the JD-fit analysis feature's free web-Project verification track
+(`ai-prompts/claude-projects-test/` — `MANUAL_ANALYSIS_PROMPT.md`, `WEB_PROJECT_USAGE.md`,
+`MANUAL_TEST_SESSION.md`, `manual-runs/`) was retired; that feature is now verified locally instead.
+See `ai-prompts/검증현황.md` row 1 and `docs/library-decisions/TECH_STACK_DECISIONS.md`.

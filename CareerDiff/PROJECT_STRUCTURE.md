@@ -1,15 +1,15 @@
 # CareerDiff — Folder Structure
 
-레포 최상위 4개 폴더(`app/`, `docs/`, `jobkorea-ai/`, `ai-prompts/`)가 각각 무엇이고 왜
+레포 최상위 3개 폴더(`app/`, `docs/`, `ai-prompts/`)가 각각 무엇이고 왜
 필요한지 정리한 문서다. 각 폴더는 성격이 다르므로 섞지 않는다 — 무엇을 확인하려는지에 따라 아래
-표에서 폴더를 먼저 찾는다.
+표에서 폴더를 먼저 찾는다. (자동 크롤러 서브프로젝트였던 `jobkorea-ai/`는 2026-08-01 법적 리스크
+판단으로 제거됨 — 아래 "채용정보 수집" 절 참고.)
 
 | 폴더 | 한 줄 요약 | app/ 실행에 필수인가 |
 | --- | --- | --- |
 | `app/` | 실제 제품(Next.js) | ✅ 이것 자체가 제품 |
 | `docs/` | 설계·기획 문서 | 코드는 아니지만 구현 기준의 출처 |
-| `jobkorea-ai/` | 잡코리아 공개 채용정보 수집·분류 FastAPI 서브프로젝트 | ❌ `app/`과 독립, 포트폴리오용 서브프로젝트 |
-| `ai-prompts/` | 분석 프롬프트 설계 + 무료 웹 검증 자료 | 코드는 아니지만 `OpenAiAnalysisProvider`의 원본 |
+| `ai-prompts/` | 분석 프롬프트 설계 원칙 + 채용정보 수동 수집 절차 | 코드는 아니지만 `OpenAiAnalysisProvider`의 원본 |
 
 ## `app/` — 제품 코드
 
@@ -29,31 +29,29 @@ Next.js(App Router) + TypeScript로 만든 실제 CareerDiff 웹앱. `SPEC.md`�
 | 하위 폴더 | 내용 |
 | --- | --- |
 | `docs/features/` | 기능 10개 각각의 목적·규칙·UI 계약·테스트 체크 |
-| `docs/design/` | 데이터 모델, 모듈 경계, UI 설계, 프로덕션 아키텍처, RAG/데이터 전략, 보안 위협 모델, 접근성 |
+| `docs/design/` | 데이터 모델, 모듈 경계, UI 설계, 보안 위협 모델, 접근성 |
 | `docs/integration/` | 분석 흐름, API 계약 |
-| `docs/library-decisions/` | 라이브러리 선택 기준·전체 스택 결정·기능별 매핑(`features/*.md`) |
+| `docs/library-decisions/` | 라이브러리 선택 기준·전체 스택 결정·기능별 매핑(`FEATURE_LIBRARY_MATRIX.md` 표 하나로 통합, 2026-08-01) |
 | `docs/operations/` | 운영 런북 |
-| `docs/INDEX.md`, `docs/DOCUMENTATION_AUDIT.md` | 문서 전체 지도, 문서 완성도 감사 |
+| `docs/INDEX.md` | 문서 전체 지도 |
 
 **필요성**: 장식용 문서가 아니라 실제로 구현/리뷰 기준으로 계속 참조됨 — 예를 들어
 `docs/features/08-mini-project-recommendations.md`의 "정확히 3개" 규칙 위반을 코드(mock 결과)와
 앱 스키마 테스트에서 실제로 잡아낸 이력이 있음. 필요함, 유지.
 
-## `jobkorea-ai/` — 잡코리아 채용정보 수집·분류 (별도 서브프로젝트)
+## 채용정보 수집 — `jobkorea-ai/` 제거(2026-08-01)와 수동 대체
 
-`app/`과 완전히 분리된 포트폴리오용 서브프로젝트. 잡코리아의 **공개** 채용목록(`/recruit/joblist`)과
-공개 공고 상세(`/Recruit/GI_Read`)만 대상으로 저빈도 수집 후 관심 키워드로 선별·분류해 FastAPI로
-제공한다. 로그인·CAPTCHA·접근 제한 우회는 하지 않는다. 기존 `pipeline/`(합성 데이터 기반 Airflow
-학습용 파이프라인, 실제 크롤링 영구 HOLD)을 대체하기로 결정(2026-07-24) — 실제 공개 페이지 크롤링으로
-전환하는 의도적 선택이며, 실 운영 전 잡코리아 이용약관·robots.txt를 직접 재확인해야 한다.
+`jobkorea-ai/`(잡코리아 공개 페이지를 코드로 자동 수집하던 FastAPI 서브프로젝트)는 사용자가 자동
+크롤링 자체를 법적 리스크로 판단해 완전히 제거했다(코드·테스트·문서·DB 전부 삭제, `git rm`으로
+이력엔 남아 있음 — `../../VERIFICATION.md` 게이트 로그 참고). 이전에는 `pipeline/`(합성 데이터
+학습용, 2026-07-24 `jobkorea-ai/`로 대체)이 있었고, 이번엔 자동 수집 자체를 접었다 — 다음
+자동화 재도입은 공식 API가 확보된 뒤에만, 사람이 명시적으로 요청할 때만 진행한다.
 
-- 코드: `app/`(FastAPI), `scripts/`(collect_jobs, build_trend_report), `tests/`.
-- 문서: `jobkorea-ai/README.md`(설치·실행·API·수집 원칙).
-- **필요성**: `app/`(Next.js 제품) 동작에는 불필요(독립 실행). 사용자가 명시적으로 요청한 별도 학습/
-  포트폴리오 산출물이라 존재 이유가 다르다. `app/`과 섞이지 않도록 의도적으로 최상위에 분리해 둠 —
-  `app/`에 합치지 않는다.
+대체 수단은 `ai-prompts/job-collection-manual/`이다: 사람이 채용 사이트에서 직접 읽은 공고 1건을
+Claude/ChatGPT 웹 Project에 붙여넣어 구조화된 JSON으로 받는다(자동화 없음, 스크립트 없음). 아래
+`ai-prompts/` 절 참고.
 
-## `ai-prompts/` — 프롬프트 설계 + 무료 검증 자료
+## `ai-prompts/` — 프롬프트 설계 원칙 + 채용정보 수동 수집
 
 **설계/추적 문서**와 **웹 Projects에 그대로 붙여넣을 내용**을 폴더로 분리했다(이번에 재정리).
 
@@ -61,22 +59,26 @@ Next.js(App Router) + TypeScript로 만든 실제 CareerDiff 웹앱. `SPEC.md`�
 ai-prompts/
   README.md                        - 분석기 프롬프트가 지켜야 할 규칙(설계 원칙)
   검증현황.md                     - 유료 API/실데이터를 쓰는 모든 AI 기능의 검증 상태 레지스트리
-  claude-projects-test/
-    지침.md                        - Project Instructions에 붙여넣는 지침 (명령형)
-    메모리.md                      - 계정 단위 Memory에 붙여넣는 상세/압축 문구 2종
-    사용법.md                      - Project 생성부터 3세트 검증까지 실행 절차
-    MANUAL_ANALYSIS_PROMPT.md      - 코드(buildAnalysisPrompt.ts)와 동일한, 복붙용 프롬프트+스키마
-    MANUAL_TEST_SESSION.md         - 8세트 실행지 + 체크리스트 (AI_EVALUATION_PLAN.md 10유형 중 8개)
-    WEB_PROJECT_USAGE.md           - Claude/ChatGPT 플랫폼별 설정 차이 + 상세 검증 절차
+  job-collection-manual/
+    README.md                      - 이 트랙이 왜 존재하는지(jobkorea-ai 대체) + 절대 원칙
+    지침.md                        - Project Instructions (JobCollect Project용, CareerDiff와 별개)
+    메모리.md                      - 계정 단위 Memory 문구
+    사용법.md                      - Project 생성부터 공고 1건 수집까지 절차
+    COLLECT_PROMPT.md              - 복붙용 프롬프트 + 채용정보 구조화 스키마
+    COLLECT_LOG.md                 - 수집 메타데이터 로그(공고 본문 제외, git 추적)
+    collected-jobs/                 - 구조화된 결과 JSON 누적 폴더(git 미추적)
 ```
 
-- **필요성**: `app/src/core/llm/buildAnalysisPrompt.ts`가 소스이고, `MANUAL_ANALYSIS_PROMPT.md`는
-  그 복붙판이다. 유료 `OPENAI_API_KEY` 없이 Claude.ai/ChatGPT 웹 구독만으로 같은 프롬프트+스키마의
-  결과 품질을 사람이 먼저 확인하기 위해 존재한다(비용 게이트). 필드 단위로 코드와 대조해 일치함을
-  확인함(2026-07-15).
-- 이전에는 `prompts/PROJECT_TEST_INSTRUCTIONS.md` + 최상위 `web-project/` 폴더가 별도로 존재해 스키마가
-  둘로 갈라졌었다(오래된 스키마가 `retrievalContext`/`metadata`/`id` 필드 없이 방치됨) — 삭제하고 이
-  단일 트랙으로 통합함.
+- **채용공고-이력서 적합도 분석(fitScore 등) 검증은 2026-08-01부터 로컬에서 진행한다.** 이전에는
+  이 폴더에 `claude-projects-test/`(Claude/ChatGPT 웹 Project에 붙여넣는 프롬프트+스키마+8세트
+  실행지+실데이터 누적 트랙)가 있었으나, 사용자가 웹 Project 경로가 더 이상 필요 없다고 판단해
+  전체 삭제했다 — "수집, 비교 데이터를 로컬에서 비교한다"는 방향으로 전환. 로컬 검증의 구체 방법은
+  아직 이 저장소 문서에 정의돼 있지 않다(사용자가 직접 진행 예정). 이력은
+  `docs/library-decisions/TECH_STACK_DECISIONS.md`의 "2026-07-13 decision"(왜 웹 Project 방식을
+  택했는지)과 "2026-08-01 update"(왜 폐기했는지), `VERIFICATION.md`의 같은 날짜 게이트 로그 참고.
+- **2026-08-01 추가**: `jobkorea-ai/` 자동 크롤러 제거에 맞춰 `job-collection-manual/`을 신설 —
+  채용정보 자체를 모으는 역할(별도 `JobCollect` Project)이다. 위에서 제거한 분석 검증 트랙과는
+  전혀 다른 목적이라 애초에 분리해 뒀던 덕에, 분석 트랙 삭제가 이 폴더에는 영향을 주지 않았다.
 
 ## 필요성 검증 결과 (2026-07-15)
 
@@ -85,6 +87,5 @@ ai-prompts/
 - `prompts/PROJECT_TEST_INSTRUCTIONS.md`, 최상위 `web-project/`(구 버전) — 어디서도 링크되지 않는
   고아 문서였고 스키마가 낡아 있었음. 삭제 완료, `prompts/web-project/`로 단일화.
 
-남은 4개 폴더 중 앱 실행에 직접 필요한 것은 `app/`뿐이고, 나머지 3개(`docs/`, `jobkorea-ai/`,
-`ai-prompts/`)는 "설계 근거·검증 절차·별도 포트폴리오 산출물"로서
-각각 독립적인 존재 이유가 있어 유지한다.
+남은 3개 폴더 중 앱 실행에 직접 필요한 것은 `app/`뿐이고, 나머지 2개(`docs/`, `ai-prompts/`)는
+"설계 근거·검증 절차·채용정보 수동 수집 절차"로서 각각 독립적인 존재 이유가 있어 유지한다.

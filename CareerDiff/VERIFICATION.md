@@ -14,6 +14,116 @@
 - 90%: regression check, documentation, and handoff notes are complete.
 - 100%: agreed verification criteria pass and no HOLD condition remains.
 
+85% (2026-08-01, fix stale planned-architecture references in `docs/design/MODULE_BOUNDARIES.md`,
+`docs/integration/ANALYSIS_FLOW.md`, `docs/integration/PROMPT_SERVICE_MAP.md`, and `README.md` step 8;
+run full regression loop): These three docs described a per-stage service architecture
+(`JobRequirementExtractor`, `EvidenceMatcher`, `FitScorer`, `RagContextProvider`, etc.) and 7 feature
+service folders that were never built — the actual implementation collapsed everything into one
+`AnalysisOrchestrator` -> `LlmAnalysisProvider` LLM call. Confirmed via `find app/src` (no such
+folders exist) before rewriting each doc to describe the real flow instead. `docs/design/DATA_MODEL.md`
+was checked and left alone — its `EmbeddableChunk`/`RetrievedContextItem` types do exist in
+`app/src/core/types/analysis.ts`, so unlike the three docs above it wasn't drifted, just an unused
+(but real) part of the schema contract. `app/` source itself needed no changes — reviewed it first
+(1,679 lines, 27 files) and found no bloat: `LlmAnalysisProvider`'s interface exists for a concrete
+reason (constructor-injected fake provider in tests, no real API call needed), no duplicate files
+like `docs/` had. [LOOP-START] goal: confirm the doc-only edits left `app/` unaffected / exit
+criteria: typecheck+lint+unit+build+E2E all pass / max iterations: 3. Ran `npm run typecheck` (clean),
+`lint` (clean), `test` (24/24 Vitest), `build` (Next.js/Turbopack, compiled clean), `test:e2e`
+(4/4 Playwright). `git status --short CareerDiff/app/` showed zero changes, confirming this was a
+pure regression check with nothing to break. [LOOP-END] result: 5/5 checks pass / gate: 85%
+(unchanged — docs accuracy fix, no functional change). Gate stays 85%.
+
+85% (2026-08-01, simplify `docs/` — remove redundant/speculative documents, no `app/` code change):
+User said the `ai-prompts/`/`docs/`/`CareerDiff` structure was over-classified for the project's
+actual size and asked for a leaner pass, with `app/` source to follow as a separate, explicitly
+confirmed step. Surveyed the tree: `docs/` alone was ~1,585 lines across `design/`+`integration/`
+plus 21 feature/library-decision files, against 1,679 lines of actual product code in `app/src/` —
+roughly 1:1 doc-to-code weight for a mock-only MVP. Removed 16 files after confirming each was
+either fully redundant or documented an unimplemented/speculative feature: `docs/library-decisions/features/*.md`
+(11 files — `docs/library-decisions/FEATURE_LIBRARY_MATRIX.md`'s one table already states the same
+per-feature library choices with far less text, confirmed by direct comparison before deleting);
+`docs/design/PRODUCTION_ARCHITECTURE.md` (313 lines) and `docs/integration/RUNTIME_EVOLUTION.md`
+(phase-migration plan, overlapped with README's "다음 작업" list) — no deploy has ever happened,
+nothing in `app/` implements a later phase; `docs/design/AI_DATA_STRATEGY.md` (258 lines) and
+`docs/integration/RAG_EMBEDDING_PLAN.md` (183 lines) — RAG is not implemented anywhere in `app/`
+(`retrievalContext` is hard-coded `false` throughout); `docs/DOCUMENTATION_AUDIT.md` — a
+pre-implementation "is there enough documentation to start coding" gate, moot now that
+implementation is done. Kept `docs/features/*.md` (matched to real test-caught regressions per
+`README.md`), `docs/design/DATA_MODEL.md`/`MODULE_BOUNDARIES.md`/`SECURITY_THREAT_MODEL.md`/`UI_DESIGN.md`/`ACCESSIBILITY_I18N_PLAN.md`/`AI_EVALUATION_PLAN.md`,
+`docs/integration/ANALYSIS_FLOW.md`/`API_CONTRACT.md`/`PROMPT_SERVICE_MAP.md`, and the 4 root docs —
+user confirmed this exact split before deletion (asked via a single scoped question rather than
+guessing on a 40-file, partially-irreversible change). Updated every cross-reference: `ARCHITECTURE.md`
+(trimmed "Production architecture note", kept the one still-valid privacy sentence from "AI data
+strategy note"), `docs/INDEX.md`, `PROJECT_STRUCTURE.md`, `CareerDiff/README.md`,
+`docs/library-decisions/README.md`. `app/` was not touched — user asked for docs first, `app/`
+simplification as a separate confirmed pass (build/test/typecheck re-verification required there,
+unlike this docs-only change). Gate stays 85%.
+
+85% (2026-08-01, retire the web-Project free verification track for JD-fit analysis; move to local
+verification instead, no `app/` code change): User decided `ai-prompts/claude-projects-test/` (the
+Claude/ChatGPT web-Project track for verifying `/api/analyze`'s prompt+schema — `MANUAL_ANALYSIS_PROMPT.md`,
+`WEB_PROJECT_USAGE.md`, `MANUAL_TEST_SESSION.md`'s 8 fixed sets, and the `manual-runs/` real-data
+accumulation track added earlier the same day) was not needed: "수집, 비교 데이터를 로컬에서
+비교하는것이다" — job-posting *collection* stays on the web-Project path (`job-collection-manual/`,
+unaffected by this entry), but *comparison* (JD-vs-resume fit analysis) moves to local verification.
+Ran `git rm -r CareerDiff/ai-prompts/claude-projects-test` (6 tracked files: `MANUAL_ANALYSIS_PROMPT.md`,
+`MANUAL_TEST_SESSION.md`, `WEB_PROJECT_USAGE.md`, `지침.md`, `메모리.md`, `사용법.md` — all had only
+this session's edits, nothing else at risk) plus the two files added earlier today that were still
+untracked (`REAL_RUN_LOG.md`, `manual-runs/`, both created and deleted in the same day, 0 real runs
+ever recorded in either). Updated every cross-reference: `ai-prompts/README.md`, `ai-prompts/검증현황.md`
+(row 1 rewritten — local verification, method not yet defined in this repo), `docs/INDEX.md`,
+`PROJECT_STRUCTURE.md`, `CareerDiff/README.md`, `docs/library-decisions/TECH_STACK_DECISIONS.md`
+(added a "2026-08-01 update" section superseding, not deleting, the 2026-07-13 decision that
+originally justified the web-Project approach — kept as history since the RAG/LangChain-avoidance
+reasoning in it is still valid), and `ai-prompts/job-collection-manual/README.md`'s dangling pointer
+to the now-removed folder. The local verification method itself is intentionally left undefined —
+user said they will handle it directly, not something to build speculatively. No `app/` code
+touched; docs/removal only, gate stays 85%.
+
+85% (2026-08-01, remove `jobkorea-ai/` entirely for legal risk; add `job-collection-manual/` as its
+manual replacement, no `app/` code change): User decided the automated JobKorea crawler itself
+(`jobkorea-ai/scripts/collect_jobs.py` + `app/crawler/`) was a legal risk and asked to remove it
+completely — not re-scope, not HOLD, remove. This reopens the 2026-07-24 decision (`pipeline/`
+replaced by `jobkorea-ai/`) a second time: that entry replaced a synthetic-data pipeline with a real
+public-page crawler; this entry removes the real crawler outright rather than replacing it with
+another automated one. Ran `git rm -r CareerDiff/jobkorea-ai` (34 tracked files — `app/`, `scripts/`,
+`tests/`, `README.md`, `pyproject.toml`, `.env.example`, `docker-compose.yml`, `jobkorea_ai.egg-info/`)
+after confirming `git status` showed the tree was clean (no uncommitted local changes lost); also
+deleted the gitignored, never-tracked `.venv/`, `.env`, `jobkorea.db`, `reports/`, `__pycache__/` on
+disk. Added `ai-prompts/job-collection-manual/` (`README.md`, `지침.md`, `메모리.md`, `사용법.md`,
+`COLLECT_PROMPT.md`, `COLLECT_LOG.md`, gitignored `collected-jobs/`) as the replacement: a separate
+`JobCollect` Claude/ChatGPT web Project (distinct from the `CareerDiff` fit-analysis Project) that
+structures one real job posting at a time from text a human copied by hand — no script, no
+scheduler, no URL fetching by the model itself. The extraction/categorization schema mirrors what
+`jobkorea-ai/app/filters/classifier.py` + `keywords.py` did in code (fixed category list, required
+vs. preferred skills, tech keywords) so a future official-API integration can reuse the same shape.
+Updated every cross-reference: root `README.md`, `CareerDiff/README.md`, `PROJECT_STRUCTURE.md`,
+`ai-prompts/검증현황.md` (registry row 2 marked removed, new row 3 added for the manual track),
+`ai-prompts/claude-projects-test/메모리.md` (stale `jobkorea-ai/` boundary line pointed at
+`JobCollect` instead). `.gitignore` updated for `job-collection-manual/collected-jobs/*` (avoid
+re-publishing scraped-site posting text even when hand-copied, same caution as the resume-data
+pattern above). No `app/` code touched; this is a subproject removal + docs, gate stays 85%.
+
+85% (2026-07-31, add a real-data accumulation track alongside the 8 fixed synthetic sets, no
+code change): User asked to run real job postings (not just the 8 synthetic sets) through the
+free Claude/ChatGPT Project path, save each result JSON, and grow that dataset toward a threshold
+before deciding on the paid `OPENAI_API_KEY` step. Added `ai-prompts/claude-projects-test/manual-runs/`
+(result JSON storage, gitignored — contains real candidate data extracted from real resumes) and
+`ai-prompts/claude-projects-test/REAL_RUN_LOG.md` (tracked metadata-only log: date, job-category tag,
+PASS/FAIL, no raw personal text). Proposed target sample (adjustable, stated as a proposal, not
+user-confirmed yet): 15 runs, 3+ distinct job categories, 90%+ PASS rate — documented in
+`manual-runs/README.md`. Updated `.gitignore` (root) to exclude `manual-runs/*` except its own
+`README.md`, matching the existing `candidate-profile-*.json` real-PII pattern. Also promoted two
+rules that previously existed only as one-off additions in `MANUAL_TEST_SESSION.md` Set 2 (prompt-injection
+defense) and Set 8 (ignore culture/benefits paragraphs) into the standing rule set in
+`MANUAL_ANALYSIS_PROMPT.md`, `지침.md`, and `ai-prompts/README.md`'s Hard rules — real job postings
+hit both patterns often, so treating them as one-off test exceptions understated the risk. **Found
+but did not fix**: `app/src/core/llm/buildAnalysisPrompt.ts` (the actual paid-path prompt) does not
+include either promoted rule yet — flagged as a drift in `MANUAL_ANALYSIS_PROMPT.md` and this entry;
+applying it to `buildAnalysisPrompt.ts` would need `npm run typecheck`/`lint`/`test` (26 tests)/`build`
+re-verification and is left for a separate, explicitly-confirmed change. No `app/` code touched by
+this entry; docs/gitignore only, gate stays 85%.
+
 85% (2026-07-24, replace `pipeline/` with `jobkorea-ai/`, no change to the app gate number): User
 decided to use `jobkorea-ai/` (a FastAPI subproject that collects and classifies real, public
 JobKorea listings — `/recruit/joblist` and `/Recruit/GI_Read` only, no login/CAPTCHA/access-limit

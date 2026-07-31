@@ -1,24 +1,17 @@
 ﻿# Prompt and Service Integration
 
-This document maps feature services to prompts or deterministic logic.
+This document maps how prompts and validation fit together in the built code (2026-08-01 rewrite —
+see `docs/design/MODULE_BOUNDARIES.md`; the earlier plan to split requirement-extraction,
+evidence-matching, fit-scoring, etc. into separate deterministic/LLM services was never built).
 
-## MVP split
+## Actual split
 
-### LLM-backed services
-
-- `JobRequirementExtractor`
-- `CandidateEvidenceExtractor`
-- `ResumeSuggestionGenerator`
-- `MiniProjectRecommender`
-- `InterviewPrepGenerator`
-
-### Deterministic services
-
-- `JobDescriptionNormalizer`
-- `CandidateProfileNormalizer`
-- `EvidenceMatcher` where possible.
-- `FitScorer`.
-- `RiskClassifier`.
+- **One LLM call** (`buildAnalysisPrompt.ts` -> `OpenAiAnalysisProvider`) produces the entire
+  structured result: job requirements, candidate evidence, matches, fit score, resume suggestions,
+  mini projects, and interview prep together.
+- **Zod validation** (`analyzeRequestSchema` on the way in, `analysisResult.ts`'s schema on the way
+  out via OpenAI Structured Outputs) is the only deterministic layer — there is no separate
+  rule-based matcher or scorer.
 
 ## Prompt boundary
 

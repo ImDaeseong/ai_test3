@@ -13,8 +13,8 @@ This directory records library choices before implementation so coding can proce
 
 - `TECH_STACK_DECISIONS.md`: project-wide library choices.
 - `SELECTION_CRITERIA.md`: criteria used when comparing libraries.
-- `FEATURE_LIBRARY_MATRIX.md`: feature-to-library map.
-- `features/*.md`: per-feature implementation and library notes.
+- `FEATURE_LIBRARY_MATRIX.md`: feature-to-library map (2026-08-01: the old `features/*.md`
+  per-feature files were removed — this one table already said the same thing with less text).
 
 ## Rule
 

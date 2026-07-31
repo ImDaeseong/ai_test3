@@ -123,11 +123,9 @@ Stop and ask for human review if:
 - The analysis starts making hiring guarantees.
 - The project scope expands into a broad applicant tracking system before MVP is usable.
 
-## Production architecture note
-
-The current feature-based structure is intended to survive production, but the runtime architecture must gain additional service layers before launch. See `docs/design/PRODUCTION_ARCHITECTURE.md` and `docs/integration/RUNTIME_EVOLUTION.md` for the final target structure and migration stages.
-
 ## AI data strategy note
 
-CareerDiff should not vectorize and store raw resumes or job descriptions by default. The long-term data asset should be structured, consent-aware analysis data: job requirements, candidate evidence, match results, scoring signals, user feedback, and anonymized aggregate trends. See `docs/design/AI_DATA_STRATEGY.md` and `docs/integration/RAG_EMBEDDING_PLAN.md`.
+CareerDiff should not vectorize and store raw resumes or job descriptions by default. The long-term data asset should be structured, consent-aware analysis data: job requirements, candidate evidence, match results, scoring signals, user feedback, and anonymized aggregate trends.
+
+(2026-08-01: the detailed production-architecture and RAG/data-strategy planning docs this section used to point to were removed as premature for a mock-only MVP with no deploy history and no RAG code — see `VERIFICATION.md`'s 2026-08-01 doc-simplification gate entry. This note keeps the one standing constraint that still applies.)
 

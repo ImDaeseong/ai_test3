@@ -7,8 +7,8 @@
 - **목적**: 나는 이직 준비 중에 CareerDiff로 채용공고와 내 이력서/프로젝트를 비교해서 부족한 역량, 이력서 수정안, 보완 프로젝트를 얻는다.
 - **입력**: 채용공고 텍스트, 이력서/커리어/프로젝트 설명 (붙여넣기)
 - **출력**: 적합도 점수, 강한/약한/누락 매칭, 이력서 재작성 제안, 역량 우선순위, 소규모 보완 프로젝트 3개, 7일 준비 플랜
-- **상태**: Mock 기반 UI/흐름은 완성 — 진행률 게이트 85% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 실제로 동작(단위/컴포넌트 테스트 24개 통과 + 샘플 부재 테스트 1개 스킵 + Playwright E2E 4개 통과). 결과 내용은 한글. 다만 `AnalysisOrchestrator`는 실제 분석 로직 없이 "키 없으면 고정 mock 반환, 키 있으면 LLM 호출"만 하므로(`AnalysisOrchestrator.ts:55-60`) 지금은 UI 셸이지 실사용자 입력을 분석하지는 못한다. 유료 API 호출 전에 `ai-prompts/claude-projects-test/MANUAL_ANALYSIS_PROMPT.md` + `ai-prompts/claude-projects-test/WEB_PROJECT_USAGE.md`로 Claude/ChatGPT 웹에서 무료로 먼저 검증 중(비용 문제로 유료 API는 이 검증이 안정화된 뒤로 미룸).
-- **폴더 구조**: `app`/`docs`/`jobkorea-ai`/`ai-prompts` 각 폴더의 역할과 필요성 검증은 [`PROJECT_STRUCTURE.md`](./PROJECT_STRUCTURE.md) 참고.
+- **상태**: Mock 기반 UI/흐름은 완성 — 진행률 게이트 85% (`VERIFICATION.md`). 채용공고/이력서 입력 → 분석하기 → 대시보드(점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비) 전체 흐름이 실제로 동작(단위/컴포넌트 테스트 24개 통과 + 샘플 부재 테스트 1개 스킵 + Playwright E2E 4개 통과). 결과 내용은 한글. 다만 `AnalysisOrchestrator`는 실제 분석 로직 없이 "키 없으면 고정 mock 반환, 키 있으면 LLM 호출"만 하므로(`AnalysisOrchestrator.ts:55-60`) 지금은 UI 셸이지 실사용자 입력을 분석하지는 못한다. 유료 API 호출 전 검증은 2026-08-01부터 로컬에서 진행한다(웹 Project 무료 검증 트랙은 사용자 판단으로 폐기 — `docs/library-decisions/TECH_STACK_DECISIONS.md`의 "2026-08-01 update" 참고).
+- **폴더 구조**: `app`/`docs`/`ai-prompts` 각 폴더의 역할과 필요성 검증은 [`PROJECT_STRUCTURE.md`](./PROJECT_STRUCTURE.md) 참고.
 - **의의**: 본인 이직 준비용이자 포트폴리오 — LLM/RAG, 문서 파싱, 스킬 추출, 스코어링/랭킹, 프롬프트 설계, 프라이버시 인지 제품 설계, 대시보드 UI를 보여줌
 
 ## 스택
@@ -44,32 +44,33 @@ npm run test:e2e    # Playwright E2E — 프로덕션 빌드 기준으로 실행
 | `ARCHITECTURE.md` | 초기 기술 아키텍처, 분석 파이프라인, HOLD 조건 |
 | `VERIFICATION.md` | 진행률 게이트, 검증 루프, 문서/기능/프라이버시 체크 |
 | `docs/features/` | 기능 10개 각각의 목적·규칙·UI 계약·테스트 체크 |
-| `docs/design/` | 데이터 모델, 모듈 경계, UI 설계, 프로덕션 아키텍처, RAG/데이터 전략, 보안 위협 모델, 접근성 계획 |
-| `docs/integration/` | 분석 흐름, 프롬프트/서비스 분리, API 계약, 런타임 진화 |
-| `docs/library-decisions/` | 라이브러리 선택 기준, 전체 스택 결정, 기능별 매핑 |
+| `docs/design/` | 데이터 모델, 모듈 경계, UI 설계, 보안 위협 모델, 접근성 계획 |
+| `docs/integration/` | 분석 흐름, 프롬프트/서비스 분리, API 계약 |
+| `docs/library-decisions/` | 라이브러리 선택 기준, 전체 스택 결정, 기능별 매핑(표 하나로 통합) |
 | `docs/operations/` | 운영 런북 |
-| `docs/DOCUMENTATION_AUDIT.md` | 문서 완성도 감사 — 구현 착수 가능 여부 게이트 |
 
 ### AI 기능 검증 문서 (비용/안전성 게이트)
 
-핵심 원칙: **유료 API 비용이 들거나 실데이터를 다루는 AI 기능은, 무료 웹 UI(Claude/ChatGPT
-Projects)나 로컬 검증으로 먼저 확인하기 전까지 유료/실전 경로를 켜지 않는다.** 예를 들어 채용공고와
-이력서를 비교하는 CareerDiff의 핵심 분석은 OpenAI API를 쓰지 않고도 이미 있는 Claude/ChatGPT 웹
-구독으로 무료 검증할 수 있다 — 이 검증이 끝나기 전까지는 유료 API 경로를 쓰지 않는다.
+핵심 원칙: **유료 API 비용이 들거나 실데이터를 다루는 AI 기능은, 무료/로컬 검증으로 먼저 확인하기
+전까지 유료/실전 경로를 켜지 않는다.** 채용공고-이력서 적합도 분석(`/api/analyze`) 기능은
+2026-08-01부터 로컬에서 검증한다(이전에는 Claude/ChatGPT 웹 Project 무료 검증 트랙을 썼으나
+폐기 — 이유는 `ai-prompts/검증현황.md` 1번 행 참고). 채용정보 수집(`job-collection-manual/`)은
+지금도 웹 Project를 쓴다 — 서로 다른 기능이라 검증 방식이 다르다.
 
 | 문서 | 용도 |
 |---|---|
-| `ai-prompts/검증현황.md` | **시작점** — 프로젝트 전체 AI 기능 목록 + 무료 검증 상태 + 유료 전환 조건 |
+| `ai-prompts/검증현황.md` | **시작점** — 프로젝트 전체 AI 기능 목록 + 검증 상태 + 유료 전환 조건 |
 | `ai-prompts/README.md` | 분석기 프롬프트가 지켜야 할 목표/규칙(설계 원칙) |
-| `ai-prompts/claude-projects-test/` | **웹사이트 Projects에 그대로 붙여넣거나 업로드할 내용만 모은 폴더**(`MANUAL_ANALYSIS_PROMPT.md` + `WEB_PROJECT_USAGE.md`) — 설계/추적 문서와 분리 |
-| `jobkorea-ai/README.md` | `jobkorea-ai/` 잡코리아 채용정보 수집·분류 서브프로젝트 설치·실행·수집 원칙 |
+| `ai-prompts/job-collection-manual/README.md` | 채용정보 수동 수집(사람이 직접 읽고 웹 Project로 구조화) 원칙·절차 |
 
-## 잡코리아 채용정보 수집·분류 (`jobkorea-ai/`)
+## 채용정보 수집
 
-`app/` 제품과는 분리된 별도 서브프로젝트. 잡코리아의 공개 채용목록/공개 공고 상세 페이지만 저빈도로
-수집해 관심 키워드로 선별·분류하고 FastAPI로 제공한다. 로그인·CAPTCHA·접근 제한은 우회하지 않으며,
-실제 운영 전 잡코리아 이용약관·robots.txt를 직접 확인해야 한다(기존 `pipeline/`의 합성 데이터
-기반 Airflow 파이프라인을 대체, 2026-07-24). 실행 방법은 `jobkorea-ai/README.md` 참고.
+자동 크롤러 서브프로젝트였던 `jobkorea-ai/`(잡코리아 공개 페이지를 코드로 수집)는 2026-08-01
+법적 리스크 판단으로 완전히 제거했다(`VERIFICATION.md` 게이트 로그 참고). 지금은
+`ai-prompts/job-collection-manual/`의 절차대로, 사람이 채용 사이트에서 직접 읽은 공고를 Claude/ChatGPT
+웹 Project에 붙여넣어 구조화하는 수동 방식만 쓴다 — 스크립트·스케줄러 기반 자동 수집은 다시
+만들지 않는다. 공식 API(예: 워크넷 Open API, 채용 플랫폼 제휴 API)가 확보되면 그때 자동 수집을
+재도입하되, 그 전환은 사람이 명시적으로 요청할 때만 진행한다.
 
 ## 유지보수 원칙
 
@@ -87,5 +88,5 @@ Projects)나 로컬 검증으로 먼저 확인하기 전까지 유료/실전 경
 5. ~~첫 사용 가능한 화면 구축~~ — 완료 (`app/src/app/page.tsx`: 채용공고 입력, 후보자 정보 입력, 분석 버튼, 프라이버시 안내).
 6. ~~Mock 데이터 기반 대시보드 구축~~ — 완료 (`app/src/features/analysis-dashboard/`: 점수/요건/매칭/이력서 제안/보완 프로젝트 3개/면접 준비 6개 패널).
 7. ~~`AnalysisOrchestrator`와 API 라우트 추가~~ — 완료 (`app/src/core/analysis/AnalysisOrchestrator.ts`, `app/src/app/api/analyze/route.ts`). 아직 mock만 반환하며, 요청 검증은 Zod(`app/src/core/schemas/analyzeRequest.ts`).
-8. ~~테스트 확충~~ — 완료. 단위/컴포넌트 테스트 24개 통과 + 샘플 부재 테스트 1개 스킵(오케스트레이터의 provider 분기와 OpenAI strict-schema 변환 포함, 실제 API 호출 없음) + Playwright E2E 4개(`app/e2e/analyzer.spec.ts`, 입력 검증·전체 분석 흐름·보완 프로젝트 정확히 3개·API 400 응답 확인). `requirement-extraction`/`evidence-extraction`/`evidence-matching`/`fit-scoring`/`resume-suggestions`/`mini-projects`/`interview-prep` 서비스 폴더(`docs/design/MODULE_BOUNDARIES.md`)는 실제 로직이 생기기 전까지 계속 비워둠.
-9. LLM provider 연동 — **진행 중, 무료 수동 검증 단계**. `app/src/core/llm/OpenAiAnalysisProvider.ts`가 OpenAI Responses API + Structured Outputs(`docs/library-decisions/TECH_STACK_DECISIONS.md`)로 구현되어 있고, `AnalysisOrchestrator`가 `OPENAI_API_KEY` 유무로 mock/실분석을 분기한다. 유료 API 호출은 비용 문제로 보류하고, 대신 `ai-prompts/claude-projects-test/MANUAL_ANALYSIS_PROMPT.md`(코드와 동일한 프롬프트+스키마의 복붙판)를 `ai-prompts/claude-projects-test/WEB_PROJECT_USAGE.md` 절차에 따라 Claude/ChatGPT 웹 Project에서 무료로 먼저 검증한다. 이 수동 검증이 여러 입력 조합에서 체크리스트를 통과하면, 그때 실제 `OPENAI_API_KEY`로 `OpenAiAnalysisProvider`를 한 번 호출해 같은 기준으로 재확인한다(`OpenAiAnalysisProvider.ts` 코드 주석 참고).
+8. ~~테스트 확충~~ — 완료. 단위/컴포넌트 테스트 24개 통과 + 샘플 부재 테스트 1개 스킵(오케스트레이터의 provider 분기와 OpenAI strict-schema 변환 포함, 실제 API 호출 없음) + Playwright E2E 4개(`app/e2e/analyzer.spec.ts`, 입력 검증·전체 분석 흐름·보완 프로젝트 정확히 3개·API 400 응답 확인). 단계별 추출/매칭/스코어링 서비스로 나누는 대신, LLM 호출 하나(`buildAnalysisPrompt.ts`)가 구조화된 결과 전체를 생성하는 더 단순한 구조로 구현됐다(2026-08-01, `docs/design/MODULE_BOUNDARIES.md`를 실제 코드에 맞게 갱신 — 예전엔 존재하지 않는 7개 서비스 폴더를 계획대로 언급하고 있었음).
+9. LLM provider 연동 — **진행 중, 검증 단계**. `app/src/core/llm/OpenAiAnalysisProvider.ts`가 OpenAI Responses API + Structured Outputs(`docs/library-decisions/TECH_STACK_DECISIONS.md`)로 구현되어 있고, `AnalysisOrchestrator`가 `OPENAI_API_KEY` 유무로 mock/실분석을 분기한다. 유료 API 호출은 비용 문제로 보류하며, 검증 방식은 2026-08-01부터 로컬로 전환했다(Claude/ChatGPT 웹 Project 무료 검증 트랙은 폐기 — `docs/library-decisions/TECH_STACK_DECISIONS.md`의 "2026-08-01 update" 참고). 로컬 검증의 구체 절차는 아직 문서화되지 않았다. 검증 통과 후에만, 그리고 사람이 수동으로 요청할 때만 실제 `OPENAI_API_KEY` 호출로 넘어간다(`OpenAiAnalysisProvider.ts` 코드 주석 참고).

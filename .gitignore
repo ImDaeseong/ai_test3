@@ -9,3 +9,12 @@ outputs/
 
 # personal resume data (real name/phone/email/address) — this repo is public
 candidate-profile-*.json
+
+# manual web-Project run results built from real job postings + real resume text — contain
+# real candidate data extracted by the LLM (sourceSnippet etc.), same reason as above
+CareerDiff/ai-prompts/claude-projects-test/manual-runs/*
+!CareerDiff/ai-prompts/claude-projects-test/manual-runs/README.md
+
+# manually collected job-posting JSON (replaces the removed jobkorea-ai crawler) — avoid
+# re-publishing scraped-site posting text wholesale, even when copied by hand
+CareerDiff/ai-prompts/job-collection-manual/collected-jobs/*

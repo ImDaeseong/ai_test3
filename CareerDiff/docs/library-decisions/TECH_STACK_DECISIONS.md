@@ -50,3 +50,12 @@
 This mirrors an already-proven pattern from `ai_test1/music_lyric`'s web-project prompt docs (prompt-first, no API cost, human runs it and reads the result).
 
 **Path to 100%** (tracked in `VERIFICATION.md`): run the manual prompt across at least 3 varied job-description/resume pairs and pass the checklist each time, then run `OpenAiAnalysisProvider` once with a real `OPENAI_API_KEY` and confirm the same checklist against a live response — specifically checking that OpenAI's strict `json_schema` mode round-trips the `.optional()` fields in `analysisResult.ts` correctly, per the risk already noted in `OpenAiAnalysisProvider.ts`'s code comment.
+
+## 2026-08-01 update: web-Project free verification retired, moved to local
+
+The Claude/ChatGPT web-Project track above (`ai-prompts/claude-projects-test/`) is retired — the
+user decided to verify this feature locally instead and removed the folder. This entry is kept as
+history (it explains why the pattern existed and what it ruled out — RAG/LangChain — which is still
+valid reasoning), but it no longer describes the current verification path. See `VERIFICATION.md`'s
+2026-08-01 gate entry and `ai-prompts/검증현황.md` row 1 for the current status; the local
+verification method itself has not been defined yet in this repo's docs.
