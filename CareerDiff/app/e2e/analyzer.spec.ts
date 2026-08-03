@@ -12,7 +12,7 @@ test.describe("CareerDiff analyzer flow", () => {
     await expect(page.getByText("비밀번호, 토큰, 사내 전용 식별자 등 민감 정보는 붙여넣지 마세요.")).toBeVisible();
   });
 
-  test("blocks the analyze button until both fields have enough text (docs/features/01, 02)", async ({ page }) => {
+  test("blocks the analyze button until both fields have enough text (docs/PRODUCT.md)", async ({ page }) => {
     await page.goto("/");
     const analyzeButton = page.getByRole("button", { name: "분석하기" });
     await expect(analyzeButton).toBeDisabled();
@@ -27,7 +27,7 @@ test.describe("CareerDiff analyzer flow", () => {
     await expect(analyzeButton).toBeEnabled();
   });
 
-  test("runs a full analysis and renders all MVP dashboard sections (docs/features/10)", async ({ page }) => {
+  test("runs a full analysis and renders all MVP dashboard sections (docs/PRODUCT.md)", async ({ page }) => {
     const consoleErrors: string[] = [];
     page.on("console", (message) => {
       if (message.type() === "error") consoleErrors.push(message.text());
@@ -45,7 +45,7 @@ test.describe("CareerDiff analyzer flow", () => {
     await expect(page.getByRole("heading", { name: "보완 프로젝트 추천" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "면접 준비" })).toBeVisible();
 
-    // docs/features/08: exactly 3 mini project recommendations.
+    // docs/PRODUCT.md: exactly 3 mini project recommendations.
     const miniProjectCards = page.locator("article");
     await expect(miniProjectCards).toHaveCount(3);
 

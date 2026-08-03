@@ -1,6 +1,6 @@
 import type { LlmAnalysisProvider } from "@/core/llm/LlmAnalysisProvider";
 import { OpenAiAnalysisProvider } from "@/core/llm/OpenAiAnalysisProvider";
-import { mockAnalysisResult } from "@/core/mocks/mockAnalysisResult";
+import { buildLocalAnalysis } from "@/core/analysis/LocalAnalysisProvider";
 import { analyzeRequestSchema } from "@/core/schemas/analyzeRequest";
 import type { CareerDiffAnalysisResult } from "@/core/types";
 
@@ -25,17 +25,14 @@ export class AnalysisProviderError extends Error {
 /**
  * Coordinates one job-fit analysis request.
  *
- * Per docs/integration/ANALYSIS_FLOW.md, this is the only module allowed to
+ * Per docs/ARCHITECTURE.md, this is the only module allowed to
  * call extraction/matching/scoring/generation services and the only module
  * allowed to request RetrievalContext. Only the API route should call this
  * class; it must not be imported directly by UI components.
  *
- * Mock-first with an optional LLM key (docs/integration/ANALYSIS_FLOW.md
- * "Mock-first implementation rule" + docs/library-decisions/TECH_STACK_DECISIONS.md):
+ * Local-first with an optional LLM key (docs/ARCHITECTURE.md):
  * - No API key configured (the default — nothing in this repo sets one):
- *   always returns the stable mock result. This is the expected state for
- *   local development and for anyone who clones the repo without an
- *   OpenAI account.
+ *   analyzes the actual inputs with the deterministic local analyzer.
  * - API key configured (OPENAI_API_KEY, see .env.example): calls the real
  *   provider. A failure there is a real error, not silently masked by
  *   falling back to mock data — see AnalysisProviderError.
@@ -53,7 +50,7 @@ export class AnalysisOrchestrator {
     }
 
     if (!this.llmProvider.isConfigured()) {
-      return mockAnalysisResult;
+      return buildLocalAnalysis(parsed.data);
     }
 
     try {

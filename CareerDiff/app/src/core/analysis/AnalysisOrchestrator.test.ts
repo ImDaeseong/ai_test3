@@ -45,9 +45,9 @@ describe("AnalysisOrchestrator (default provider, no API key in this environment
     await expect(orchestrator.analyze("not json")).rejects.toThrow(AnalysisOrchestratorValidationError);
   });
 
-  it("returns the stable mock result when no LLM provider is configured", async () => {
+  it("returns an input-dependent local result when no LLM provider is configured", async () => {
     const result = await orchestrator.analyze(validRequest);
-    expect(result).toEqual(mockAnalysisResult);
+    expect(result.metadata.modelVersion).toBe("local-keyword-analyzer");
   });
 
   it("returns MVP retrieval defaults regardless of input", async () => {
@@ -58,13 +58,13 @@ describe("AnalysisOrchestrator (default provider, no API key in this environment
 });
 
 describe("AnalysisOrchestrator (dependency-injected fake provider, no real API calls)", () => {
-  it("ignores a configured provider's generate() result if isConfigured() is false", async () => {
+  it("uses local analysis when an injected provider is not configured", async () => {
     const provider = new FakeLlmProvider(false, async () => {
       throw new Error("generate() must not be called when the provider reports unconfigured.");
     });
     const orchestrator = new AnalysisOrchestrator(provider);
     const result = await orchestrator.analyze(validRequest);
-    expect(result).toEqual(mockAnalysisResult);
+    expect(result.metadata.modelVersion).toBe("local-keyword-analyzer");
   });
 
   it("uses the provider's result when isConfigured() is true", async () => {

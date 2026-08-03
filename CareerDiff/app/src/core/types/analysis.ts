@@ -1,7 +1,7 @@
 /**
  * Shared analysis data contracts.
  *
- * Source of truth: ../../../../docs/design/DATA_MODEL.md
+ * Source of truth: ../../../../docs/ARCHITECTURE.md
  * Keep this file in sync with that document — update both together.
  */
 
@@ -161,7 +161,7 @@ export type CareerDiffAnalysisResult = {
   metadata: AnalysisMetadata;
 };
 
-// --- API contract (source of truth: docs/integration/API_CONTRACT.md, docs/integration/ANALYSIS_FLOW.md) ---
+// --- API contract (source of truth: docs/ARCHITECTURE.md, docs/ARCHITECTURE.md) ---
 
 export type AnalyzeRequest = {
   jobDescription: string;

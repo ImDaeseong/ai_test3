@@ -18,3 +18,9 @@ CareerDiff/ai-prompts/claude-projects-test/manual-runs/*
 # manually collected job-posting JSON (replaces the removed jobkorea-ai crawler) — avoid
 # re-publishing scraped-site posting text wholesale, even when copied by hand
 CareerDiff/ai-prompts/job-collection-manual/collected-jobs/*
+
+# app runtime storage (data/<UUID>.json per PRODUCT.md/ARCHITECTURE.md) — contains real job
+# posting text and candidate profile fields entered through the running app, same reason as
+# the entries above. Found untracked and unignored 2026-08-03; contains real content, not
+# fixtures, so excluded rather than committed.
+CareerDiff/data/*.json

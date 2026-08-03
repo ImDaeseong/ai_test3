@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * Validates POST /api/analyze request bodies.
- * Source of truth for the shape: docs/integration/API_CONTRACT.md.
+ * Source of truth for the shape: docs/ARCHITECTURE.md.
  */
 
 const MIN_TEXT_LENGTH = 30;

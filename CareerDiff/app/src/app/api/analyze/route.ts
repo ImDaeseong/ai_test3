@@ -6,7 +6,7 @@ import {
 } from "@/core/analysis/AnalysisOrchestrator";
 import type { AnalyzeResponse, ApiErrorResponse } from "@/core/types";
 
-// Per docs/integration/ANALYSIS_FLOW.md: only this route calls AnalysisOrchestrator.
+// Per docs/ARCHITECTURE.md: only this route calls AnalysisOrchestrator.
 const orchestrator = new AnalysisOrchestrator();
 
 export async function POST(request: Request) {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    // Do not log the raw body (docs/integration/API_CONTRACT.md privacy requirements).
+    // Do not log the raw body (docs/ARCHITECTURE.md privacy requirements).
     return NextResponse.json<ApiErrorResponse>(
       { error: { code: "VALIDATION_ERROR", message: "Request body must be valid JSON.", retryable: false } },
       { status: 400 },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const CANDIDATE_PROFILE_MIN_LENGTH = 30;
 
@@ -11,33 +11,75 @@ export function isCandidateProfileValid(value: string): boolean {
 export type CandidateProfileInputPanelProps = {
   value: string;
   onChange: (value: string) => void;
-  targetSeniority: string;
-  onTargetSeniorityChange: (value: string) => void;
 };
 
-export function CandidateProfileInputPanel({
-  value,
-  onChange,
-  targetSeniority,
-  onTargetSeniorityChange,
-}: CandidateProfileInputPanelProps) {
+const PROFILE_STORAGE_KEY = "careerdiff:candidate-profile";
+const PROFILE_FILENAME_STORAGE_KEY = "careerdiff:candidate-profile-filename";
+
+export function CandidateProfileInputPanel({ value, onChange }: CandidateProfileInputPanelProps) {
   const [touched, setTouched] = useState(false);
+  const [filename, setFilename] = useState("");
+  const [fileError, setFileError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const trimmedLength = value.trim().length;
   const isEmpty = trimmedLength === 0;
   const isTooShort = !isEmpty && trimmedLength < CANDIDATE_PROFILE_MIN_LENGTH;
 
+  useEffect(() => {
+    const savedProfile = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (savedProfile) onChange(savedProfile);
+    setFilename(window.localStorage.getItem(PROFILE_FILENAME_STORAGE_KEY) ?? "");
+  }, [onChange]);
+
+  async function attachProfile(file: File | undefined) {
+    if (!file) return;
+    setFileError("");
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      const profile = JSON.stringify(parsed, null, 2);
+      window.localStorage.setItem(PROFILE_STORAGE_KEY, profile);
+      window.localStorage.setItem(PROFILE_FILENAME_STORAGE_KEY, file.name);
+      onChange(profile);
+      setFilename(file.name);
+    } catch {
+      setFileError("올바른 JSON 파일을 선택해 주세요.");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="candidate-profile" className="text-sm font-semibold text-neutral-800">
-        이력서 / 커리어 / 프로젝트
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor="candidate-profile" className="text-sm font-semibold text-neutral-800">
+          이력서 / 커리어 / 프로젝트
+        </label>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-semibold"
+        >
+          {filename ? "재첨부" : "첨부"}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          aria-label="후보자 프로필 JSON 첨부"
+          className="hidden"
+          onChange={(event) => {
+            void attachProfile(event.target.files?.[0]);
+            event.target.value = "";
+          }}
+        />
+      </div>
+      {filename && <p className="text-xs text-green-700">첨부됨: {filename}</p>}
+      {fileError && <p role="alert" className="text-xs text-red-600">{fileError}</p>}
       <textarea
         id="candidate-profile"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onBlur={() => setTouched(true)}
         rows={10}
-        placeholder="이력서, 커리어 요약, 프로젝트 설명을 붙여넣으세요."
+        placeholder="JSON 파일을 첨부하거나 이력서, 커리어 요약, 프로젝트 설명을 붙여넣으세요."
         className="w-full resize-y rounded-md border border-neutral-300 p-3 text-sm focus:border-neutral-500 focus:outline-none"
       />
       <div className="flex min-h-[1rem] items-center justify-between text-xs text-neutral-500">
@@ -47,16 +89,6 @@ export function CandidateProfileInputPanel({
           <span role="alert" className="text-red-600">최소 {CANDIDATE_PROFILE_MIN_LENGTH}자 이상 입력해 주세요.</span>
         )}
       </div>
-      <input
-        type="text"
-        value={targetSeniority}
-        onChange={(event) => onTargetSeniorityChange(event.target.value)}
-        placeholder="목표 연차/시니어리티 (선택)"
-        className="w-full rounded-md border border-neutral-300 p-2 text-sm focus:border-neutral-500 focus:outline-none"
-      />
-      <p className="text-xs text-amber-700">
-        비밀번호, 토큰, 사내 전용 식별자 등 민감 정보는 붙여넣지 마세요.
-      </p>
     </div>
   );
 }

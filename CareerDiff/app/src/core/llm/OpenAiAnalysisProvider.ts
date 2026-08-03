@@ -63,12 +63,12 @@ export function omitNullObjectFields(value: unknown): unknown {
 
 /**
  * OpenAI Responses API + Structured Outputs
- * (docs/library-decisions/TECH_STACK_DECISIONS.md).
+ * (docs/ARCHITECTURE.md).
  *
  * Reads the key from OPENAI_API_KEY (see .env.example, left blank on
  * purpose). isConfigured() gates every call — AnalysisOrchestrator only
  * reaches generate() when a key is present, and falls back to the mock
- * result otherwise (docs/integration/ANALYSIS_FLOW.md "Mock-first
+ * result otherwise (docs/ARCHITECTURE.md "Mock-first
  * implementation rule").
  *
  * Not yet exercised against the real API in this repo: no OPENAI_API_KEY

@@ -5,7 +5,7 @@ import type { CareerDiffAnalysisResult } from "@/core/types";
 import { AnalysisDashboard } from "./AnalysisDashboard";
 
 describe("AnalysisDashboard", () => {
-  it("renders all MVP sections for the mock result (docs/features/10)", () => {
+  it("renders all MVP sections for the mock result (docs/PRODUCT.md)", () => {
     render(<AnalysisDashboard result={mockAnalysisResult} />);
 
     expect(screen.getByText("적합도 점수")).toBeInTheDocument();

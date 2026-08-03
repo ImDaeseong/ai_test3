@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AnalyzeResponse, ApiErrorResponse, CareerDiffAnalysisResult } from "@/core/types";
+import {
+  appendValidationCase,
+  loadValidationCases,
+} from "@/core/validation/analysisValidationStore";
 import { AnalysisDashboard } from "@/features/analysis-dashboard/AnalysisDashboard";
+import { AnalysisJsonPanel } from "@/features/analysis-dashboard/AnalysisJsonPanel";
 import {
   CandidateProfileInputPanel,
   isCandidateProfileValid,
@@ -12,18 +17,24 @@ import { isJobDescriptionValid, JobDescriptionInputPanel } from "@/features/job-
 type Status = "idle" | "loading" | "error" | "done";
 
 /**
- * Owns page composition and analysis state (docs/design/UI_DESIGN.md
+ * Owns page composition and analysis state (docs/ARCHITECTURE.md
  * "UI component boundaries"). Input panels and the dashboard stay
  * display/input-only and receive typed props or callbacks.
  */
 export default function AnalyzerPage() {
   const [jobDescription, setJobDescription] = useState("");
-  const [targetRole, setTargetRole] = useState("");
   const [candidateProfile, setCandidateProfile] = useState("");
-  const [targetSeniority, setTargetSeniority] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [validationCount, setValidationCount] = useState(0);
   const [result, setResult] = useState<CareerDiffAnalysisResult | null>(null);
+
+  useEffect(() => {
+    const cases = loadValidationCases();
+    setValidationCount(cases.length);
+    if (cases.length > 0) setResult(cases[cases.length - 1].result);
+  }, []);
 
   const canAnalyze =
     isJobDescriptionValid(jobDescription) && isCandidateProfileValid(candidateProfile) && status !== "loading";
@@ -31,6 +42,7 @@ export default function AnalyzerPage() {
   async function handleAnalyze() {
     setStatus("loading");
     setErrorMessage(null);
+    setValidationError(null);
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -38,8 +50,6 @@ export default function AnalyzerPage() {
         body: JSON.stringify({
           jobDescription,
           candidateProfile,
-          targetRole: targetRole || undefined,
-          targetSeniority: targetSeniority || undefined,
         }),
       });
       if (!response.ok) {
@@ -50,6 +60,25 @@ export default function AnalyzerPage() {
       }
       const body = (await response.json()) as AnalyzeResponse;
       setResult(body.result);
+      try {
+        const cases = appendValidationCase({
+          jobDescription,
+          candidateProfile,
+          result: body.result,
+        });
+        setValidationCount(cases.length);
+        const validationCase = cases[cases.length - 1];
+        const saveResponse = await fetch("/api/validation-cases", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(validationCase),
+        });
+        if (!saveResponse.ok) {
+          throw new Error("Validation case file save failed.");
+        }
+      } catch {
+        setValidationError("분석은 완료됐지만 검증 데이터를 브라우저 또는 data 폴더에 저장하지 못했습니다.");
+      }
       setStatus("done");
     } catch {
       setErrorMessage("네트워크 오류로 분석에 실패했습니다. 다시 시도해 주세요.");
@@ -67,22 +96,19 @@ export default function AnalyzerPage() {
       </header>
 
       <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-        CareerDiff는 기본적으로 이력서나 채용공고를 저장하지 않습니다. 비밀번호, 토큰, 사내 전용 식별자, 고객 개인정보 등
-        민감한 정보는 붙여넣지 마세요.
+        첨부한 후보자 JSON은 이 브라우저에 저장되고, 분석 검증 데이터는 브라우저와 CareerDiff/data 폴더에 저장됩니다.
+        비밀번호, 토큰, 사내 전용 식별자, 고객 개인정보 등 민감한 정보는 첨부하지 마세요. 누적 JSON을 외부에 공유하기
+        전 개인정보를 확인하세요.
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <JobDescriptionInputPanel
           value={jobDescription}
           onChange={setJobDescription}
-          targetRole={targetRole}
-          onTargetRoleChange={setTargetRole}
         />
         <CandidateProfileInputPanel
           value={candidateProfile}
           onChange={setCandidateProfile}
-          targetSeniority={targetSeniority}
-          onTargetSeniorityChange={setTargetSeniority}
         />
       </div>
 
@@ -103,7 +129,14 @@ export default function AnalyzerPage() {
         </p>
       )}
 
-      {result && <AnalysisDashboard result={result} />}
+      {validationError && <p role="alert" className="text-sm text-red-600">{validationError}</p>}
+
+      {result && (
+        <>
+          <AnalysisJsonPanel result={result} validationCount={validationCount} />
+          <AnalysisDashboard result={result} />
+        </>
+      )}
     </main>
   );
 }

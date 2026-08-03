@@ -27,7 +27,7 @@ describe("mockAnalysisResult", () => {
     expect(mockAnalysisResult.interviewPrep.questions.length).toBeGreaterThan(0);
   });
 
-  it("recommends exactly 3 mini projects, each mapped to a target gap (docs/features/08)", () => {
+  it("recommends exactly 3 mini projects, each mapped to a target gap (docs/PRODUCT.md)", () => {
     expect(mockAnalysisResult.miniProjects).toHaveLength(3);
     for (const project of mockAnalysisResult.miniProjects) {
       expect(project.targetGaps.length).toBeGreaterThan(0);

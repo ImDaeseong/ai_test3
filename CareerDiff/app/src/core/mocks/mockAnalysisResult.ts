@@ -2,7 +2,7 @@ import type { CareerDiffAnalysisResult } from "@/core/types";
 
 /**
  * Stable mock result so the dashboard UI can be built before any LLM
- * integration exists (docs/integration/ANALYSIS_FLOW.md "Mock-first
+ * integration exists (docs/ARCHITECTURE.md "Mock-first
  * implementation rule"). All content below is synthetic.
  */
 export const mockAnalysisResult: CareerDiffAnalysisResult = {

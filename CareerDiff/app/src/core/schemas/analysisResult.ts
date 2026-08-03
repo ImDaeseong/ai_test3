@@ -4,7 +4,7 @@ import { z } from "zod";
  * Runtime schema for CareerDiffAnalysisResult, used to (1) validate
  * whatever JSON an LLM provider returns before it reaches the UI, and
  * (2) generate the structured-output JSON schema for the OpenAI request.
- * Source of truth for the shape: docs/design/DATA_MODEL.md.
+ * Source of truth for the shape: docs/ARCHITECTURE.md.
  */
 
 const confidenceSchema = z.enum(["high", "medium", "low"]);

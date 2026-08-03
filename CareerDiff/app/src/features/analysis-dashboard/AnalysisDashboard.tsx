@@ -7,7 +7,7 @@ import { ScorePanel } from "./ScorePanel";
 import { SuggestionPanel } from "./SuggestionPanel";
 
 /**
- * Page-level composition for the result view (docs/features/10). Display-only:
+ * Page-level composition for the result view (docs/PRODUCT.md). Display-only:
  * it must not recalculate any analysis logic, only render `result`.
  */
 export function AnalysisDashboard({ result }: { result: CareerDiffAnalysisResult }) {

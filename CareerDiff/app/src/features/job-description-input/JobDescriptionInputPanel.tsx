@@ -11,18 +11,73 @@ export function isJobDescriptionValid(value: string): boolean {
 export type JobDescriptionInputPanelProps = {
   value: string;
   onChange: (value: string) => void;
-  targetRole: string;
-  onTargetRoleChange: (value: string) => void;
 };
 
-export function JobDescriptionInputPanel({ value, onChange, targetRole, onTargetRoleChange }: JobDescriptionInputPanelProps) {
+export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInputPanelProps) {
   const [touched, setTouched] = useState(false);
+  const [jobUrl, setJobUrl] = useState("");
+  const [importStatus, setImportStatus] = useState<"idle" | "loading" | "error" | "done">("idle");
+  const [importMessage, setImportMessage] = useState("");
   const trimmedLength = value.trim().length;
   const isEmpty = trimmedLength === 0;
   const isTooShort = !isEmpty && trimmedLength < JOB_DESCRIPTION_MIN_LENGTH;
 
+  async function importJobPosting() {
+    setImportStatus("loading");
+    setImportMessage("");
+    try {
+      const response = await fetch("/api/jobs/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: jobUrl }),
+      });
+      const body = (await response.json()) as { job?: { description: string }; error?: { message: string } };
+      if (!response.ok || !body.job) {
+        setImportStatus("error");
+        setImportMessage(body.error?.message ?? "채용공고를 가져오지 못했습니다.");
+        return;
+      }
+      onChange(body.job.description);
+      setImportStatus("done");
+      setImportMessage("채용공고를 불러왔습니다.");
+    } catch {
+      setImportStatus("error");
+      setImportMessage("네트워크 오류로 채용공고를 가져오지 못했습니다.");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2">
+      <label htmlFor="job-url" className="text-sm font-semibold text-neutral-800">
+        잡코리아 채용공고 URL
+      </label>
+      <div className="flex gap-2">
+        <input
+          id="job-url"
+          type="url"
+          value={jobUrl}
+          onChange={(event) => setJobUrl(event.target.value)}
+          placeholder="https://www.jobkorea.co.kr/Recruit/GI_Read/..."
+          className="min-w-0 flex-1 rounded-md border border-neutral-300 p-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={importJobPosting}
+          disabled={!jobUrl.trim() || importStatus === "loading"}
+          className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {importStatus === "loading" ? "가져오는 중..." : "공고 가져오기"}
+        </button>
+      </div>
+      {importMessage && (
+        <p
+          role={importStatus === "error" ? "alert" : "status"}
+          className={`text-xs ${importStatus === "error" ? "text-red-600" : "text-green-700"}`}
+        >
+          {importMessage}
+        </p>
+      )}
+
       <label htmlFor="job-description" className="text-sm font-semibold text-neutral-800">
         채용공고
       </label>
@@ -32,7 +87,7 @@ export function JobDescriptionInputPanel({ value, onChange, targetRole, onTarget
         onChange={(event) => onChange(event.target.value)}
         onBlur={() => setTouched(true)}
         rows={10}
-        placeholder="채용공고 원문을 붙여넣으세요."
+        placeholder="URL로 가져오거나 채용공고 원문을 붙여넣으세요."
         className="w-full resize-y rounded-md border border-neutral-300 p-3 text-sm focus:border-neutral-500 focus:outline-none"
       />
       <div className="flex min-h-[1rem] items-center justify-between text-xs text-neutral-500">
@@ -42,13 +97,6 @@ export function JobDescriptionInputPanel({ value, onChange, targetRole, onTarget
           <span role="alert" className="text-red-600">최소 {JOB_DESCRIPTION_MIN_LENGTH}자 이상 입력해 주세요.</span>
         )}
       </div>
-      <input
-        type="text"
-        value={targetRole}
-        onChange={(event) => onTargetRoleChange(event.target.value)}
-        placeholder="목표 직무 (선택)"
-        className="w-full rounded-md border border-neutral-300 p-2 text-sm focus:border-neutral-500 focus:outline-none"
-      />
     </div>
   );
 }
