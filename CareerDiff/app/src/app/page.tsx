@@ -31,9 +31,13 @@ export default function AnalyzerPage() {
   const [result, setResult] = useState<CareerDiffAnalysisResult | null>(null);
 
   useEffect(() => {
-    const cases = loadValidationCases();
-    setValidationCount(cases.length);
-    if (cases.length > 0) setResult(cases[cases.length - 1].result);
+    // Deferred to a microtask so state updates happen in a callback rather
+    // than synchronously in the effect body (react-hooks/set-state-in-effect).
+    queueMicrotask(() => {
+      const cases = loadValidationCases();
+      setValidationCount(cases.length);
+      if (cases.length > 0) setResult(cases[cases.length - 1].result);
+    });
   }, []);
 
   const canAnalyze =

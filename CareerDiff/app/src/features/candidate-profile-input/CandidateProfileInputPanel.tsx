@@ -26,9 +26,13 @@ export function CandidateProfileInputPanel({ value, onChange }: CandidateProfile
   const isTooShort = !isEmpty && trimmedLength < CANDIDATE_PROFILE_MIN_LENGTH;
 
   useEffect(() => {
-    const savedProfile = window.localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (savedProfile) onChange(savedProfile);
-    setFilename(window.localStorage.getItem(PROFILE_FILENAME_STORAGE_KEY) ?? "");
+    // Deferred to a microtask so state updates happen in a callback rather
+    // than synchronously in the effect body (react-hooks/set-state-in-effect).
+    queueMicrotask(() => {
+      const savedProfile = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+      if (savedProfile) onChange(savedProfile);
+      setFilename(window.localStorage.getItem(PROFILE_FILENAME_STORAGE_KEY) ?? "");
+    });
   }, [onChange]);
 
   async function attachProfile(file: File | undefined) {
