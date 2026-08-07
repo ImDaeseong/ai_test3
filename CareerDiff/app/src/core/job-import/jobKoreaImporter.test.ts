@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  hasSufficientJobDetail,
   JobImportError,
   parseJobKoreaDetailHtml,
   parseJobKoreaHtml,
@@ -32,6 +33,7 @@ describe("parseJobKoreaHtml", () => {
       company: "테스트회사",
       description: expect.stringContaining("FastAPI와 Python"),
       fetchedAt: "2026-07-31T00:00:00.000Z",
+      sufficient: true,
     });
   });
 
@@ -45,6 +47,26 @@ describe("parseJobKoreaHtml", () => {
     const result = parseJobKoreaHtml(html, "https://www.jobkorea.co.kr/Recruit/GI_Read/1");
     expect(result.description).toContain("Python 개발 업무");
     expect(result.description).not.toContain("1710001335");
+  });
+});
+
+describe("hasSufficientJobDetail", () => {
+  it("treats JobKorea summary boilerplate as insufficient", () => {
+    // A real captured summary: company meta + how-to-apply, no requirements.
+    const summaryOnly =
+      "채용공고 ㈜닷밀 본부장 채용 D-37 경력 상세요강 기업 정보 모집분야 본부장 급여 회사 내규에 따름 " +
+      "근무지 서울 마포구 지도 지원자격 경력 경력(8년이상) 접수기간/방법 방법 잡코리아 즉시지원 " +
+      "지원자 현황 로그인 하고 지원자 현황을 확인해보세요! 기업구분 벤처기업 " +
+      "해당공고 불법·허위·과장 또는 오류 신고하기 본 채용정보는 해당 기업이 자율적으로 등록한 것으로, " +
+      "잡코리아는 게재된 채용정보의 정확성이나 적법성을 보장하지 않습니다.";
+    expect(hasSufficientJobDetail(summaryOnly)).toBe(false);
+  });
+
+  it("treats a description with real requirement sections as sufficient", () => {
+    const withDetail =
+      "담당업무: FastAPI와 Python으로 백엔드 API를 설계하고 구현합니다. " +
+      "자격요건: 백엔드 개발 경력 3년 이상. 우대사항: RAG 서비스 경험.";
+    expect(hasSufficientJobDetail(withDetail)).toBe(true);
   });
 });
 

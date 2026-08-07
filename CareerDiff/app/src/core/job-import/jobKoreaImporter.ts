@@ -5,10 +5,55 @@ export type ImportedJobPosting = {
   company: string;
   description: string;
   fetchedAt: string;
+  /**
+   * False when the import only captured JobKorea's summary boilerplate
+   * (company info, benefits, how-to-apply) without the actual job detail
+   * (담당업무/자격요건/우대사항). The UI then asks the user to paste the
+   * detail manually. JobKorea now renders that detail client-side, so this
+   * is often false — see docs and the manual-paste fallback in the panel.
+   */
+  sufficient: boolean;
 };
 
 const ALLOWED_HOSTS = new Set(["www.jobkorea.co.kr", "m.jobkorea.co.kr"]);
 const MAX_HTML_LENGTH = 5_000_000;
+
+// Phrases that only appear in JobKorea's summary/meta scrape, never in a real
+// job-detail body. Two or more of these with no requirement marker means we
+// got the boilerplate summary, not the posting's actual requirements.
+const SUMMARY_ONLY_MARKERS = [
+  "지원자 현황",
+  "잡코리아 즉시지원",
+  "기업구분",
+  "해당공고 불법",
+  "채용정보의 정확성",
+];
+
+// Markers that signal the real job-detail body was captured (or pasted).
+const REQUIREMENT_MARKERS = [
+  "담당업무",
+  "주요업무",
+  "자격요건",
+  "우대사항",
+  "기술스택",
+  "responsibilities",
+  "requirements",
+  "qualifications",
+];
+
+/**
+ * Whether a job description carries the actual requirements, not just
+ * JobKorea's summary boilerplate. Used both after a scrape and as the
+ * signal for the manual-paste fallback.
+ */
+export function hasSufficientJobDetail(description: string): boolean {
+  const lower = description.toLowerCase();
+  if (REQUIREMENT_MARKERS.some((marker) => lower.includes(marker.toLowerCase()))) {
+    return true;
+  }
+  const summaryMarkerHits = SUMMARY_ONLY_MARKERS.filter((marker) => description.includes(marker)).length;
+  return summaryMarkerHits < 2;
+}
 
 export class JobImportError extends Error {
   constructor(message: string, readonly status: number) {
@@ -130,6 +175,7 @@ export function parseJobKoreaHtml(
     company,
     description,
     fetchedAt,
+    sufficient: hasSufficientJobDetail(description),
   };
 }
 
@@ -170,8 +216,11 @@ export async function importJobKoreaPosting(rawUrl: string): Promise<ImportedJob
 
   const detail = parseJobKoreaDetailHtml(await detailResponse.text());
   if (detail.length < 100 || posting.description.includes(detail)) return posting;
+  // Real detail body was captured, so the import is sufficient regardless of
+  // the summary-marker heuristic.
   return {
     ...posting,
     description: `${posting.description}\n\n상세요강\n${detail}`,
+    sufficient: true,
   };
 }

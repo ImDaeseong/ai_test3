@@ -45,13 +45,28 @@ describe("JobDescriptionInputPanel", () => {
     const description = "AI 백엔드 개발자 채용 공고입니다. ".repeat(3);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ job: { description } }),
+      json: async () => ({ job: { description, sufficient: true } }),
     }));
     const user = userEvent.setup();
     render(<ControlledPanel />);
     await user.type(screen.getByLabelText("잡코리아 채용공고 URL"), "https://www.jobkorea.co.kr/Recruit/GI_Read/1");
     await user.click(screen.getByRole("button", { name: "공고 가져오기" }));
     expect(await screen.findByRole("status")).toHaveTextContent("채용공고를 불러왔습니다.");
+    expect(screen.getByLabelText("채용공고")).toHaveValue(description);
+  });
+
+  it("asks the user to paste the detail when only a summary was captured", async () => {
+    const description = "회사 소개와 복리후생만 담긴 요약입니다. ".repeat(3);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ job: { description, sufficient: false } }),
+    }));
+    const user = userEvent.setup();
+    render(<ControlledPanel />);
+    await user.type(screen.getByLabelText("잡코리아 채용공고 URL"), "https://www.jobkorea.co.kr/Recruit/GI_Read/1");
+    await user.click(screen.getByRole("button", { name: "공고 가져오기" }));
+    // The summary still fills the textarea, but the panel directs a manual paste.
+    expect(await screen.findByRole("alert")).toHaveTextContent("상세 모집요강을 복사해");
     expect(screen.getByLabelText("채용공고")).toHaveValue(description);
   });
 });

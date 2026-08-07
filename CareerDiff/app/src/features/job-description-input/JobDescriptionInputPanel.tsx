@@ -16,7 +16,7 @@ export type JobDescriptionInputPanelProps = {
 export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInputPanelProps) {
   const [touched, setTouched] = useState(false);
   const [jobUrl, setJobUrl] = useState("");
-  const [importStatus, setImportStatus] = useState<"idle" | "loading" | "error" | "done">("idle");
+  const [importStatus, setImportStatus] = useState<"idle" | "loading" | "error" | "warning" | "done">("idle");
   const [importMessage, setImportMessage] = useState("");
   const trimmedLength = value.trim().length;
   const isEmpty = trimmedLength === 0;
@@ -31,15 +31,25 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: jobUrl }),
       });
-      const body = (await response.json()) as { job?: { description: string }; error?: { message: string } };
+      const body = (await response.json()) as {
+        job?: { description: string; sufficient?: boolean };
+        error?: { message: string };
+      };
       if (!response.ok || !body.job) {
         setImportStatus("error");
         setImportMessage(body.error?.message ?? "채용공고를 가져오지 못했습니다.");
         return;
       }
       onChange(body.job.description);
-      setImportStatus("done");
-      setImportMessage("채용공고를 불러왔습니다.");
+      if (body.job.sufficient === false) {
+        // Only the summary boilerplate came through; the site renders the real
+        // detail client-side. Ask the user to paste it into the textarea below.
+        setImportStatus("warning");
+        setImportMessage("요약만 가져왔습니다. 공고의 상세 모집요강을 복사해 아래 입력란에 붙여넣어 주세요.");
+      } else {
+        setImportStatus("done");
+        setImportMessage("채용공고를 불러왔습니다.");
+      }
     } catch {
       setImportStatus("error");
       setImportMessage("네트워크 오류로 채용공고를 가져오지 못했습니다.");
@@ -71,8 +81,14 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
       </div>
       {importMessage && (
         <p
-          role={importStatus === "error" ? "alert" : "status"}
-          className={`text-xs ${importStatus === "error" ? "text-red-600" : "text-green-700"}`}
+          role={importStatus === "error" || importStatus === "warning" ? "alert" : "status"}
+          className={`text-xs ${
+            importStatus === "error"
+              ? "text-red-600"
+              : importStatus === "warning"
+                ? "text-amber-700"
+                : "text-green-700"
+          }`}
         >
           {importMessage}
         </p>
