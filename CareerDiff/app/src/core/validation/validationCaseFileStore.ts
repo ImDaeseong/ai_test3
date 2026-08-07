@@ -4,6 +4,10 @@ import { randomUUID } from "node:crypto";
 import type { AnalysisValidationCase } from "@/core/validation/analysisValidationStore";
 
 export function validationDataDirectory(): string {
+  // Tests and E2E point this at a throwaway directory so they never write
+  // into the real CareerDiff/data folder (see playwright.config.ts).
+  const override = process.env.CAREERDIFF_DATA_DIR;
+  if (override) return path.resolve(override);
   return path.resolve(process.cwd(), "..", "data");
 }
 

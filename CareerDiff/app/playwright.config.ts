@@ -1,4 +1,11 @@
+import os from "node:os";
+import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+
+// Keep the full-analysis E2E flow from writing synthetic validation cases
+// into the real CareerDiff/data folder; the server reads this override in
+// validationCaseFileStore.ts.
+const E2E_DATA_DIR = path.join(os.tmpdir(), "careerdiff-e2e-data");
 
 export default defineConfig({
   testDir: "./e2e",
@@ -24,5 +31,6 @@ export default defineConfig({
     url: "http://127.0.0.1:3100",
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    env: { CAREERDIFF_DATA_DIR: E2E_DATA_DIR },
   },
 });
