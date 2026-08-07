@@ -8,8 +8,8 @@ const CANDIDATE_PROFILE =
 test.describe("CareerDiff analyzer flow", () => {
   test("shows the privacy notice and per-field sensitive-data warning before any input", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("CareerDiff는 기본적으로 이력서나 채용공고를 저장하지 않습니다.")).toBeVisible();
-    await expect(page.getByText("비밀번호, 토큰, 사내 전용 식별자 등 민감 정보는 붙여넣지 마세요.")).toBeVisible();
+    await expect(page.getByText("브라우저와 CareerDiff/data 폴더에 저장됩니다")).toBeVisible();
+    await expect(page.getByText("민감한 정보는 첨부하지 마세요")).toBeVisible();
   });
 
   test("blocks the analyze button until both fields have enough text (docs/PRODUCT.md)", async ({ page }) => {
@@ -17,10 +17,10 @@ test.describe("CareerDiff analyzer flow", () => {
     const analyzeButton = page.getByRole("button", { name: "분석하기" });
     await expect(analyzeButton).toBeDisabled();
 
-    await page.getByLabel("채용공고").fill("short");
+    await page.getByLabel("채용공고", { exact: true }).fill("short");
     await expect(analyzeButton).toBeDisabled();
 
-    await page.getByLabel("채용공고").fill(JOB_DESCRIPTION);
+    await page.getByLabel("채용공고", { exact: true }).fill(JOB_DESCRIPTION);
     await expect(analyzeButton).toBeDisabled();
 
     await page.getByLabel("이력서 / 커리어 / 프로젝트").fill(CANDIDATE_PROFILE);
@@ -34,7 +34,7 @@ test.describe("CareerDiff analyzer flow", () => {
     });
 
     await page.goto("/");
-    await page.getByLabel("채용공고").fill(JOB_DESCRIPTION);
+    await page.getByLabel("채용공고", { exact: true }).fill(JOB_DESCRIPTION);
     await page.getByLabel("이력서 / 커리어 / 프로젝트").fill(CANDIDATE_PROFILE);
     await page.getByRole("button", { name: "분석하기" }).click();
 

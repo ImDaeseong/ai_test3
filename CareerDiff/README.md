@@ -28,7 +28,7 @@ npm run dev
 
 ## 현재 분석 방식
 
-- `OPENAI_API_KEY`가 없으면 고정 mock 결과를 반환합니다.
+- `OPENAI_API_KEY`가 없으면 입력 공고와 후보자 프로필을 실제로 분석하는 로컬 키워드 분석기(`LocalAnalysisProvider`)를 사용합니다.
 - 키가 있으면 OpenAI Structured Outputs를 사용합니다.
 - 잡코리아 수집은 공개 상세 페이지 HTML을 직접 읽으며 로그인, CAPTCHA 또는 접근통제를 우회하지 않습니다.
 

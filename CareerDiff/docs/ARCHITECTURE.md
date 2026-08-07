@@ -40,7 +40,7 @@ app/src/
 채용공고 + 후보자 프로필
 → POST /api/analyze
 → AnalysisOrchestrator
-→ mock 또는 OpenAI provider
+→ 로컬 분석기 또는 OpenAI provider
 → 스키마가 검증된 분석 JSON
 → 화면 렌더링
 → POST /api/validation-cases
@@ -85,6 +85,6 @@ app/src/
 
 ## 분석 모드
 
-`OPENAI_API_KEY`가 없으면 테스트 가능한 고정 mock을 반환합니다. 키가 있으면
-`OpenAiAnalysisProvider`가 Structured Outputs 스키마로 실제 분석을 수행합니다. RAG와 retrieval은
-MVP에서 비활성화합니다.
+`OPENAI_API_KEY`가 없으면 입력 공고와 후보자 프로필을 실제로 분석하는 결정론적 로컬 키워드
+분석기(`LocalAnalysisProvider`)를 사용합니다. 키가 있으면 `OpenAiAnalysisProvider`가 Structured
+Outputs 스키마로 실제 분석을 수행합니다. RAG와 retrieval은 MVP에서 비활성화합니다.

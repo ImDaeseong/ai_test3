@@ -65,20 +65,22 @@ export default function AnalyzerPage() {
       const body = (await response.json()) as AnalyzeResponse;
       setResult(body.result);
       try {
-        const cases = appendValidationCase({
+        const { cases, added } = appendValidationCase({
           jobDescription,
           candidateProfile,
           result: body.result,
         });
         setValidationCount(cases.length);
-        const validationCase = cases[cases.length - 1];
-        const saveResponse = await fetch("/api/validation-cases", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(validationCase),
-        });
-        if (!saveResponse.ok) {
-          throw new Error("Validation case file save failed.");
+        // Identical input and result already stored: skip the redundant file write.
+        if (added) {
+          const saveResponse = await fetch("/api/validation-cases", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(added),
+          });
+          if (!saveResponse.ok) {
+            throw new Error("Validation case file save failed.");
+          }
         }
       } catch {
         setValidationError("분석은 완료됐지만 검증 데이터를 브라우저 또는 data 폴더에 저장하지 못했습니다.");
