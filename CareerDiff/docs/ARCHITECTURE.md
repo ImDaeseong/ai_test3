@@ -32,10 +32,10 @@ app/src/
 ## 데이터 흐름
 
 ```text
-잡코리아 URL
+채용공고 URL (잡코리아·사람인·인크루트)
 → POST /api/jobs/import
-→ 공개 HTML 정리
-→ 채용공고 본문
+→ 사이트별 공개 HTML 정리
+→ 채용공고 본문 + 충분성(sufficient) 판정
 
 채용공고 + 후보자 프로필
 → POST /api/analyze
@@ -51,9 +51,11 @@ app/src/
 
 ### `POST /api/jobs/import`
 
-입력: `{ "url": "https://...jobkorea.co.kr/Recruit/GI_Read/..." }`
+입력: `{ "url": "..." }` — 잡코리아(`/Recruit/GI_Read/<id>`), 사람인
+(`/zf_user/jobs/relay/view?rec_idx=<id>`), 인크루트(`/jobdb_info/jobpost.asp?job=<id>`) 상세 URL.
 
-출력: 출처 URL, 제목, 회사명, 정리된 공고 본문, 수집 시각.
+출력: 출처 URL, 제목, 회사명, 정리된 공고 본문, 수집 시각, 충분성(`sufficient`).
+`sufficient=false`면 요약만 수집된 것이므로 UI가 상세 요강 직접 붙여넣기를 안내한다.
 
 ### `POST /api/analyze`
 
@@ -76,7 +78,8 @@ app/src/
 
 ## 보안 경계
 
-- 잡코리아 HTTPS 상세공고 호스트와 경로만 허용해 SSRF 범위를 제한한다.
+- 지원 사이트(잡코리아·사람인·인크루트)의 HTTPS 상세공고 호스트와 경로만 화이트리스트로 허용해
+  SSRF 범위를 제한한다. 인크루트 `www` 링크는 `job` 서브도메인으로 재작성해 직접 요청한다(리다이렉트는 error).
 - 응답 크기와 요청 시간을 제한한다.
 - 원문을 서버 로그에 기록하지 않는다.
 - 입력을 신뢰할 수 없는 데이터로 취급하며 프롬프트 명령으로 실행하지 않는다.
