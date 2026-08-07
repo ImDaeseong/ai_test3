@@ -1,5 +1,5 @@
 export type ImportedJobPosting = {
-  source: "jobkorea";
+  source: "jobkorea" | "saramin" | "incruit";
   sourceUrl: string;
   title: string;
   company: string;
@@ -88,7 +88,7 @@ function decodeHtml(value: string): string {
   });
 }
 
-function cleanText(html: string): string {
+export function cleanText(html: string): string {
   return decodeHtml(
     html
       .replace(/<!--[\s\S]*?-->/g, " ")
@@ -137,7 +137,7 @@ export function parseJobKoreaDetailHtml(html: string): string {
   return cleanText(serializedBlock.slice(firstTag, lastClosingTag.index + lastClosingTag[0].length));
 }
 
-function metaContent(html: string, property: string): string {
+export function metaContent(html: string, property: string): string {
   const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const patterns = [
     new RegExp(`<meta[^>]+(?:property|name)=["']${escaped}["'][^>]+content=["']([^"']*)["'][^>]*>`, "i"),

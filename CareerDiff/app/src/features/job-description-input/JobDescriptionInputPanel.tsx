@@ -59,7 +59,7 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor="job-url" className="text-sm font-semibold text-neutral-800">
-        잡코리아 채용공고 URL
+        채용공고 URL
       </label>
       <div className="flex gap-2">
         <input
@@ -67,7 +67,7 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
           type="url"
           value={jobUrl}
           onChange={(event) => setJobUrl(event.target.value)}
-          placeholder="https://www.jobkorea.co.kr/Recruit/GI_Read/..."
+          placeholder="잡코리아·사람인·인크루트 상세공고 URL"
           className="min-w-0 flex-1 rounded-md border border-neutral-300 p-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
         <button

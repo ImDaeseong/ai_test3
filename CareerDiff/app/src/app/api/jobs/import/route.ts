@@ -1,4 +1,4 @@
-import { JobImportError, importJobKoreaPosting } from "@/core/job-import/jobKoreaImporter";
+import { importJobPosting, JobImportError } from "@/core/job-import/jobImporter";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     return Response.json({ error: { message: "url 문자열을 입력해 주세요." } }, { status: 400 });
   }
   try {
-    return Response.json({ job: await importJobKoreaPosting(url) });
+    return Response.json({ job: await importJobPosting(url) });
   } catch (error) {
     if (error instanceof JobImportError) {
       return Response.json({ error: { message: error.message } }, { status: error.status });
