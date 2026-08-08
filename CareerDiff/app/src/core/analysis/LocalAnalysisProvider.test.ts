@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { careerDiffAnalysisResultSchema } from "@/core/schemas/analysisResult";
-import { buildLocalAnalysis } from "./LocalAnalysisProvider";
+import { buildLocalAnalysis, inspectJobDescription } from "./LocalAnalysisProvider";
+
+describe("inspectJobDescription", () => {
+  it("is ready only when a known skill is present", () => {
+    expect(inspectJobDescription("Python과 AWS로 백엔드 서비스를 운영할 개발자를 찾습니다.").ready).toBe(true);
+    const noSkill = inspectJobDescription("매장 운영과 고객 응대를 담당할 매니저를 모집합니다. 경력 3년 이상.");
+    expect(noSkill.ready).toBe(false);
+    expect(noSkill.reason).toBe("no-known-skills");
+  });
+
+  it("is not ready for text below the analyzable length", () => {
+    const short = inspectJobDescription("개발자 모집");
+    expect(short.ready).toBe(false);
+    expect(short.reason).toBe("too-short");
+  });
+});
 
 describe("buildLocalAnalysis", () => {
   it("changes requirements and score when the posting changes", () => {

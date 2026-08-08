@@ -62,11 +62,21 @@ describe("hasSufficientJobDetail", () => {
     expect(hasSufficientJobDetail(summaryOnly)).toBe(false);
   });
 
-  it("treats a description with real requirement sections as sufficient", () => {
+  it("treats a description that names known skills as sufficient", () => {
     const withDetail =
       "담당업무: FastAPI와 Python으로 백엔드 API를 설계하고 구현합니다. " +
       "자격요건: 백엔드 개발 경력 3년 이상. 우대사항: RAG 서비스 경험.";
     expect(hasSufficientJobDetail(withDetail)).toBe(true);
+  });
+
+  it("is insufficient when a requirements section names no analyzer-known skill", () => {
+    // Requirement markers used to force success on their own; a JD the local
+    // analyzer cannot extract skills from must now be insufficient so the user
+    // is asked to paste more, not shown an empty analysis.
+    const requirementsNoSkill =
+      "담당업무: 매장 운영과 고객 응대를 담당합니다. 자격요건: 관련 경력 3년 이상. " +
+      "우대사항: 리더십과 커뮤니케이션 능력이 뛰어난 분.";
+    expect(hasSufficientJobDetail(requirementsNoSkill)).toBe(false);
   });
 
   it("flags a non-tech summary with no recognizable skills as insufficient", () => {

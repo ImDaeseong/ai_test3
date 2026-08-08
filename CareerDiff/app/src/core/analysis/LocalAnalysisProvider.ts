@@ -74,13 +74,32 @@ function includesSkill(text: string, skill: SkillDefinition): boolean {
   return skill.aliases.some((alias) => lower.includes(alias));
 }
 
+export type AnalysisReadiness = {
+  /** True only when this analyzer can produce a non-empty analysis. */
+  ready: boolean;
+  detectedSkills: string[];
+  reason?: "too-short" | "no-known-skills";
+};
+
+const MIN_ANALYZABLE_LENGTH = 30;
+
 /**
- * Whether the analyzer's skill vocabulary matches anything in `text`. Shared
- * with the importer so its "sufficient" check predicts the same outcome this
- * analyzer produces — if no skill is found here, the analysis will be empty.
+ * The analyzer's own judgment of whether a job description will produce a
+ * usable analysis. It is the single source of truth for readiness: the
+ * importer delegates here instead of guessing from text markers, so a
+ * requirements heading with no recognizable skill is correctly not ready
+ * (it would still yield an empty analysis). When the analyzer changes (e.g.
+ * an LLM provider), this readiness logic changes with it.
  */
-export function textContainsKnownSkill(text: string): boolean {
-  return SKILLS.some((skill) => includesSkill(text, skill));
+export function inspectJobDescription(description: string): AnalysisReadiness {
+  const detectedSkills = SKILLS.filter((skill) => includesSkill(description, skill)).map((skill) => skill.label);
+  if (description.trim().length < MIN_ANALYZABLE_LENGTH) {
+    return { ready: false, detectedSkills, reason: "too-short" };
+  }
+  if (detectedSkills.length === 0) {
+    return { ready: false, detectedSkills, reason: "no-known-skills" };
+  }
+  return { ready: true, detectedSkills };
 }
 
 function evidenceSnippet(text: string, skill: SkillDefinition): string {
