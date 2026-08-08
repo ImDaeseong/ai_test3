@@ -1,9 +1,9 @@
 import type { CareerDiffAnalysisResult } from "@/core/types";
 
 /**
- * Stable mock result so the dashboard UI can be built before any LLM
- * integration exists (docs/ARCHITECTURE.md "Mock-first
- * implementation rule"). All content below is synthetic.
+ * A stable, fully-synthetic analysis result used as a shared test fixture
+ * (dashboard rendering, schema, and provider tests). Not used at runtime — the
+ * no-key path runs the deterministic local analyzer, not this mock.
  */
 export const mockAnalysisResult: CareerDiffAnalysisResult = {
   fitScore: {

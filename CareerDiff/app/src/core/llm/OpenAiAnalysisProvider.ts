@@ -67,16 +67,16 @@ export function omitNullObjectFields(value: unknown): unknown {
  *
  * Reads the key from OPENAI_API_KEY (see .env.example, left blank on
  * purpose). isConfigured() gates every call — AnalysisOrchestrator only
- * reaches generate() when a key is present, and falls back to the mock
- * result otherwise (docs/ARCHITECTURE.md "Mock-first
- * implementation rule").
+ * reaches generate() when a key is present, and otherwise falls back to the
+ * deterministic local analyzer (LocalAnalysisProvider), not a mock.
  *
- * Not yet exercised against the real API in this repo: no OPENAI_API_KEY
- * is configured in this environment. Tests cover provider selection and
- * conversion of domain-optional fields into OpenAI's required+nullable
- * strict-schema representation. Before production, run one consented,
- * synthetic request with a real key and confirm the response validates
- * against careerDiffAnalysisResultSchema.
+ * Not yet exercised against the real API in this repo (no OPENAI_API_KEY is
+ * configured here), but generate()'s full pipeline — strict-schema request,
+ * response parse, null stripping, and Zod validation — is covered by a
+ * mocked-client unit test, along with provider selection and the
+ * required+nullable strict-schema conversion. Before production, run one
+ * consented, synthetic request with a real key and confirm the response
+ * validates against careerDiffAnalysisResultSchema.
  */
 export class OpenAiAnalysisProvider implements LlmAnalysisProvider {
   isConfigured(): boolean {
