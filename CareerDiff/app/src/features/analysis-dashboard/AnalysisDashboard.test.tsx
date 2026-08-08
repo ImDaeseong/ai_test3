@@ -16,6 +16,31 @@ describe("AnalysisDashboard", () => {
     expect(screen.getByText("면접 준비")).toBeInTheDocument();
   });
 
+  it("shows no no-match notice when strong matches exist", () => {
+    render(<AnalysisDashboard result={mockAnalysisResult} />);
+    expect(screen.queryByText(/직접 일치하는 이력서 근거가 없습니다/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/비교할 기술 요건을 추출하지 못했습니다/)).not.toBeInTheDocument();
+  });
+
+  it("explains a mismatch when there are requirements but no strong match", () => {
+    const mismatch: CareerDiffAnalysisResult = {
+      ...mockAnalysisResult,
+      matches: { strong: [], weak: [], missing: [], risks: [] },
+    };
+    render(<AnalysisDashboard result={mismatch} />);
+    expect(screen.getByText(/직접 일치하는 이력서 근거가 없습니다/)).toBeInTheDocument();
+  });
+
+  it("points at the empty job when no requirements were extracted", () => {
+    const emptyJob: CareerDiffAnalysisResult = {
+      ...mockAnalysisResult,
+      jobRequirements: { ...mockAnalysisResult.jobRequirements, requiredSkills: [], preferredSkills: [] },
+      matches: { strong: [], weak: [], missing: [], risks: [] },
+    };
+    render(<AnalysisDashboard result={emptyJob} />);
+    expect(screen.getByText(/비교할 기술 요건을 추출하지 못했습니다/)).toBeInTheDocument();
+  });
+
   it("does not break layout when result sections are empty", () => {
     const emptyResult: CareerDiffAnalysisResult = {
       ...mockAnalysisResult,

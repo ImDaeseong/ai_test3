@@ -16,15 +16,19 @@ test.describe("CareerDiff analyzer flow", () => {
     await page.goto("/");
     const analyzeButton = page.getByRole("button", { name: "분석하기" });
     await expect(analyzeButton).toBeDisabled();
+    // A disabled button must say why, never read as an unexplained no-op.
+    await expect(page.getByText("분석하려면 채용공고와 이력서/커리어를 30자 이상 입력하세요.")).toBeVisible();
 
     await page.getByLabel("채용공고", { exact: true }).fill("short");
     await expect(analyzeButton).toBeDisabled();
 
     await page.getByLabel("채용공고", { exact: true }).fill(JOB_DESCRIPTION);
     await expect(analyzeButton).toBeDisabled();
+    await expect(page.getByText("분석하려면 이력서/커리어를 30자 이상 입력하세요.")).toBeVisible();
 
     await page.getByLabel("이력서 / 커리어 / 프로젝트").fill(CANDIDATE_PROFILE);
     await expect(analyzeButton).toBeEnabled();
+    await expect(page.getByText(/30자 이상 입력하세요/)).toHaveCount(0);
   });
 
   test("runs a full analysis and renders all MVP dashboard sections (docs/PRODUCT.md)", async ({ page }) => {

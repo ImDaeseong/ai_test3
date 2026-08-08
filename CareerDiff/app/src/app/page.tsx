@@ -40,8 +40,12 @@ export default function AnalyzerPage() {
     });
   }, []);
 
-  const canAnalyze =
-    isJobDescriptionValid(jobDescription) && isCandidateProfileValid(candidateProfile) && status !== "loading";
+  const jobReady = isJobDescriptionValid(jobDescription);
+  const candidateReady = isCandidateProfileValid(candidateProfile);
+  const canAnalyze = jobReady && candidateReady && status !== "loading";
+  // Names the still-missing inputs so a disabled button never reads as an
+  // unexplained "no reaction".
+  const missingInputs = [!jobReady && "채용공고", !candidateReady && "이력서/커리어"].filter(Boolean);
 
   async function handleAnalyze() {
     setStatus("loading");
@@ -118,15 +122,20 @@ export default function AnalyzerPage() {
         />
       </div>
 
-      <div>
+      <div className="flex flex-col gap-1.5">
         <button
           type="button"
           onClick={handleAnalyze}
           disabled={!canAnalyze}
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
           {status === "loading" ? "분석 중..." : "분석하기"}
         </button>
+        {missingInputs.length > 0 && status !== "loading" && (
+          <p className="text-xs text-neutral-500">
+            분석하려면 {missingInputs.join("와 ")}를 30자 이상 입력하세요.
+          </p>
+        )}
       </div>
 
       {status === "error" && errorMessage && (
