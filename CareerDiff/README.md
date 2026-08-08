@@ -42,3 +42,4 @@ npm run dev
 - [제품 범위](docs/PRODUCT.md)
 - [구조와 보안](docs/ARCHITECTURE.md)
 - [검증 방법](docs/VERIFICATION.md)
+- [브라우저에서 공고 원문 가져오기 (북마클릿)](docs/BOOKMARKLET.md)

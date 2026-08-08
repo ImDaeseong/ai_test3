@@ -67,7 +67,8 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
         채용공고
       </label>
       <p className="text-xs text-neutral-500">
-        공고의 상세 모집요강을 복사해 붙여넣는 것이 가장 정확합니다.
+        공고 페이지에서 상세 모집요강을 드래그해 복사(Ctrl+C)한 뒤 붙여넣는 것이 가장 정확합니다.
+        아래 URL 자동 가져오기는 사이트에 따라 요약만 수집될 수 있습니다.
       </p>
       <textarea
         id="job-description"
