@@ -74,6 +74,15 @@ function includesSkill(text: string, skill: SkillDefinition): boolean {
   return skill.aliases.some((alias) => lower.includes(alias));
 }
 
+/**
+ * Whether the analyzer's skill vocabulary matches anything in `text`. Shared
+ * with the importer so its "sufficient" check predicts the same outcome this
+ * analyzer produces — if no skill is found here, the analysis will be empty.
+ */
+export function textContainsKnownSkill(text: string): boolean {
+  return SKILLS.some((skill) => includesSkill(text, skill));
+}
+
 function evidenceSnippet(text: string, skill: SkillDefinition): string {
   const line = text
     .split(/\r?\n/)

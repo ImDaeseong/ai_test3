@@ -1,3 +1,5 @@
+import { textContainsKnownSkill } from "@/core/analysis/LocalAnalysisProvider";
+
 export type ImportedJobPosting = {
   source: "jobkorea" | "saramin" | "incruit";
   sourceUrl: string;
@@ -18,18 +20,8 @@ export type ImportedJobPosting = {
 const ALLOWED_HOSTS = new Set(["www.jobkorea.co.kr", "m.jobkorea.co.kr"]);
 const MAX_HTML_LENGTH = 5_000_000;
 
-// Phrases that only appear in JobKorea's summary/meta scrape, never in a real
-// job-detail body. Two or more of these with no requirement marker means we
-// got the boilerplate summary, not the posting's actual requirements.
-const SUMMARY_ONLY_MARKERS = [
-  "지원자 현황",
-  "잡코리아 즉시지원",
-  "기업구분",
-  "해당공고 불법",
-  "채용정보의 정확성",
-];
-
-// Markers that signal the real job-detail body was captured (or pasted).
+// Markers that signal the real job-detail body was captured (or pasted):
+// a requirements/responsibilities section, in Korean or English.
 const REQUIREMENT_MARKERS = [
   "담당업무",
   "주요업무",
@@ -42,17 +34,21 @@ const REQUIREMENT_MARKERS = [
 ];
 
 /**
- * Whether a job description carries the actual requirements, not just
- * JobKorea's summary boilerplate. Used both after a scrape and as the
- * signal for the manual-paste fallback.
+ * Whether a job description carries usable requirements rather than just a
+ * site's summary boilerplate (company info, benefits, how-to-apply).
+ *
+ * A text-marker guess at "is this the summary" proved unreliable across sites
+ * and JobKorea page formats. Instead this predicts the actual outcome: the
+ * description is sufficient only if it names a requirements section OR contains
+ * a skill the analyzer recognizes — exactly what keeps the analysis from coming
+ * back empty. When it doesn't, the UI asks the user to paste the detail.
  */
 export function hasSufficientJobDetail(description: string): boolean {
   const lower = description.toLowerCase();
   if (REQUIREMENT_MARKERS.some((marker) => lower.includes(marker.toLowerCase()))) {
     return true;
   }
-  const summaryMarkerHits = SUMMARY_ONLY_MARKERS.filter((marker) => description.includes(marker)).length;
-  return summaryMarkerHits < 2;
+  return textContainsKnownSkill(description);
 }
 
 export class JobImportError extends Error {

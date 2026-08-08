@@ -68,6 +68,23 @@ describe("hasSufficientJobDetail", () => {
       "자격요건: 백엔드 개발 경력 3년 이상. 우대사항: RAG 서비스 경험.";
     expect(hasSufficientJobDetail(withDetail)).toBe(true);
   });
+
+  it("flags a non-tech summary with no recognizable skills as insufficient", () => {
+    // A JobKorea summary format that carries none of the old summary markers,
+    // no requirement section, and no skill keyword — this used to slip through
+    // as sufficient and produce a silently empty analysis.
+    const nonTechSummary =
+      "자동차 대여 산업 플랫폼 개발 CTO 모집 상세요강 접수기간 방법 기업정보 추천공고 " +
+      "채용정보에 잘못된 내용이 있을 경우 문의해주세요. 모집요강 모집분야 전략수립 및 연구개발 총괄 " +
+      "모집인원 1명 고용형태 정규직 급여 회사 내규에 따름 근무시간 주5일 근무지주소 서울 송파구 " +
+      "지원자격 경력 10년이상 학력 대졸이상";
+    expect(hasSufficientJobDetail(nonTechSummary)).toBe(false);
+  });
+
+  it("treats a summary that still names a known skill as sufficient", () => {
+    const withSkill = "백엔드 개발자 모집. 접수기간 방법 기업정보. Python과 AWS 경험 필요.";
+    expect(hasSufficientJobDetail(withSkill)).toBe(true);
+  });
 });
 
 describe("parseJobKoreaDetailHtml", () => {
