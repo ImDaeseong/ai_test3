@@ -17,7 +17,8 @@ npm run test:e2e
 - 요약만 수집(sufficient=false) 시 분석 필드를 채우지 않고 회사·제목만 안내하며 상세 요강 붙여넣기를 요구
 - `분석하기`는 readiness(분석 가능한 스킬 존재)일 때만 활성화; 아니면 사유별 안내(길이 부족 vs 요건 없음)
 - 무매칭(강한 매칭 0) 시 원인별 배너 표시(공고 스킬 0 vs 이력서 불일치)
-- import readiness ↔ 실제 분석 결과 정합: ready면 요건 추출>0, notready면 0 (`data/*.json`로 확인)
+- import readiness ↔ 실제 분석 결과 정합: ready면 요건 추출>0, notready면 0 (`data/*.json`로 확인). 의미적
+  분류(ready/no-known-skills/too-short)는 PII 없는 라벨 픽스처(`jobReadiness.fixtures.ts`)로 자동 회귀 가드됨
 - 공개 HTML에서 한글 제목·회사명·본문 추출
 - 후보자 JSON 첨부, 잘못된 JSON 거부, 새로고침 복원
 - 분석 요청 스키마와 결과 스키마, 미니 프로젝트 정확히 3개

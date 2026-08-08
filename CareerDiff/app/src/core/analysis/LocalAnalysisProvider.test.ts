@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { careerDiffAnalysisResultSchema } from "@/core/schemas/analysisResult";
+import { jobReadinessFixtures } from "./jobReadiness.fixtures";
 import { buildLocalAnalysis, inspectJobDescription } from "./LocalAnalysisProvider";
+
+function classify(description: string): "ready" | "no-known-skills" | "too-short" {
+  const readiness = inspectJobDescription(description);
+  if (readiness.ready) return "ready";
+  return readiness.reason ?? "no-known-skills";
+}
+
+describe("inspectJobDescription semantic regression (labeled fixtures)", () => {
+  it.each(jobReadinessFixtures)("classifies '$label' as $expected", ({ description, expected }) => {
+    expect(classify(description)).toBe(expected);
+  });
+});
 
 describe("inspectJobDescription", () => {
   it("is ready only when a known skill is present", () => {
