@@ -12,7 +12,7 @@ test.describe("CareerDiff analyzer flow", () => {
     await expect(page.getByText("민감한 정보는 첨부하지 마세요")).toBeVisible();
   });
 
-  test("blocks the analyze button until both fields have enough text (docs/PRODUCT.md)", async ({ page }) => {
+  test("enables analyze once both fields are long enough (docs/PRODUCT.md)", async ({ page }) => {
     await page.goto("/");
     const analyzeButton = page.getByRole("button", { name: "분석하기" });
     await expect(analyzeButton).toBeDisabled();
@@ -22,14 +22,6 @@ test.describe("CareerDiff analyzer flow", () => {
     await page.getByLabel("채용공고", { exact: true }).fill("short");
     await expect(analyzeButton).toBeDisabled();
 
-    // Long enough, but no skill the analyzer recognizes: still blocked, and told
-    // to paste the detail rather than shown an empty 0-score result.
-    await page
-      .getByLabel("채용공고", { exact: true })
-      .fill("이 공고는 매장 운영과 고객 응대를 담당할 매니저를 모집합니다. 경력 3년 이상 필요합니다.");
-    await expect(analyzeButton).toBeDisabled();
-    await expect(page.getByText("분석 가능한 기술 요건을 찾지 못했습니다.")).toBeVisible();
-
     await page.getByLabel("채용공고", { exact: true }).fill(JOB_DESCRIPTION);
     await expect(analyzeButton).toBeDisabled();
     await expect(page.getByText("분석하려면 이력서/커리어를 30자 이상 입력하세요.")).toBeVisible();
@@ -37,6 +29,22 @@ test.describe("CareerDiff analyzer flow", () => {
     await page.getByLabel("이력서 / 커리어 / 프로젝트").fill(CANDIDATE_PROFILE);
     await expect(analyzeButton).toBeEnabled();
     await expect(page.getByText(/30자 이상 입력하세요/)).toHaveCount(0);
+  });
+
+  test("stays analyzable with a non-blocking warning when no skill is recognized", async ({ page }) => {
+    await page.goto("/");
+    const analyzeButton = page.getByRole("button", { name: "분석하기" });
+
+    // A long job with no analyzer-known skill plus a valid resume: the local
+    // dictionary is incomplete, so the button must NOT be blocked — it stays
+    // enabled and only warns that results may be limited.
+    await page
+      .getByLabel("채용공고", { exact: true })
+      .fill("이 공고는 매장 운영과 고객 응대를 담당할 매니저를 모집합니다. 경력 3년 이상 필요합니다.");
+    await page.getByLabel("이력서 / 커리어 / 프로젝트").fill(CANDIDATE_PROFILE);
+
+    await expect(analyzeButton).toBeEnabled();
+    await expect(page.getByText(/인식된 기술 요건이 없어/)).toBeVisible();
   });
 
   test("runs a full analysis and renders all MVP dashboard sections (docs/PRODUCT.md)", async ({ page }) => {

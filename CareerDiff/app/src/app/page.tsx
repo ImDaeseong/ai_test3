@@ -41,21 +41,16 @@ export default function AnalyzerPage() {
     });
   }, []);
 
-  // The analyzer decides readiness (single source of truth): the job text must
-  // be long enough AND name something it can actually analyze. This keeps the
-  // button from producing an empty 0-score result and instead directs a paste.
+  // Enable on length only. The local skill dictionary is incomplete, so a job
+  // with no recognized skill must NOT be a hard block (it would trap valid
+  // postings) — it stays analyzable with a non-blocking warning, and the
+  // zero-match banner explains any empty result afterward.
   const jobReadiness = inspectJobDescription(jobDescription);
+  const jobLengthOk = jobReadiness.reason !== "too-short";
   const candidateReady = isCandidateProfileValid(candidateProfile);
-  const canAnalyze = jobReadiness.ready && candidateReady && status !== "loading";
-  // A disabled button always says why.
-  const disabledHint =
-    canAnalyze || status === "loading"
-      ? null
-      : jobReadiness.reason === "no-known-skills"
-        ? "이 공고에서 분석 가능한 기술 요건을 찾지 못했습니다. 공고의 상세 모집요강을 복사해 붙여넣어 주세요."
-        : `분석하려면 ${[!jobReadiness.ready && "채용공고", !candidateReady && "이력서/커리어"]
-            .filter(Boolean)
-            .join("와 ")}를 30자 이상 입력하세요.`;
+  const canAnalyze = jobLengthOk && candidateReady && status !== "loading";
+  const missingInputs = [!jobLengthOk && "채용공고", !candidateReady && "이력서/커리어"].filter(Boolean);
+  const noSkillWarning = canAnalyze && jobReadiness.reason === "no-known-skills";
 
   async function handleAnalyze() {
     setStatus("loading");
@@ -141,7 +136,14 @@ export default function AnalyzerPage() {
         >
           {status === "loading" ? "분석 중..." : "분석하기"}
         </button>
-        {disabledHint && <p className="text-xs text-neutral-500">{disabledHint}</p>}
+        {status !== "loading" && missingInputs.length > 0 && (
+          <p className="text-xs text-neutral-500">분석하려면 {missingInputs.join("와 ")}를 30자 이상 입력하세요.</p>
+        )}
+        {noSkillWarning && (
+          <p className="text-xs text-amber-700">
+            인식된 기술 요건이 없어 분석 결과가 제한적일 수 있습니다. 공고의 상세 모집요강을 붙여넣으면 더 정확합니다.
+          </p>
+        )}
       </div>
 
       {status === "error" && errorMessage && (
