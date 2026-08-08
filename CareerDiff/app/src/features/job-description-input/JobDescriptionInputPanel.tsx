@@ -32,7 +32,7 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
         body: JSON.stringify({ url: jobUrl }),
       });
       const body = (await response.json()) as {
-        job?: { description: string; sufficient?: boolean };
+        job?: { description: string; sufficient?: boolean; title?: string; company?: string };
         error?: { message: string };
       };
       if (!response.ok || !body.job) {
@@ -40,16 +40,21 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
         setImportMessage(body.error?.message ?? "채용공고를 가져오지 못했습니다.");
         return;
       }
-      onChange(body.job.description);
-      if (body.job.sufficient === false) {
-        // Only the summary boilerplate came through; the site renders the real
-        // detail client-side. Ask the user to paste it into the textarea below.
+      const job = body.job;
+      if (job.sufficient === false) {
+        // Partial import: the site rendered the real detail client-side, so we
+        // only got a summary. Don't populate the analyzable field with that
+        // noise — name what we identified and require a manual paste.
         setImportStatus("warning");
-        setImportMessage("요약만 가져왔습니다. 공고의 상세 모집요강을 복사해 아래 입력란에 붙여넣어 주세요.");
-      } else {
-        setImportStatus("done");
-        setImportMessage("채용공고를 불러왔습니다.");
+        const label = [job.company, job.title].filter(Boolean).join(" · ");
+        setImportMessage(
+          `${label ? `'${label}' ` : ""}공고의 상세 요강을 자동으로 가져오지 못했습니다. 공고의 상세 모집요강을 복사해 아래 입력란에 붙여넣어 주세요.`,
+        );
+        return;
       }
+      onChange(job.description);
+      setImportStatus("done");
+      setImportMessage("채용공고를 불러왔습니다.");
     } catch {
       setImportStatus("error");
       setImportMessage("네트워크 오류로 채용공고를 가져오지 못했습니다.");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { inspectJobDescription } from "@/core/analysis/LocalAnalysisProvider";
 import type { AnalyzeResponse, ApiErrorResponse, CareerDiffAnalysisResult } from "@/core/types";
 import {
   appendValidationCase,
@@ -12,7 +13,7 @@ import {
   CandidateProfileInputPanel,
   isCandidateProfileValid,
 } from "@/features/candidate-profile-input/CandidateProfileInputPanel";
-import { isJobDescriptionValid, JobDescriptionInputPanel } from "@/features/job-description-input/JobDescriptionInputPanel";
+import { JobDescriptionInputPanel } from "@/features/job-description-input/JobDescriptionInputPanel";
 
 type Status = "idle" | "loading" | "error" | "done";
 
@@ -40,12 +41,21 @@ export default function AnalyzerPage() {
     });
   }, []);
 
-  const jobReady = isJobDescriptionValid(jobDescription);
+  // The analyzer decides readiness (single source of truth): the job text must
+  // be long enough AND name something it can actually analyze. This keeps the
+  // button from producing an empty 0-score result and instead directs a paste.
+  const jobReadiness = inspectJobDescription(jobDescription);
   const candidateReady = isCandidateProfileValid(candidateProfile);
-  const canAnalyze = jobReady && candidateReady && status !== "loading";
-  // Names the still-missing inputs so a disabled button never reads as an
-  // unexplained "no reaction".
-  const missingInputs = [!jobReady && "채용공고", !candidateReady && "이력서/커리어"].filter(Boolean);
+  const canAnalyze = jobReadiness.ready && candidateReady && status !== "loading";
+  // A disabled button always says why.
+  const disabledHint =
+    canAnalyze || status === "loading"
+      ? null
+      : jobReadiness.reason === "no-known-skills"
+        ? "이 공고에서 분석 가능한 기술 요건을 찾지 못했습니다. 공고의 상세 모집요강을 복사해 붙여넣어 주세요."
+        : `분석하려면 ${[!jobReadiness.ready && "채용공고", !candidateReady && "이력서/커리어"]
+            .filter(Boolean)
+            .join("와 ")}를 30자 이상 입력하세요.`;
 
   async function handleAnalyze() {
     setStatus("loading");
@@ -131,11 +141,7 @@ export default function AnalyzerPage() {
         >
           {status === "loading" ? "분석 중..." : "분석하기"}
         </button>
-        {missingInputs.length > 0 && status !== "loading" && (
-          <p className="text-xs text-neutral-500">
-            분석하려면 {missingInputs.join("와 ")}를 30자 이상 입력하세요.
-          </p>
-        )}
+        {disabledHint && <p className="text-xs text-neutral-500">{disabledHint}</p>}
       </div>
 
       {status === "error" && errorMessage && (

@@ -55,18 +55,20 @@ describe("JobDescriptionInputPanel", () => {
     expect(screen.getByLabelText("채용공고")).toHaveValue(description);
   });
 
-  it("asks the user to paste the detail when only a summary was captured", async () => {
+  it("does not fill the field with a summary-only import and asks for a paste", async () => {
     const description = "회사 소개와 복리후생만 담긴 요약입니다. ".repeat(3);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ job: { description, sufficient: false } }),
+      json: async () => ({ job: { description, sufficient: false, title: "백엔드 채용", company: "테스트회사" } }),
     }));
     const user = userEvent.setup();
     render(<ControlledPanel />);
     await user.type(screen.getByLabelText("채용공고 URL"), "https://www.jobkorea.co.kr/Recruit/GI_Read/1");
     await user.click(screen.getByRole("button", { name: "공고 가져오기" }));
-    // The summary still fills the textarea, but the panel directs a manual paste.
-    expect(await screen.findByRole("alert")).toHaveTextContent("상세 모집요강을 복사해");
-    expect(screen.getByLabelText("채용공고")).toHaveValue(description);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("상세 모집요강을 복사해");
+    expect(alert).toHaveTextContent("테스트회사");
+    // Partial imports must not populate the analyzable field with summary noise.
+    expect(screen.getByLabelText("채용공고")).toHaveValue("");
   });
 });

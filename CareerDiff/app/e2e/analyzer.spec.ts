@@ -22,6 +22,14 @@ test.describe("CareerDiff analyzer flow", () => {
     await page.getByLabel("채용공고", { exact: true }).fill("short");
     await expect(analyzeButton).toBeDisabled();
 
+    // Long enough, but no skill the analyzer recognizes: still blocked, and told
+    // to paste the detail rather than shown an empty 0-score result.
+    await page
+      .getByLabel("채용공고", { exact: true })
+      .fill("이 공고는 매장 운영과 고객 응대를 담당할 매니저를 모집합니다. 경력 3년 이상 필요합니다.");
+    await expect(analyzeButton).toBeDisabled();
+    await expect(page.getByText("분석 가능한 기술 요건을 찾지 못했습니다.")).toBeVisible();
+
     await page.getByLabel("채용공고", { exact: true }).fill(JOB_DESCRIPTION);
     await expect(analyzeButton).toBeDisabled();
     await expect(page.getByText("분석하려면 이력서/커리어를 30자 이상 입력하세요.")).toBeVisible();
