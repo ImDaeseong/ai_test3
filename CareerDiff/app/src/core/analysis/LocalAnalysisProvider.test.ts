@@ -15,6 +15,12 @@ describe("inspectJobDescription", () => {
     expect(short.ready).toBe(false);
     expect(short.reason).toBe("too-short");
   });
+
+  it("recognizes skills added from real postings (C++/Flutter/HTML)", () => {
+    const result = inspectJobDescription("프런트엔드 개발자 모집. 담당업무는 Flutter, HTML, CSS와 C++ 기반 개발입니다.");
+    expect(result.ready).toBe(true);
+    expect(result.detectedSkills).toEqual(expect.arrayContaining(["Flutter", "HTML", "CSS", "C++"]));
+  });
 });
 
 describe("buildLocalAnalysis", () => {

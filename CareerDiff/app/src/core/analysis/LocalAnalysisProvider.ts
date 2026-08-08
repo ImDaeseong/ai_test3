@@ -65,6 +65,22 @@ const SKILLS: SkillDefinition[] = [
   { label: "Playwright", category: "testing", aliases: ["playwright"] },
   { label: "Selenium", category: "testing", aliases: ["selenium"] },
   { label: "BeautifulSoup", category: "collection", aliases: ["beautifulsoup", "beautiful soup"] },
+  // Added from real postings (C++/C#/Flutter/HTML/CSS/QA/DevOps were present but
+  // unmatched) plus common languages/frameworks that were missing. Aliases are
+  // kept substring-safe on purpose — e.g. no bare "go"/"뷰"/"rust", which would
+  // falsely match 하고/인터뷰/cluster.
+  { label: "C++", category: "language", aliases: ["c++"] },
+  { label: "C#", category: "language", aliases: ["c#"] },
+  { label: "Go", category: "language", aliases: ["golang"] },
+  { label: "Swift", category: "language", aliases: ["swift"] },
+  { label: "PHP", category: "language", aliases: ["php"] },
+  { label: "Vue.js", category: "framework", aliases: ["vue.js", "vuejs", "vue"] },
+  { label: "Angular", category: "framework", aliases: ["angular"] },
+  { label: "Flutter", category: "framework", aliases: ["flutter", "플러터"] },
+  { label: "HTML", category: "frontend", aliases: ["html"] },
+  { label: "CSS", category: "frontend", aliases: ["css"] },
+  { label: "DevOps", category: "delivery", aliases: ["devops"] },
+  { label: "QA", category: "testing", aliases: ["qa"] },
 ];
 
 const FALLBACK_GAPS = ["요구사항 기반 API 구현", "자동화 테스트", "배포 및 운영 문서화"];
