@@ -50,6 +50,12 @@ export const jobReadinessFixtures: JobReadinessFixture[] = [
     expected: "no-known-skills",
   },
   {
+    label: "robotics role names robot/mechatronics/embedded skills",
+    description:
+      "로봇 시뮬레이션 총괄 CTO 모집. 담당업무: 메카트로닉스와 임베디드 펌웨어, 자율주행 알고리즘을 설계합니다.",
+    expected: "ready",
+  },
+  {
     label: "too short to analyze",
     description: "개발자 모집",
     expected: "too-short",

@@ -81,6 +81,17 @@ const SKILLS: SkillDefinition[] = [
   { label: "CSS", category: "frontend", aliases: ["css"] },
   { label: "DevOps", category: "delivery", aliases: ["devops"] },
   { label: "QA", category: "testing", aliases: ["qa"] },
+  // Robotics/hardware domain, added from real CTO/로봇 postings. Aliases stay
+  // substring-safe — no bare "ros" (across), "imu" (simulation), or "제어"
+  // (원격제어), which would false-match.
+  { label: "Robotics", category: "robotics", aliases: ["로봇", "로보틱스", "robotics"] },
+  { label: "Mechatronics", category: "robotics", aliases: ["메카트로닉스", "mechatronics"] },
+  { label: "Autonomous Driving", category: "robotics", aliases: ["자율주행", "autonomous driving"] },
+  { label: "ROS", category: "robotics", aliases: ["ros2", "ros 2", "robot operating system"] },
+  { label: "Embedded", category: "hardware", aliases: ["embedded", "임베디드"] },
+  { label: "Firmware", category: "hardware", aliases: ["firmware", "펌웨어"] },
+  { label: "Computer Vision", category: "ai", aliases: ["computer vision", "컴퓨터 비전", "컴퓨터비전"] },
+  { label: "CUDA", category: "ai", aliases: ["cuda"] },
 ];
 
 const FALLBACK_GAPS = ["요구사항 기반 API 구현", "자동화 테스트", "배포 및 운영 문서화"];
