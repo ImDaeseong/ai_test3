@@ -24,7 +24,10 @@ export function AnalysisJsonPanel({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-semibold text-neutral-900">분석 결과 JSON</h2>
-          <p className="text-xs text-neutral-600">이 브라우저에 검증 데이터 {validationCount}건이 누적되어 있습니다.</p>
+          <p className="text-xs text-neutral-600">
+            이 브라우저에 검증 데이터 {validationCount}건이 누적되어 있습니다. 이 기록은 결과 검토용이며, 누적되어도 분석
+            품질이 올라가지는 않습니다.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
