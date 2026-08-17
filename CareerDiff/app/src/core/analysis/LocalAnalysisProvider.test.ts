@@ -34,6 +34,16 @@ describe("inspectJobDescription", () => {
     expect(result.ready).toBe(true);
     expect(result.detectedSkills).toEqual(expect.arrayContaining(["Flutter", "HTML", "CSS", "C++"]));
   });
+
+  it("recognizes hardware/CAD skills added from a real 로봇제어 posting", () => {
+    const result = inspectJobDescription(
+      "로봇제어/강화학습 연구·개발자 채용. 스킬: C, C++, Linux, CATIA, NX, OrCAD, CUDA, MCU, Embedded, SIMD",
+    );
+    expect(result.ready).toBe(true);
+    expect(result.detectedSkills).toEqual(
+      expect.arrayContaining(["C++", "Linux", "CATIA", "OrCAD", "CUDA", "MCU", "Embedded", "SIMD"]),
+    );
+  });
 });
 
 describe("buildLocalAnalysis", () => {

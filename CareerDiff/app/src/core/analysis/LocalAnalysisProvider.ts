@@ -92,6 +92,14 @@ const SKILLS: SkillDefinition[] = [
   { label: "Firmware", category: "hardware", aliases: ["firmware", "펌웨어"] },
   { label: "Computer Vision", category: "ai", aliases: ["computer vision", "컴퓨터 비전", "컴퓨터비전"] },
   { label: "CUDA", category: "ai", aliases: ["cuda"] },
+  // Added from a real 로봇제어/강화학습 posting (C, Linux, CATIA, NX, OrCAD,
+  // CUDA, MCU, Embedded, SIMD listed as required 스킬) that a local-analyzer
+  // run left mostly unmatched. Bare "NX" is skipped as unsafe (2-char substring).
+  { label: "Linux", category: "infrastructure", aliases: ["linux", "리눅스"] },
+  { label: "CATIA", category: "hardware", aliases: ["catia"] },
+  { label: "OrCAD", category: "hardware", aliases: ["orcad"] },
+  { label: "MCU", category: "hardware", aliases: ["mcu"] },
+  { label: "SIMD", category: "hardware", aliases: ["simd"] },
 ];
 
 const FALLBACK_GAPS = ["요구사항 기반 API 구현", "자동화 테스트", "배포 및 운영 문서화"];
