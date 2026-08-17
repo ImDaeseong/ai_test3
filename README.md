@@ -1,6 +1,6 @@
 # ai_test3
 
-개인 프로젝트 작업공간입니다. `music_insight_studio`는 2026-07-17에 `ai_test2/`로 이동했습니다(진행할 작업이 많이 남은 `CareerDiff`에 집중하기 위해). 지금은 `CareerDiff` 하나만 유지합니다.
+개인 프로젝트 작업공간입니다. 현재 `CareerDiff` 하나를 유지합니다.
 
 ## Projects
 
