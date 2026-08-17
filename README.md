@@ -13,11 +13,6 @@ Job Fit Analyzer입니다. 채용공고와 이력서/커리어/프로젝트 이�
 - **채용정보 수집**: 자동 크롤링은 법적 리스크로 제거됨 — 당분간 사람이 직접 붙여넣어 수동 누적, 공식 API 경로가 생기면 자동화 재검토.
 - **시작점**: [`CareerDiff/docs/README.md`](CareerDiff/docs/README.md)(문서 지도) → 검증 명령·게이트는 [`VERIFICATION.md`](CareerDiff/docs/VERIFICATION.md)(정확한 테스트 개수는 `npm run typecheck && npm test`로 직접 확인).
 
-## 공통 관례
+## 새 프로젝트 추가 시
 
-- 맨 앞에 한 문장짜리 사용 사례(one-sentence use case) 명시.
-- 구현 전 `SPEC.md`/제품 범위 정의.
-- `ARCHITECTURE.md`로 기술 방향과 모듈 경계 정의.
-- `VERIFICATION.md`로 진행률 게이트와 (코드가 생기면) 구체적인 pass/fail 검증 명령 관리.
-- 구현을 멈추고 사람 검토를 요구하는 명시적 HOLD 조건.
-- 유료 API/실데이터를 다루는 기능은 무료·저비용 경로(mock/로컬)로 먼저 검증한 기록 없이는 유료 경로로 전환하지 않음(`CareerDiff/docs/VERIFICATION.md` 참고).
+`CareerDiff/docs/`(PRODUCT/ARCHITECTURE/VERIFICATION 3파일 + 문서 지도) 구조를 그대로 따른다: 한 문장 사용 사례 → 제품 범위 → 기술/모듈 경계 → 검증 명령과 HOLD 조건. 유료 API·실데이터를 다루는 기능은 무료·저비용 경로(mock/로컬)로 먼저 검증한 기록 없이는 유료 경로로 전환하지 않는다.
