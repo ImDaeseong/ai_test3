@@ -38,8 +38,20 @@ export default function AnalyzerPage() {
   useEffect(() => {
     // Deferred to a microtask so state updates happen in a callback rather
     // than synchronously in the effect body (react-hooks/set-state-in-effect).
-    queueMicrotask(() => {
-      const loaded = loadValidationCases();
+    queueMicrotask(async () => {
+      // The data/ folder on disk is the full record of everything ever
+      // analyzed on this machine; the browser's localStorage copy only
+      // covers this one browser and can be cleared. Prefer the server list
+      // and fall back to localStorage only if the fetch itself fails.
+      let loaded: AnalysisValidationCase[];
+      try {
+        const response = await fetch("/api/validation-cases");
+        if (!response.ok) throw new Error("failed to load validation cases");
+        const body = (await response.json()) as { cases: AnalysisValidationCase[] };
+        loaded = body.cases;
+      } catch {
+        loaded = loadValidationCases();
+      }
       setCases(loaded);
       setValidationCount(loaded.length);
       if (loaded.length > 0) {

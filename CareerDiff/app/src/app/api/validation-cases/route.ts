@@ -1,5 +1,13 @@
 import { analysisValidationCaseSchema } from "@/core/validation/validationCaseSchema";
-import { saveValidationCaseFile } from "@/core/validation/validationCaseFileStore";
+import { listValidationCaseFiles, saveValidationCaseFile } from "@/core/validation/validationCaseFileStore";
+
+export async function GET() {
+  try {
+    return Response.json({ cases: await listValidationCaseFiles() });
+  } catch {
+    return Response.json({ error: { message: "검증 데이터를 불러오지 못했습니다." } }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   let body: unknown;

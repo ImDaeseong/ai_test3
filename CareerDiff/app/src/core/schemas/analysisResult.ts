@@ -146,3 +146,17 @@ export const careerDiffAnalysisResultSchema = z.object({
   relatedSkillGuidance: z.array(relatedSkillGuidanceSchema),
   metadata: analysisMetadataSchema,
 });
+
+/**
+ * Backfills fields added to CareerDiffAnalysisResult after older saved
+ * results (browser localStorage and data/*.json) were written, so those
+ * legitimate past analyses validate instead of being discarded outright.
+ * Only additive, safe-to-default fields belong here — relatedSkillGuidance
+ * defaults to [] because "no known relation" is indistinguishable from "this
+ * result predates the field". A renamed or removed field must fail
+ * validation instead of being silently patched here.
+ */
+export function backfillLegacyAnalysisResult(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  return { relatedSkillGuidance: [], ...raw };
+}

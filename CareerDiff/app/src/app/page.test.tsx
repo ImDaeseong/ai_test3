@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mockAnalysisResult } from "@/core/mocks/mockAnalysisResult";
 import type { CareerDiffAnalysisResult } from "@/core/types";
 import { VALIDATION_CASES_STORAGE_KEY } from "@/core/validation/analysisValidationStore";
@@ -16,7 +16,7 @@ describe("AnalyzerPage mount (validation case auto-load)", () => {
     window.localStorage.clear();
   });
 
-  it("does not crash and skips the dashboard when the only stored case predates a required field", async () => {
+  it("does not crash and recovers a stored case that predates relatedSkillGuidance", async () => {
     const staleResult: Record<string, unknown> = { ...mockAnalysisResult };
     delete staleResult.relatedSkillGuidance;
     window.localStorage.setItem(
@@ -28,6 +28,28 @@ describe("AnalyzerPage mount (validation case auto-load)", () => {
           jobDescription: "job description",
           candidateProfile: "candidate profile",
           result: staleResult,
+        },
+      ]),
+    );
+
+    render(<AnalyzerPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("적합도 점수")).toBeInTheDocument();
+    });
+    expect(screen.getByText("연결된 기술 정보가 없습니다.")).toBeInTheDocument();
+  });
+
+  it("does not crash and skips the dashboard when the only stored case is malformed beyond recovery", async () => {
+    window.localStorage.setItem(
+      VALIDATION_CASES_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          jobDescription: "job description",
+          candidateProfile: "candidate profile",
+          result: { fitScore: mockAnalysisResult.fitScore },
         },
       ]),
     );
@@ -101,6 +123,43 @@ describe("AnalyzerPage mount (validation case auto-load)", () => {
 
     await waitFor(() => {
       expect(screen.getByText(mockAnalysisResult.summary)).toBeInTheDocument();
+    });
+  });
+
+  describe("with the server case list (data/*.json, not just this browser's cache)", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("shows a case saved on the server even when this browser's localStorage is empty", async () => {
+      const serverOnlyResult: CareerDiffAnalysisResult = {
+        ...mockAnalysisResult,
+        summary: "다른 브라우저에서 저장된 서버 케이스 요약입니다.",
+      };
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            cases: [
+              {
+                id: "server-case",
+                createdAt: "2026-08-03T00:00:00.000Z",
+                jobDescription: "server-persisted job description",
+                candidateProfile: "server-persisted candidate profile",
+                result: serverOnlyResult,
+              },
+            ],
+          }),
+        }),
+      );
+
+      render(<AnalyzerPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText(serverOnlyResult.summary)).toBeInTheDocument();
+      });
+      expect(screen.getByText("분석 히스토리 (1건)")).toBeInTheDocument();
     });
   });
 });

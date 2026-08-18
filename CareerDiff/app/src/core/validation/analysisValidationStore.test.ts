@@ -70,7 +70,7 @@ describe("analysisValidationStore", () => {
     expect(loadValidationCases()).toEqual([]);
   });
 
-  it("drops a stored case whose result predates a required field (e.g. relatedSkillGuidance)", () => {
+  it("recovers a stored case that predates relatedSkillGuidance instead of discarding it", () => {
     const staleResult: Record<string, unknown> = { ...mockAnalysisResult };
     delete staleResult.relatedSkillGuidance;
     window.localStorage.setItem(
@@ -82,6 +82,26 @@ describe("analysisValidationStore", () => {
           jobDescription: "job description",
           candidateProfile: "candidate profile",
           result: staleResult,
+        },
+      ]),
+    );
+
+    const cases = loadValidationCases();
+    expect(cases).toHaveLength(1);
+    expect(cases[0].result.relatedSkillGuidance).toEqual([]);
+    expect(cases[0].result.fitScore).toEqual(mockAnalysisResult.fitScore);
+  });
+
+  it("drops a stored case that is malformed beyond the known relatedSkillGuidance backfill", () => {
+    window.localStorage.setItem(
+      VALIDATION_CASES_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          jobDescription: "job description",
+          candidateProfile: "candidate profile",
+          result: { fitScore: mockAnalysisResult.fitScore },
         },
       ]),
     );

@@ -1,5 +1,5 @@
 import type { CareerDiffAnalysisResult } from "@/core/types";
-import { careerDiffAnalysisResultSchema } from "@/core/schemas/analysisResult";
+import { backfillLegacyAnalysisResult, careerDiffAnalysisResultSchema } from "@/core/schemas/analysisResult";
 
 export const VALIDATION_CASES_STORAGE_KEY = "careerdiff:validation-cases";
 
@@ -11,32 +11,45 @@ export type AnalysisValidationCase = {
   result: CareerDiffAnalysisResult;
 };
 
-function isStoredValidationCase(item: unknown): item is AnalysisValidationCase {
-  if (!item || typeof item !== "object") return false;
+/**
+ * Backfills known-additive schema fields onto a raw stored case's result,
+ * then re-checks the basic case shape. A case that still fails validation
+ * after backfilling is dropped rather than passed through with `as`, which
+ * would surface as a downstream render crash instead of a load-time filter.
+ */
+function normalizeStoredValidationCase(item: unknown): AnalysisValidationCase | null {
+  if (!item || typeof item !== "object") return null;
   const candidate = item as Record<string, unknown>;
-  return (
-    typeof candidate.id === "string" &&
-    typeof candidate.createdAt === "string" &&
-    typeof candidate.jobDescription === "string" &&
-    typeof candidate.candidateProfile === "string" &&
-    careerDiffAnalysisResultSchema.safeParse(candidate.result).success
-  );
+  if (
+    typeof candidate.id !== "string" ||
+    typeof candidate.createdAt !== "string" ||
+    typeof candidate.jobDescription !== "string" ||
+    typeof candidate.candidateProfile !== "string"
+  ) {
+    return null;
+  }
+
+  const parsedResult = careerDiffAnalysisResultSchema.safeParse(backfillLegacyAnalysisResult(candidate.result));
+  if (!parsedResult.success) return null;
+
+  return {
+    id: candidate.id,
+    createdAt: candidate.createdAt,
+    jobDescription: candidate.jobDescription,
+    candidateProfile: candidate.candidateProfile,
+    result: parsedResult.data,
+  };
 }
 
-/**
- * Cases saved under an older schema version (e.g. before relatedSkillGuidance
- * was added to CareerDiffAnalysisResult) no longer match
- * careerDiffAnalysisResultSchema and are dropped here rather than passed
- * through with `as`, which would surface as a downstream render crash
- * instead of a load-time filter.
- */
 export function loadValidationCases(): AnalysisValidationCase[] {
   const saved = window.localStorage.getItem(VALIDATION_CASES_STORAGE_KEY);
   if (!saved) return [];
   try {
     const parsed = JSON.parse(saved) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isStoredValidationCase);
+    return parsed
+      .map(normalizeStoredValidationCase)
+      .filter((item): item is AnalysisValidationCase => item !== null);
   } catch {
     return [];
   }
