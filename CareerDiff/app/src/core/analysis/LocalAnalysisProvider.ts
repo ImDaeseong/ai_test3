@@ -174,6 +174,12 @@ const SKILLS: SkillDefinition[] = [
 
 const FALLBACK_GAPS = ["요구사항 기반 API 구현", "자동화 테스트", "배포 및 운영 문서화"];
 
+// Used for both fitScore categories when there is no comparable skill signal
+// (no detected posting skills, or no matched evidence), so an unrelated
+// posting (e.g. business-ops lead vs. a software résumé) doesn't read as a
+// flattering ~40% match while the risk banner says the opposite.
+const NO_SIGNAL_SCORE = 20;
+
 // A missing skill's direct relatedTo neighbors sometimes have no relatedTo of
 // their own back to something the candidate holds (e.g. LangGraph->LangChain
 // ends there, but LangChain->LLM->OpenAI continues). MAX_BRIDGE_DEPTH bounds
@@ -283,7 +289,7 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
   const matched = detected.filter((skill) => includesSkill(input.candidateProfile, skill));
   const missing = detected.filter((skill) => !matched.includes(skill));
   const denominator = detected.length || 1;
-  const score = detected.length ? Math.round((matched.length / denominator) * 100) : 40;
+  const score = detected.length ? Math.round((matched.length / denominator) * 100) : NO_SIGNAL_SCORE;
 
   const evidence: EvidenceItem[] = matched.map((skill, index) => ({
     id: `evidence-${index + 1}`,
@@ -336,7 +342,7 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
         },
         {
           label: "근거 충실도",
-          score: matched.length ? Math.min(100, 50 + matched.length * 10) : 20,
+          score: matched.length ? Math.min(100, 50 + matched.length * 10) : NO_SIGNAL_SCORE,
           reason: `직접 인용 가능한 기술 근거 ${matched.length}개를 확인했습니다.`,
         },
       ],

@@ -10,7 +10,10 @@ export function validationDataDirectory(): string {
   // into the real CareerDiff/data folder (see playwright.config.ts).
   const override = process.env.CAREERDIFF_DATA_DIR;
   if (override) return path.resolve(override);
-  return path.resolve(process.cwd(), "..", "data");
+  // turbopackIgnore: process.cwd() is dynamic to Next's file tracer, which
+  // otherwise falls back to tracing the whole project (including data/*.json,
+  // which holds candidate PII) as a build-time NFT warning.
+  return path.resolve(/* turbopackIgnore: true */ process.cwd(), "..", "data");
 }
 
 export async function saveValidationCaseFile(
