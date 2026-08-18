@@ -31,10 +31,10 @@ const SKILLS: SkillDefinition[] = [
   { label: "Spring", category: "framework", aliases: ["spring"] },
   { label: "Node.js", category: "framework", aliases: ["node.js", "nodejs"] },
   { label: "React", category: "framework", aliases: ["react"] },
-  { label: "Next.js", category: "framework", aliases: ["next.js", "nextjs"] },
+  { label: "Next.js", category: "framework", aliases: ["next.js", "nextjs"], relatedTo: ["React"] },
   { label: "SQL", category: "database", aliases: ["sql"] },
-  { label: "PostgreSQL", category: "database", aliases: ["postgresql", "postgres"] },
-  { label: "MySQL", category: "database", aliases: ["mysql"] },
+  { label: "PostgreSQL", category: "database", aliases: ["postgresql", "postgres"], relatedTo: ["SQL"] },
+  { label: "MySQL", category: "database", aliases: ["mysql"], relatedTo: ["SQL"] },
   { label: "Redis", category: "database", aliases: ["redis"] },
   { label: "MongoDB", category: "database", aliases: ["mongodb"] },
   { label: "Elasticsearch", category: "database", aliases: ["elasticsearch"] },
@@ -44,13 +44,13 @@ const SKILLS: SkillDefinition[] = [
   { label: "Docker", category: "infrastructure", aliases: ["docker"], relatedTo: ["Kubernetes"] },
   { label: "Kubernetes", category: "infrastructure", aliases: ["kubernetes", "k8s"], relatedTo: ["Docker"] },
   { label: "Terraform", category: "infrastructure", aliases: ["terraform"] },
-  { label: "GitHub Actions", category: "delivery", aliases: ["github actions"] },
-  { label: "CI/CD", category: "delivery", aliases: ["ci/cd", "cicd"] },
+  { label: "GitHub Actions", category: "delivery", aliases: ["github actions"], relatedTo: ["CI/CD"] },
+  { label: "CI/CD", category: "delivery", aliases: ["ci/cd", "cicd"], relatedTo: ["GitHub Actions"] },
   { label: "REST API", category: "api", aliases: ["rest api", "restful"] },
   { label: "GraphQL", category: "api", aliases: ["graphql"] },
   { label: "Kafka", category: "messaging", aliases: ["kafka"] },
   { label: "RabbitMQ", category: "messaging", aliases: ["rabbitmq"] },
-  { label: "Airflow", category: "data", aliases: ["airflow"] },
+  { label: "Airflow", category: "data", aliases: ["airflow"], relatedTo: ["Spark"] },
   { label: "Spark", category: "data", aliases: ["spark"] },
   { label: "PyTorch", category: "ai", aliases: ["pytorch"], relatedTo: ["CUDA"] },
   { label: "TensorFlow", category: "ai", aliases: ["tensorflow"], relatedTo: ["CUDA"] },
@@ -106,7 +106,7 @@ const SKILLS: SkillDefinition[] = [
   { label: "Flutter", category: "framework", aliases: ["flutter", "플러터"] },
   { label: "HTML", category: "frontend", aliases: ["html"] },
   { label: "CSS", category: "frontend", aliases: ["css"] },
-  { label: "DevOps", category: "delivery", aliases: ["devops"] },
+  { label: "DevOps", category: "delivery", aliases: ["devops"], relatedTo: ["CI/CD"] },
   { label: "QA", category: "testing", aliases: ["qa"] },
   // Robotics/hardware domain, added from real CTO/로봇 postings. Aliases stay
   // substring-safe — no bare "ros" (across), "imu" (simulation), or "제어"
@@ -130,7 +130,7 @@ const SKILLS: SkillDefinition[] = [
   // Added from a real "C# WPF 개발자" posting where a 47-case batch test run
   // left WPF unmatched. CIM/HCM from the same 스킬 line were skipped as
   // ambiguous ERP-module acronyms, not identifiable developer skills.
-  { label: "WPF", category: "framework", aliases: ["wpf"] },
+  { label: "WPF", category: "framework", aliases: ["wpf"], relatedTo: ["C#"] },
 ];
 
 const FALLBACK_GAPS = ["요구사항 기반 API 구현", "자동화 테스트", "배포 및 운영 문서화"];

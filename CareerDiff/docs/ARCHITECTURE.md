@@ -97,7 +97,8 @@ Outputs 스키마로 실제 분석을 수행합니다. RAG와 retrieval은 MVP�
 `LocalAnalysisProvider`의 `SKILLS` 배열은 각 스킬에 `relatedTo`(다른 스킬 라벨 목록)를 선택적으로
 가질 수 있습니다. 부족한 기술 중 `relatedTo`가 있는 항목만 `relatedSkillGuidance`로 노출되며,
 후보자가 관련 기술을 이미 보유했으면 그 기술을 출발점으로 언급합니다. 관계는 RAG↔Vector
-DB/LangChain, Docker↔Kubernetes처럼 잘 알려진 기술적 사실만 수동으로 등록하며, 자격증·강의명은
+DB/LangChain, Docker↔Kubernetes, Next.js→React, PostgreSQL/MySQL→SQL처럼 잘 알려진 기술적
+사실만 수동으로 등록하며(전체 스킬 사전을 다 덮지는 않음), 자격증·강의명은
 시간이 지나면 바뀌거나 없어질 수 있어 다루지 않습니다(추가하려면 실제 존재 여부를 별도 검증해야
 함). 벡터 검색이나 그래프DB가 아닌 TypeScript 배열 조회이므로 RAG/Vector DB MVP 비범위와는
 무관합니다.

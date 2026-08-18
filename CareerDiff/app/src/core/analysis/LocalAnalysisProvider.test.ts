@@ -125,4 +125,18 @@ describe("buildLocalAnalysis", () => {
     expect(kubernetesGuidance?.reason).toContain("Docker");
     expect(kubernetesGuidance?.reason).toContain("이미");
   });
+
+  it("covers ontology relations added for web/data/delivery skills", () => {
+    const result = buildLocalAnalysis({
+      jobDescription: "Next.js, PostgreSQL, GitHub Actions, Airflow, WPF 경험이 있는 개발자를 찾습니다.",
+      candidateProfile: "React와 SQL 기반 웹 서비스를 개발한 경험이 있습니다.",
+    });
+
+    const bySkill = Object.fromEntries(result.relatedSkillGuidance.map((g) => [g.skill, g]));
+    expect(bySkill["Next.js"].relatedSkills).toEqual(["React"]);
+    expect(bySkill["PostgreSQL"].relatedSkills).toEqual(["SQL"]);
+    expect(bySkill["GitHub Actions"].relatedSkills).toEqual(["CI/CD"]);
+    expect(bySkill["Airflow"].relatedSkills).toEqual(["Spark"]);
+    expect(bySkill["WPF"].relatedSkills).toEqual(["C#"]);
+  });
 });
