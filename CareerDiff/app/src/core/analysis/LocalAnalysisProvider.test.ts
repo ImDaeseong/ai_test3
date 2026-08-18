@@ -109,7 +109,7 @@ describe("buildLocalAnalysis", () => {
     expect(result.relatedSkillGuidance).toEqual([
       expect.objectContaining({
         skill: "RAG",
-        relatedSkills: ["Vector DB", "LangChain"],
+        relatedSkills: ["Vector DB", "LangChain", "LLM"],
       }),
     ]);
     expect(result.relatedSkillGuidance[0].reason).not.toContain("이미");
@@ -136,7 +136,99 @@ describe("buildLocalAnalysis", () => {
     expect(bySkill["Next.js"].relatedSkills).toEqual(["React"]);
     expect(bySkill["PostgreSQL"].relatedSkills).toEqual(["SQL"]);
     expect(bySkill["GitHub Actions"].relatedSkills).toEqual(["CI/CD"]);
-    expect(bySkill["Airflow"].relatedSkills).toEqual(["Spark"]);
+    expect(bySkill["Airflow"].relatedSkills).toEqual(["Spark", "Python"]);
     expect(bySkill["WPF"].relatedSkills).toEqual(["C#"]);
+  });
+
+  it("covers ontology relations added for base-language and successor-API links", () => {
+    const result = buildLocalAnalysis({
+      jobDescription:
+        "FastAPI, Django, Flask, Spring, Kotlin, PyTorch, TensorFlow, WebGPU 경험이 있는 개발자를 찾습니다.",
+      candidateProfile: "웹 서비스와 백엔드 시스템을 개발한 경험이 있습니다.".repeat(2),
+    });
+
+    const bySkill = Object.fromEntries(result.relatedSkillGuidance.map((g) => [g.skill, g]));
+    expect(bySkill["FastAPI"].relatedSkills).toEqual(["Python"]);
+    expect(bySkill["Django"].relatedSkills).toEqual(["Python"]);
+    expect(bySkill["Flask"].relatedSkills).toEqual(["Python"]);
+    expect(bySkill["Spring"].relatedSkills).toEqual(["Java"]);
+    expect(bySkill["Kotlin"].relatedSkills).toEqual(["Java"]);
+    expect(bySkill["PyTorch"].relatedSkills).toEqual(["CUDA", "Python"]);
+    expect(bySkill["TensorFlow"].relatedSkills).toEqual(["CUDA", "Python"]);
+    expect(bySkill["WebGPU"].relatedSkills).toEqual(["WebGL"]);
+  });
+
+  it("names Python as the bridge skill for a missing Python web framework", () => {
+    const result = buildLocalAnalysis({
+      jobDescription: "Django 기반 백엔드 개발자를 채용합니다.",
+      candidateProfile: "Python으로 데이터 처리 스크립트를 여러 개 작성한 경험이 있습니다.".repeat(2),
+    });
+
+    const djangoGuidance = result.relatedSkillGuidance.find((guidance) => guidance.skill === "Django");
+    expect(djangoGuidance?.reason).toContain("Python");
+    expect(djangoGuidance?.reason).toContain("이미");
+  });
+
+  it("covers ontology relations added in the second pass (frontend runtime links, engine languages, new DB/language skills)", () => {
+    const result = buildLocalAnalysis({
+      jobDescription:
+        "TypeScript, Node.js, React, Vue.js, Angular, Unity, Unreal Engine, BeautifulSoup, MSSQL, MariaDB, Delphi 경험이 있는 개발자를 찾습니다.",
+      candidateProfile: "웹 서비스와 게임 클라이언트를 개발한 경험이 있습니다.".repeat(2),
+    });
+
+    const bySkill = Object.fromEntries(result.relatedSkillGuidance.map((g) => [g.skill, g]));
+    expect(bySkill["TypeScript"].relatedSkills).toEqual(["JavaScript"]);
+    expect(bySkill["Node.js"].relatedSkills).toEqual(["JavaScript"]);
+    expect(bySkill["React"].relatedSkills).toEqual(["JavaScript"]);
+    expect(bySkill["Vue.js"].relatedSkills).toEqual(["JavaScript"]);
+    expect(bySkill["Angular"].relatedSkills).toEqual(["TypeScript"]);
+    expect(bySkill["Unity"].relatedSkills).toEqual(["C#"]);
+    expect(bySkill["Unreal Engine"].relatedSkills).toEqual(["C++"]);
+    expect(bySkill["BeautifulSoup"].relatedSkills).toEqual(["Python"]);
+    expect(bySkill["MS SQL Server"].relatedSkills).toEqual(["SQL"]);
+    expect(bySkill["MariaDB"].relatedSkills).toEqual(["SQL"]);
+    // Delphi has no relatedTo — it was added as a standalone recognized skill.
+    expect(bySkill["Delphi"]).toBeUndefined();
+
+    const requiredLabels = result.jobRequirements.requiredSkills.map((item) => item.label);
+    expect(requiredLabels).toEqual(expect.arrayContaining(["Delphi", "MS SQL Server"]));
+  });
+
+  it("recognizes Delphi and MS SQL Server from a real 'C, C#, C++, Delphi, JAVA, MSSQL, DBMS' posting", () => {
+    const result = inspectJobDescription(
+      "채용분야: 관제/정산시스템 개발자. 스킬: C, C#, C++, Delphi, JAVA, MSSQL, DBMS",
+    );
+    expect(result.ready).toBe(true);
+    expect(result.detectedSkills).toEqual(
+      expect.arrayContaining(["C#", "C++", "Delphi", "Java", "MS SQL Server"]),
+    );
+  });
+
+  it("bridges a missing skill through a multi-hop relatedTo chain when no direct neighbor matches", () => {
+    // LangGraph -> LangChain -> LLM -> OpenAI is a 3-hop relatedTo chain.
+    // The candidate only has OpenAI, two hops past LangGraph's direct
+    // neighbor (LangChain), so a 1-hop lookup would find no bridge at all.
+    const result = buildLocalAnalysis({
+      jobDescription: "LangGraph 기반 에이전트 시스템을 구축할 AI 엔지니어를 찾습니다.",
+      candidateProfile: "OpenAI API로 챗봇을 만든 경험이 있습니다.".repeat(2),
+    });
+
+    const langGraphGuidance = result.relatedSkillGuidance.find((guidance) => guidance.skill === "LangGraph");
+    expect(langGraphGuidance?.relatedSkills).toEqual(["LangChain"]);
+    expect(langGraphGuidance?.reason).toContain("OpenAI → LLM → LangChain");
+  });
+
+  it("does not bridge a missing skill beyond MAX_BRIDGE_DEPTH hops", () => {
+    // VLA -> Reinforcement Learning -> Sim2Real -> Digital Twin -> Unreal
+    // Engine/Unity is 4 hops from VLA's direct neighbor (Reinforcement
+    // Learning), past the 3-hop bridge limit, so no bridge should be found.
+    const result = buildLocalAnalysis({
+      jobDescription: "VLA 모델을 다루는 로보틱스 엔지니어를 찾습니다.",
+      candidateProfile: "Unity로 3D 시뮬레이션 환경을 개발한 경험이 있습니다.".repeat(2),
+    });
+
+    const vlaGuidance = result.relatedSkillGuidance.find((guidance) => guidance.skill === "VLA");
+    expect(vlaGuidance?.reason).not.toContain("이미");
+    expect(vlaGuidance?.reason).not.toContain("→");
   });
 });

@@ -22,19 +22,21 @@ type SkillDefinition = {
 const SKILLS: SkillDefinition[] = [
   { label: "Python", category: "language", aliases: ["python"] },
   { label: "Java", category: "language", aliases: ["java"] },
-  { label: "Kotlin", category: "language", aliases: ["kotlin"] },
-  { label: "TypeScript", category: "language", aliases: ["typescript"] },
+  { label: "Kotlin", category: "language", aliases: ["kotlin"], relatedTo: ["Java"] },
+  { label: "TypeScript", category: "language", aliases: ["typescript"], relatedTo: ["JavaScript"] },
   { label: "JavaScript", category: "language", aliases: ["javascript"] },
-  { label: "FastAPI", category: "framework", aliases: ["fastapi"] },
-  { label: "Django", category: "framework", aliases: ["django"] },
-  { label: "Flask", category: "framework", aliases: ["flask"] },
-  { label: "Spring", category: "framework", aliases: ["spring"] },
-  { label: "Node.js", category: "framework", aliases: ["node.js", "nodejs"] },
-  { label: "React", category: "framework", aliases: ["react"] },
+  { label: "FastAPI", category: "framework", aliases: ["fastapi"], relatedTo: ["Python"] },
+  { label: "Django", category: "framework", aliases: ["django"], relatedTo: ["Python"] },
+  { label: "Flask", category: "framework", aliases: ["flask"], relatedTo: ["Python"] },
+  { label: "Spring", category: "framework", aliases: ["spring"], relatedTo: ["Java"] },
+  { label: "Node.js", category: "framework", aliases: ["node.js", "nodejs"], relatedTo: ["JavaScript"] },
+  { label: "React", category: "framework", aliases: ["react"], relatedTo: ["JavaScript"] },
   { label: "Next.js", category: "framework", aliases: ["next.js", "nextjs"], relatedTo: ["React"] },
   { label: "SQL", category: "database", aliases: ["sql"] },
   { label: "PostgreSQL", category: "database", aliases: ["postgresql", "postgres"], relatedTo: ["SQL"] },
   { label: "MySQL", category: "database", aliases: ["mysql"], relatedTo: ["SQL"] },
+  { label: "MS SQL Server", category: "database", aliases: ["mssql", "ms-sql", "sql server"], relatedTo: ["SQL"] },
+  { label: "MariaDB", category: "database", aliases: ["mariadb"], relatedTo: ["SQL"] },
   { label: "Redis", category: "database", aliases: ["redis"] },
   { label: "MongoDB", category: "database", aliases: ["mongodb"] },
   { label: "Elasticsearch", category: "database", aliases: ["elasticsearch"] },
@@ -50,13 +52,13 @@ const SKILLS: SkillDefinition[] = [
   { label: "GraphQL", category: "api", aliases: ["graphql"] },
   { label: "Kafka", category: "messaging", aliases: ["kafka"] },
   { label: "RabbitMQ", category: "messaging", aliases: ["rabbitmq"] },
-  { label: "Airflow", category: "data", aliases: ["airflow"], relatedTo: ["Spark"] },
+  { label: "Airflow", category: "data", aliases: ["airflow"], relatedTo: ["Spark", "Python"] },
   { label: "Spark", category: "data", aliases: ["spark"] },
-  { label: "PyTorch", category: "ai", aliases: ["pytorch"], relatedTo: ["CUDA"] },
-  { label: "TensorFlow", category: "ai", aliases: ["tensorflow"], relatedTo: ["CUDA"] },
+  { label: "PyTorch", category: "ai", aliases: ["pytorch"], relatedTo: ["CUDA", "Python"] },
+  { label: "TensorFlow", category: "ai", aliases: ["tensorflow"], relatedTo: ["CUDA", "Python"] },
   { label: "LangChain", category: "ai", aliases: ["langchain"], relatedTo: ["LLM"] },
   { label: "LangGraph", category: "ai", aliases: ["langgraph"], relatedTo: ["LangChain"] },
-  { label: "RAG", category: "ai", aliases: ["rag", "retrieval augmented"], relatedTo: ["Vector DB", "LangChain"] },
+  { label: "RAG", category: "ai", aliases: ["rag", "retrieval augmented"], relatedTo: ["Vector DB", "LangChain", "LLM"] },
   { label: "LLM", category: "ai", aliases: ["llm", "large language model"], relatedTo: ["OpenAI"] },
   { label: "OpenAI", category: "ai", aliases: ["openai", "gpt"] },
   { label: "Embedding", category: "ai", aliases: ["embedding", "임베딩"], relatedTo: ["Vector DB"] },
@@ -66,10 +68,10 @@ const SKILLS: SkillDefinition[] = [
     aliases: ["vector db", "vector database", "벡터 db", "벡터 데이터베이스"],
     relatedTo: ["Embedding"],
   },
-  { label: "Unreal Engine", category: "simulation", aliases: ["unreal engine", "unreal", "언리얼"] },
-  { label: "Unity", category: "simulation", aliases: ["unity3d", "unity"] },
+  { label: "Unreal Engine", category: "simulation", aliases: ["unreal engine", "unreal", "언리얼"], relatedTo: ["C++"] },
+  { label: "Unity", category: "simulation", aliases: ["unity3d", "unity"], relatedTo: ["C#"] },
   { label: "WebGL", category: "simulation", aliases: ["webgl"] },
-  { label: "WebGPU", category: "simulation", aliases: ["webgpu"] },
+  { label: "WebGPU", category: "simulation", aliases: ["webgpu"], relatedTo: ["WebGL"] },
   {
     label: "VLA",
     category: "ai",
@@ -91,7 +93,7 @@ const SKILLS: SkillDefinition[] = [
   },
   { label: "Playwright", category: "testing", aliases: ["playwright"] },
   { label: "Selenium", category: "testing", aliases: ["selenium"] },
-  { label: "BeautifulSoup", category: "collection", aliases: ["beautifulsoup", "beautiful soup"] },
+  { label: "BeautifulSoup", category: "collection", aliases: ["beautifulsoup", "beautiful soup"], relatedTo: ["Python"] },
   // Added from real postings (C++/C#/Flutter/HTML/CSS/QA/DevOps were present but
   // unmatched) plus common languages/frameworks that were missing. Aliases are
   // kept substring-safe on purpose — e.g. no bare "go"/"뷰"/"rust", which would
@@ -101,8 +103,8 @@ const SKILLS: SkillDefinition[] = [
   { label: "Go", category: "language", aliases: ["golang"] },
   { label: "Swift", category: "language", aliases: ["swift"] },
   { label: "PHP", category: "language", aliases: ["php"] },
-  { label: "Vue.js", category: "framework", aliases: ["vue.js", "vuejs", "vue"] },
-  { label: "Angular", category: "framework", aliases: ["angular"] },
+  { label: "Vue.js", category: "framework", aliases: ["vue.js", "vuejs", "vue"], relatedTo: ["JavaScript"] },
+  { label: "Angular", category: "framework", aliases: ["angular"], relatedTo: ["TypeScript"] },
   { label: "Flutter", category: "framework", aliases: ["flutter", "플러터"] },
   { label: "HTML", category: "frontend", aliases: ["html"] },
   { label: "CSS", category: "frontend", aliases: ["css"] },
@@ -131,9 +133,89 @@ const SKILLS: SkillDefinition[] = [
   // left WPF unmatched. CIM/HCM from the same 스킬 line were skipped as
   // ambiguous ERP-module acronyms, not identifiable developer skills.
   { label: "WPF", category: "framework", aliases: ["wpf"], relatedTo: ["C#"] },
+  // Added from a real posting (스킬: C, C#, C++, Delphi, JAVA, MSSQL, DBMS) that
+  // left Delphi and MSSQL unmatched despite the other four already being known.
+  // "DBMS" was skipped as a generic category label, not an identifiable single
+  // technology (same reasoning that skipped CIM/HCM above).
+  { label: "Delphi", category: "language", aliases: ["delphi"] },
 ];
 
+// Ontology pass over existing entries (94-case validation review, 2026-08):
+// several framework/library skills had no `relatedTo` link back to the base
+// language they run on, so a candidate who only listed the base language got
+// no bridge toward the missing framework. Each addition below is a
+// well-established, undebatable technical fact — a framework/library's own
+// runtime or primary implementation language — not a guess:
+//   FastAPI/Django/Flask → Python (Python web frameworks)
+//   Spring → Java (Java framework); Kotlin → Java (JVM-interop, officially
+//     co-supported for Android/backend)
+//   PyTorch/TensorFlow → added Python alongside existing CUDA (both are
+//     Python-first ML frameworks)
+//   RAG → added LLM alongside existing Vector DB/LangChain (RAG's own
+//     definition — Retrieval-Augmented *Generation* — augments an LLM)
+//   WebGPU → WebGL (WebGPU is the browser vendors' documented successor to
+//     WebGL, not an unrelated API)
+// No certifications or course names were added, per docs/ARCHITECTURE.md.
+//
+// Second pass (2026-08-18): more base-language/runtime links plus two new
+// skills evidenced by a real posting (스킬: C, C#, C++, Delphi, JAVA, MSSQL,
+// DBMS — see the Delphi entry's comment above):
+//   TypeScript → JavaScript (TypeScript is a typed superset that compiles to
+//     JavaScript); Node.js/React/Vue.js → JavaScript; Angular → TypeScript
+//     (Angular is written in and requires TypeScript)
+//   Unity → C#; Unreal Engine → C++ (each engine's official primary
+//     scripting/native language)
+//   BeautifulSoup → Python (it is a Python library, not multi-language)
+//   Airflow → added Python alongside existing Spark (Airflow DAGs are
+//     authored in Python)
+//   MS SQL Server, MariaDB → SQL (same relatedTo pattern as the existing
+//     PostgreSQL/MySQL → SQL entries; MariaDB had no direct posting evidence
+//     this pass but is a common, unambiguous database like its MySQL sibling)
+
 const FALLBACK_GAPS = ["요구사항 기반 API 구현", "자동화 테스트", "배포 및 운영 문서화"];
+
+// A missing skill's direct relatedTo neighbors sometimes have no relatedTo of
+// their own back to something the candidate holds (e.g. LangGraph->LangChain
+// ends there, but LangChain->LLM->OpenAI continues). MAX_BRIDGE_DEPTH bounds
+// how many relatedTo hops findBridgePath will walk past the direct neighbors
+// before giving up, so a lookup can't wander the whole graph.
+const MAX_BRIDGE_DEPTH = 3;
+
+/**
+ * Breadth-first search over the relatedTo graph, starting from a missing
+ * skill's direct neighbors, for the nearest skill the candidate already has
+ * evidence for. Returns the hop path from that candidate skill back to
+ * (but not including) `skillLabel`, or null if none is found within
+ * MAX_BRIDGE_DEPTH hops.
+ */
+function findBridgePath(skillLabel: string, candidateProfile: string): string[] | null {
+  const start = SKILLS.find((skill) => skill.label === skillLabel);
+  if (!start) return null;
+
+  const visited = new Set<string>([skillLabel]);
+  let frontier: { label: string; path: string[] }[] = (start.relatedTo ?? []).map((label) => ({
+    label,
+    path: [label],
+  }));
+
+  for (let depth = 0; depth < MAX_BRIDGE_DEPTH && frontier.length > 0; depth++) {
+    const nextFrontier: typeof frontier = [];
+    for (const node of frontier) {
+      if (visited.has(node.label)) continue;
+      visited.add(node.label);
+      const skill = SKILLS.find((candidate) => candidate.label === node.label);
+      if (!skill) continue;
+      if (includesSkill(candidateProfile, skill)) {
+        return [...node.path].reverse();
+      }
+      for (const next of skill.relatedTo ?? []) {
+        if (!visited.has(next)) nextFrontier.push({ label: next, path: [...node.path, next] });
+      }
+    }
+    frontier = nextFrontier;
+  }
+  return null;
+}
 
 function includesSkill(text: string, skill: SkillDefinition): boolean {
   const lower = text.toLowerCase();
@@ -234,9 +316,12 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
       const bridgeSkills = relatedLabels.filter((label) =>
         SKILLS.some((related) => related.label === label && includesSkill(input.candidateProfile, related)),
       );
+      const bridgePath = bridgeSkills.length ? null : findBridgePath(skill.label, input.candidateProfile);
       const reason = bridgeSkills.length
         ? `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 후보자는 이미 ${bridgeSkills.join(", ")} 경험이 있어 ${skill.label} 학습의 출발점으로 활용할 수 있습니다.`
-        : `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 관련 기술부터 함께 준비하면 학습 경로를 좁힐 수 있습니다.`;
+        : bridgePath
+          ? `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 후보자의 ${bridgePath.join(" → ")} 경험이 ${skill.label}까지 이어지는 학습 경로가 될 수 있습니다.`
+          : `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 관련 기술부터 함께 준비하면 학습 경로를 좁힐 수 있습니다.`;
       return { skill: skill.label, relatedSkills: relatedLabels, reason };
     });
 

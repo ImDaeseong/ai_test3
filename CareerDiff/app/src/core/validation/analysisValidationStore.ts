@@ -1,4 +1,5 @@
 import type { CareerDiffAnalysisResult } from "@/core/types";
+import { careerDiffAnalysisResultSchema } from "@/core/schemas/analysisResult";
 
 export const VALIDATION_CASES_STORAGE_KEY = "careerdiff:validation-cases";
 
@@ -10,12 +11,32 @@ export type AnalysisValidationCase = {
   result: CareerDiffAnalysisResult;
 };
 
+function isStoredValidationCase(item: unknown): item is AnalysisValidationCase {
+  if (!item || typeof item !== "object") return false;
+  const candidate = item as Record<string, unknown>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.createdAt === "string" &&
+    typeof candidate.jobDescription === "string" &&
+    typeof candidate.candidateProfile === "string" &&
+    careerDiffAnalysisResultSchema.safeParse(candidate.result).success
+  );
+}
+
+/**
+ * Cases saved under an older schema version (e.g. before relatedSkillGuidance
+ * was added to CareerDiffAnalysisResult) no longer match
+ * careerDiffAnalysisResultSchema and are dropped here rather than passed
+ * through with `as`, which would surface as a downstream render crash
+ * instead of a load-time filter.
+ */
 export function loadValidationCases(): AnalysisValidationCase[] {
   const saved = window.localStorage.getItem(VALIDATION_CASES_STORAGE_KEY);
   if (!saved) return [];
   try {
     const parsed = JSON.parse(saved) as unknown;
-    return Array.isArray(parsed) ? (parsed as AnalysisValidationCase[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isStoredValidationCase);
   } catch {
     return [];
   }

@@ -69,4 +69,23 @@ describe("analysisValidationStore", () => {
     window.localStorage.setItem(VALIDATION_CASES_STORAGE_KEY, "not json");
     expect(loadValidationCases()).toEqual([]);
   });
+
+  it("drops a stored case whose result predates a required field (e.g. relatedSkillGuidance)", () => {
+    const staleResult: Record<string, unknown> = { ...mockAnalysisResult };
+    delete staleResult.relatedSkillGuidance;
+    window.localStorage.setItem(
+      VALIDATION_CASES_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          jobDescription: "job description",
+          candidateProfile: "candidate profile",
+          result: staleResult,
+        },
+      ]),
+    );
+
+    expect(loadValidationCases()).toEqual([]);
+  });
 });
