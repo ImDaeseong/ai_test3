@@ -6,9 +6,11 @@ import type { AnalyzeResponse, ApiErrorResponse, CareerDiffAnalysisResult } from
 import {
   appendValidationCase,
   loadValidationCases,
+  type AnalysisValidationCase,
 } from "@/core/validation/analysisValidationStore";
 import { AnalysisDashboard } from "@/features/analysis-dashboard/AnalysisDashboard";
 import { AnalysisJsonPanel } from "@/features/analysis-dashboard/AnalysisJsonPanel";
+import { ValidationCaseHistoryPanel } from "@/features/analysis-dashboard/ValidationCaseHistoryPanel";
 import {
   CandidateProfileInputPanel,
   isCandidateProfileValid,
@@ -30,16 +32,28 @@ export default function AnalyzerPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [validationCount, setValidationCount] = useState(0);
   const [result, setResult] = useState<CareerDiffAnalysisResult | null>(null);
+  const [cases, setCases] = useState<AnalysisValidationCase[]>([]);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
   useEffect(() => {
     // Deferred to a microtask so state updates happen in a callback rather
     // than synchronously in the effect body (react-hooks/set-state-in-effect).
     queueMicrotask(() => {
-      const cases = loadValidationCases();
-      setValidationCount(cases.length);
-      if (cases.length > 0) setResult(cases[cases.length - 1].result);
+      const loaded = loadValidationCases();
+      setCases(loaded);
+      setValidationCount(loaded.length);
+      if (loaded.length > 0) {
+        const last = loaded[loaded.length - 1];
+        setResult(last.result);
+        setSelectedCaseId(last.id);
+      }
     });
   }, []);
+
+  function handleSelectCase(validationCase: AnalysisValidationCase) {
+    setResult(validationCase.result);
+    setSelectedCaseId(validationCase.id);
+  }
 
   // Enable on length only. The local skill dictionary is incomplete, so a job
   // with no recognized skill must NOT be a hard block (it would trap valid
@@ -74,12 +88,22 @@ export default function AnalyzerPage() {
       const body = (await response.json()) as AnalyzeResponse;
       setResult(body.result);
       try {
-        const { cases, added } = appendValidationCase({
+        const { cases: updatedCases, added } = appendValidationCase({
           jobDescription,
           candidateProfile,
           result: body.result,
         });
-        setValidationCount(cases.length);
+        setCases(updatedCases);
+        setValidationCount(updatedCases.length);
+        const matchedCase =
+          added ??
+          updatedCases.find(
+            (existingCase) =>
+              existingCase.jobDescription === jobDescription &&
+              existingCase.candidateProfile === candidateProfile &&
+              JSON.stringify(existingCase.result) === JSON.stringify(body.result),
+          );
+        if (matchedCase) setSelectedCaseId(matchedCase.id);
         // Identical input and result already stored: skip the redundant file write.
         if (added) {
           const saveResponse = await fetch("/api/validation-cases", {
@@ -153,6 +177,8 @@ export default function AnalyzerPage() {
       )}
 
       {validationError && <p role="alert" className="text-sm text-red-600">{validationError}</p>}
+
+      <ValidationCaseHistoryPanel cases={cases} selectedCaseId={selectedCaseId} onSelect={handleSelectCase} />
 
       {result && (
         <>
