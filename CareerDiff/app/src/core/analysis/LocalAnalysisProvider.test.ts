@@ -99,4 +99,30 @@ describe("buildLocalAnalysis", () => {
       "Digital Twin",
     ]));
   });
+
+  it("explains a missing skill's ontology relation when the candidate has no bridge skill", () => {
+    const result = buildLocalAnalysis({
+      jobDescription: "RAG 기반 검색 시스템을 구축할 AI 엔지니어를 찾습니다.",
+      candidateProfile: "Python으로 데이터 파이프라인을 구축한 경험이 있습니다.",
+    });
+
+    expect(result.relatedSkillGuidance).toEqual([
+      expect.objectContaining({
+        skill: "RAG",
+        relatedSkills: ["Vector DB", "LangChain"],
+      }),
+    ]);
+    expect(result.relatedSkillGuidance[0].reason).not.toContain("이미");
+  });
+
+  it("names the candidate's existing skill as a bridge toward a missing related skill", () => {
+    const result = buildLocalAnalysis({
+      jobDescription: "Docker Kubernetes 운영 경험이 있는 개발자를 찾습니다.",
+      candidateProfile: "Docker로 서비스를 컨테이너화해 운영한 경험이 있습니다.".repeat(2),
+    });
+
+    const kubernetesGuidance = result.relatedSkillGuidance.find((guidance) => guidance.skill === "Kubernetes");
+    expect(kubernetesGuidance?.reason).toContain("Docker");
+    expect(kubernetesGuidance?.reason).toContain("이미");
+  });
 });

@@ -130,6 +130,14 @@ export const mockAnalysisResult: CareerDiffAnalysisResult = {
       "6~7일차: 시스템 설계와 약점 영역 위주로 모의 면접 진행.",
     ],
   },
+  relatedSkillGuidance: [
+    {
+      skill: "AWS (ECS/Lambda)",
+      relatedSkills: ["Docker", "Kubernetes"],
+      reason:
+        "AWS (ECS/Lambda)은 Docker, Kubernetes과 연결된 기술입니다. 관련 기술부터 함께 준비하면 학습 경로를 좁힐 수 있습니다.",
+    },
+  ],
   metadata: {
     schemaVersion: "1.0.0",
     scoringVersion: "mock-0.1.0",

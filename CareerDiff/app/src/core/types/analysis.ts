@@ -99,6 +99,15 @@ export type InterviewPrep = {
   sevenDayPlan: string[];
 };
 
+export type RelatedSkillGuidance = {
+  /** A missing or weak requirement this guidance addresses. */
+  skill: string;
+  /** Other skills in the taxonomy that this skill builds on or connects to. */
+  relatedSkills: string[];
+  /** Why these skills are related, so the recommendation is grounded, not free-associated. */
+  reason: string;
+};
+
 // --- RAG-ready contracts (base design; MVP keeps retrievalContext.enabled=false, provider="none") ---
 
 export type EmbeddableChunk = {
@@ -158,6 +167,7 @@ export type CareerDiffAnalysisResult = {
   resumeSuggestions: ResumeSuggestions;
   miniProjects: MiniProjectRecommendation[];
   interviewPrep: InterviewPrep;
+  relatedSkillGuidance: RelatedSkillGuidance[];
   metadata: AnalysisMetadata;
 };
 

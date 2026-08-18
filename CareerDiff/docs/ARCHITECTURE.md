@@ -61,7 +61,7 @@ app/src/
 
 입력: `jobDescription`, `candidateProfile`.
 
-출력: 요구사항, 후보자 근거, 매칭, 점수, 이력서 제안, 미니 프로젝트, 면접 준비와 메타데이터.
+출력: 요구사항, 후보자 근거, 매칭, 점수, 이력서 제안, 미니 프로젝트, 연관 기술 가이드, 면접 준비와 메타데이터.
 
 ### `POST /api/validation-cases`
 
@@ -91,3 +91,13 @@ app/src/
 `OPENAI_API_KEY`가 없으면 입력 공고와 후보자 프로필을 실제로 분석하는 결정론적 로컬 키워드
 분석기(`LocalAnalysisProvider`)를 사용합니다. 키가 있으면 `OpenAiAnalysisProvider`가 Structured
 Outputs 스키마로 실제 분석을 수행합니다. RAG와 retrieval은 MVP에서 비활성화합니다.
+
+## 연관 기술 가이드 (경량 온톨로지)
+
+`LocalAnalysisProvider`의 `SKILLS` 배열은 각 스킬에 `relatedTo`(다른 스킬 라벨 목록)를 선택적으로
+가질 수 있습니다. 부족한 기술 중 `relatedTo`가 있는 항목만 `relatedSkillGuidance`로 노출되며,
+후보자가 관련 기술을 이미 보유했으면 그 기술을 출발점으로 언급합니다. 관계는 RAG↔Vector
+DB/LangChain, Docker↔Kubernetes처럼 잘 알려진 기술적 사실만 수동으로 등록하며, 자격증·강의명은
+시간이 지나면 바뀌거나 없어질 수 있어 다루지 않습니다(추가하려면 실제 존재 여부를 별도 검증해야
+함). 벡터 검색이나 그래프DB가 아닌 TypeScript 배열 조회이므로 RAG/Vector DB MVP 비범위와는
+무관합니다.

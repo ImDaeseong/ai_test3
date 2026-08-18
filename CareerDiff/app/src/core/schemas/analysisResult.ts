@@ -94,6 +94,12 @@ const interviewPrepSchema = z.object({
   sevenDayPlan: z.array(z.string()),
 });
 
+const relatedSkillGuidanceSchema = z.object({
+  skill: z.string(),
+  relatedSkills: z.array(z.string()),
+  reason: z.string(),
+});
+
 const retrievedContextItemSchema = z.object({
   chunkId: z.string(),
   sourceType: sourceTypeSchema,
@@ -137,5 +143,6 @@ export const careerDiffAnalysisResultSchema = z.object({
   resumeSuggestions: resumeSuggestionsSchema,
   miniProjects: z.array(miniProjectRecommendationSchema),
   interviewPrep: interviewPrepSchema,
+  relatedSkillGuidance: z.array(relatedSkillGuidanceSchema),
   metadata: analysisMetadataSchema,
 });

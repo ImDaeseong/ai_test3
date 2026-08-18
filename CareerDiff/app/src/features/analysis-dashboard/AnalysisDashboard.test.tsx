@@ -13,6 +13,7 @@ describe("AnalysisDashboard", () => {
     expect(screen.getByText("매칭 결과")).toBeInTheDocument();
     expect(screen.getByText("이력서 개선 제안")).toBeInTheDocument();
     expect(screen.getByText("보완 프로젝트 추천")).toBeInTheDocument();
+    expect(screen.getByText("연관 기술 가이드")).toBeInTheDocument();
     expect(screen.getByText("면접 준비")).toBeInTheDocument();
   });
 
@@ -55,6 +56,7 @@ describe("AnalysisDashboard", () => {
       matches: { strong: [], weak: [], missing: [], risks: [] },
       resumeSuggestions: { bullets: [], projectDescriptions: [], skillPriority: [], atsKeywords: [] },
       miniProjects: [],
+      relatedSkillGuidance: [],
       interviewPrep: { questions: [], weakAreas: [], sevenDayPlan: [] },
     };
 

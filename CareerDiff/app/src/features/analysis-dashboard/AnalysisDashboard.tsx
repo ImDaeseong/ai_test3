@@ -2,6 +2,7 @@ import type { CareerDiffAnalysisResult } from "@/core/types";
 import { InterviewPrepPanel } from "./InterviewPrepPanel";
 import { MatchPanel } from "./MatchPanel";
 import { MiniProjectPanel } from "./MiniProjectPanel";
+import { RelatedSkillPanel } from "./RelatedSkillPanel";
 import { RequirementPanel } from "./RequirementPanel";
 import { ScorePanel } from "./ScorePanel";
 import { SuggestionPanel } from "./SuggestionPanel";
@@ -34,6 +35,7 @@ export function AnalysisDashboard({ result }: { result: CareerDiffAnalysisResult
       <MatchPanel matches={result.matches} />
       <SuggestionPanel resumeSuggestions={result.resumeSuggestions} />
       <MiniProjectPanel miniProjects={result.miniProjects} />
+      <RelatedSkillPanel relatedSkillGuidance={result.relatedSkillGuidance} />
       <InterviewPrepPanel interviewPrep={result.interviewPrep} />
     </div>
   );

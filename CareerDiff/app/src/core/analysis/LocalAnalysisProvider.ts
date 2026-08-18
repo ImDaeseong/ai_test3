@@ -3,6 +3,7 @@ import type {
   CareerDiffAnalysisResult,
   EvidenceItem,
   MatchItem,
+  RelatedSkillGuidance,
   RequirementItem,
 } from "@/core/types";
 
@@ -10,6 +11,12 @@ type SkillDefinition = {
   label: string;
   category: string;
   aliases: string[];
+  /**
+   * Labels of other SKILLS entries this one builds on or connects to (a
+   * lightweight ontology relation, not a free-text guess). Only set where the
+   * relationship is a well-established technical fact — most entries have none.
+   */
+  relatedTo?: string[];
 };
 
 const SKILLS: SkillDefinition[] = [
@@ -34,8 +41,8 @@ const SKILLS: SkillDefinition[] = [
   { label: "AWS", category: "infrastructure", aliases: ["aws", "amazon web services"] },
   { label: "GCP", category: "infrastructure", aliases: ["gcp", "google cloud"] },
   { label: "Azure", category: "infrastructure", aliases: ["azure"] },
-  { label: "Docker", category: "infrastructure", aliases: ["docker"] },
-  { label: "Kubernetes", category: "infrastructure", aliases: ["kubernetes", "k8s"] },
+  { label: "Docker", category: "infrastructure", aliases: ["docker"], relatedTo: ["Kubernetes"] },
+  { label: "Kubernetes", category: "infrastructure", aliases: ["kubernetes", "k8s"], relatedTo: ["Docker"] },
   { label: "Terraform", category: "infrastructure", aliases: ["terraform"] },
   { label: "GitHub Actions", category: "delivery", aliases: ["github actions"] },
   { label: "CI/CD", category: "delivery", aliases: ["ci/cd", "cicd"] },
@@ -45,23 +52,43 @@ const SKILLS: SkillDefinition[] = [
   { label: "RabbitMQ", category: "messaging", aliases: ["rabbitmq"] },
   { label: "Airflow", category: "data", aliases: ["airflow"] },
   { label: "Spark", category: "data", aliases: ["spark"] },
-  { label: "PyTorch", category: "ai", aliases: ["pytorch"] },
-  { label: "TensorFlow", category: "ai", aliases: ["tensorflow"] },
-  { label: "LangChain", category: "ai", aliases: ["langchain"] },
-  { label: "LangGraph", category: "ai", aliases: ["langgraph"] },
-  { label: "RAG", category: "ai", aliases: ["rag", "retrieval augmented"] },
-  { label: "LLM", category: "ai", aliases: ["llm", "large language model"] },
+  { label: "PyTorch", category: "ai", aliases: ["pytorch"], relatedTo: ["CUDA"] },
+  { label: "TensorFlow", category: "ai", aliases: ["tensorflow"], relatedTo: ["CUDA"] },
+  { label: "LangChain", category: "ai", aliases: ["langchain"], relatedTo: ["LLM"] },
+  { label: "LangGraph", category: "ai", aliases: ["langgraph"], relatedTo: ["LangChain"] },
+  { label: "RAG", category: "ai", aliases: ["rag", "retrieval augmented"], relatedTo: ["Vector DB", "LangChain"] },
+  { label: "LLM", category: "ai", aliases: ["llm", "large language model"], relatedTo: ["OpenAI"] },
   { label: "OpenAI", category: "ai", aliases: ["openai", "gpt"] },
-  { label: "Embedding", category: "ai", aliases: ["embedding", "임베딩"] },
-  { label: "Vector DB", category: "ai", aliases: ["vector db", "vector database", "벡터 db", "벡터 데이터베이스"] },
+  { label: "Embedding", category: "ai", aliases: ["embedding", "임베딩"], relatedTo: ["Vector DB"] },
+  {
+    label: "Vector DB",
+    category: "ai",
+    aliases: ["vector db", "vector database", "벡터 db", "벡터 데이터베이스"],
+    relatedTo: ["Embedding"],
+  },
   { label: "Unreal Engine", category: "simulation", aliases: ["unreal engine", "unreal", "언리얼"] },
   { label: "Unity", category: "simulation", aliases: ["unity3d", "unity"] },
   { label: "WebGL", category: "simulation", aliases: ["webgl"] },
   { label: "WebGPU", category: "simulation", aliases: ["webgpu"] },
-  { label: "VLA", category: "ai", aliases: ["vla", "vision-language-action"] },
-  { label: "Reinforcement Learning", category: "ai", aliases: ["reinforcement learning", "강화학습"] },
-  { label: "Sim2Real", category: "simulation", aliases: ["sim2real"] },
-  { label: "Digital Twin", category: "simulation", aliases: ["digital twin", "디지털 트윈"] },
+  {
+    label: "VLA",
+    category: "ai",
+    aliases: ["vla", "vision-language-action"],
+    relatedTo: ["Reinforcement Learning", "Computer Vision"],
+  },
+  {
+    label: "Reinforcement Learning",
+    category: "ai",
+    aliases: ["reinforcement learning", "강화학습"],
+    relatedTo: ["Sim2Real"],
+  },
+  { label: "Sim2Real", category: "simulation", aliases: ["sim2real"], relatedTo: ["Reinforcement Learning", "Digital Twin"] },
+  {
+    label: "Digital Twin",
+    category: "simulation",
+    aliases: ["digital twin", "디지털 트윈"],
+    relatedTo: ["Unreal Engine", "Unity"],
+  },
   { label: "Playwright", category: "testing", aliases: ["playwright"] },
   { label: "Selenium", category: "testing", aliases: ["selenium"] },
   { label: "BeautifulSoup", category: "collection", aliases: ["beautifulsoup", "beautiful soup"] },
@@ -84,21 +111,21 @@ const SKILLS: SkillDefinition[] = [
   // Robotics/hardware domain, added from real CTO/로봇 postings. Aliases stay
   // substring-safe — no bare "ros" (across), "imu" (simulation), or "제어"
   // (원격제어), which would false-match.
-  { label: "Robotics", category: "robotics", aliases: ["로봇", "로보틱스", "robotics"] },
+  { label: "Robotics", category: "robotics", aliases: ["로봇", "로보틱스", "robotics"], relatedTo: ["ROS", "Embedded"] },
   { label: "Mechatronics", category: "robotics", aliases: ["메카트로닉스", "mechatronics"] },
   { label: "Autonomous Driving", category: "robotics", aliases: ["자율주행", "autonomous driving"] },
-  { label: "ROS", category: "robotics", aliases: ["ros2", "ros 2", "robot operating system"] },
-  { label: "Embedded", category: "hardware", aliases: ["embedded", "임베디드"] },
-  { label: "Firmware", category: "hardware", aliases: ["firmware", "펌웨어"] },
-  { label: "Computer Vision", category: "ai", aliases: ["computer vision", "컴퓨터 비전", "컴퓨터비전"] },
-  { label: "CUDA", category: "ai", aliases: ["cuda"] },
+  { label: "ROS", category: "robotics", aliases: ["ros2", "ros 2", "robot operating system"], relatedTo: ["Robotics"] },
+  { label: "Embedded", category: "hardware", aliases: ["embedded", "임베디드"], relatedTo: ["Firmware", "MCU"] },
+  { label: "Firmware", category: "hardware", aliases: ["firmware", "펌웨어"], relatedTo: ["Embedded", "MCU"] },
+  { label: "Computer Vision", category: "ai", aliases: ["computer vision", "컴퓨터 비전", "컴퓨터비전"], relatedTo: ["PyTorch", "TensorFlow"] },
+  { label: "CUDA", category: "ai", aliases: ["cuda"], relatedTo: ["PyTorch", "TensorFlow"] },
   // Added from a real 로봇제어/강화학습 posting (C, Linux, CATIA, NX, OrCAD,
   // CUDA, MCU, Embedded, SIMD listed as required 스킬) that a local-analyzer
   // run left mostly unmatched. Bare "NX" is skipped as unsafe (2-char substring).
   { label: "Linux", category: "infrastructure", aliases: ["linux", "리눅스"] },
   { label: "CATIA", category: "hardware", aliases: ["catia"] },
   { label: "OrCAD", category: "hardware", aliases: ["orcad"] },
-  { label: "MCU", category: "hardware", aliases: ["mcu"] },
+  { label: "MCU", category: "hardware", aliases: ["mcu"], relatedTo: ["Embedded", "Firmware"] },
   { label: "SIMD", category: "hardware", aliases: ["simd"] },
   // Added from a real "C# WPF 개발자" posting where a 47-case batch test run
   // left WPF unmatched. CIM/HCM from the same 스킬 line were skipped as
@@ -197,6 +224,22 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
   const gaps = missing.length ? missing.map((skill) => skill.label) : FALLBACK_GAPS;
   const projectGaps = Array.from({ length: 3 }, (_, index) => gaps[index % gaps.length]);
 
+  // A lightweight ontology pass: for each missing skill with a known relation,
+  // explain the connection and, when the candidate already has a related
+  // skill, name it as a concrete starting point instead of a bare gap list.
+  const relatedSkillGuidance: RelatedSkillGuidance[] = missing
+    .filter((skill) => (skill.relatedTo?.length ?? 0) > 0)
+    .map((skill) => {
+      const relatedLabels = skill.relatedTo ?? [];
+      const bridgeSkills = relatedLabels.filter((label) =>
+        SKILLS.some((related) => related.label === label && includesSkill(input.candidateProfile, related)),
+      );
+      const reason = bridgeSkills.length
+        ? `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 후보자는 이미 ${bridgeSkills.join(", ")} 경험이 있어 ${skill.label} 학습의 출발점으로 활용할 수 있습니다.`
+        : `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 관련 기술부터 함께 준비하면 학습 경로를 좁힐 수 있습니다.`;
+      return { skill: skill.label, relatedSkills: relatedLabels, reason };
+    });
+
   return {
     fitScore: {
       total: score,
@@ -274,6 +317,7 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
         "7일차: 모의 면접과 누락 근거 최종 점검",
       ],
     },
+    relatedSkillGuidance,
     metadata: {
       schemaVersion: "1.0.0",
       modelVersion: "local-keyword-analyzer",
