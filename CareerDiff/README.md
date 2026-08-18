@@ -33,7 +33,8 @@ npm run dev
 ## 현재 분석 방식
 
 - `OPENAI_API_KEY`가 없으면 입력 공고와 후보자 프로필을 실제로 분석하는 로컬 키워드 분석기(`LocalAnalysisProvider`)를 사용합니다.
-- 키가 있으면 OpenAI Structured Outputs를 사용합니다.
+- 키가 있으면 OpenAI Structured Outputs를 사용합니다. 안정화 이전에는 키를 연결하지 않고 Claude
+  Code에서 로컬 분석기를 반복 개선합니다(자세한 방침은 [구조와 보안](docs/ARCHITECTURE.md) 참고).
 - 채용공고 수집은 지원 사이트(잡코리아·사람인·인크루트)의 공개 상세 페이지 HTML만 직접 읽으며
   로그인, CAPTCHA 또는 접근통제를 우회하지 않습니다. 사이트가 본문을 클라이언트에서 렌더해 요약만
   수집되면 그 사실을 표시하고 직접 붙여넣기를 안내합니다.
