@@ -34,7 +34,7 @@ export function ValidationCaseHistoryPanel({
       <h2 id="validation-case-history-heading" className="text-sm font-semibold text-neutral-800">
         분석 히스토리 ({cases.length}건)
       </h2>
-      <ul className="mt-3 flex flex-col gap-2">
+      <ul className="mt-3 flex max-h-[28rem] flex-col gap-2 overflow-y-auto pr-1">
         {ordered.map((item) => {
           const selected = item.id === selectedCaseId;
           return (

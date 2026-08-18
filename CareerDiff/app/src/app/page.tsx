@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { inspectJobDescription } from "@/core/analysis/LocalAnalysisProvider";
 import type { AnalyzeResponse, ApiErrorResponse, CareerDiffAnalysisResult } from "@/core/types";
-import { appendValidationCase } from "@/core/validation/analysisValidationStore";
+import { appendValidationCase, loadValidationCases } from "@/core/validation/analysisValidationStore";
 import { AnalysisDashboard } from "@/features/analysis-dashboard/AnalysisDashboard";
 import { AnalysisJsonPanel } from "@/features/analysis-dashboard/AnalysisJsonPanel";
 import {
@@ -20,11 +20,11 @@ type Status = "idle" | "loading" | "error" | "done";
  * "UI component boundaries"). Input panels and the dashboard stay
  * display/input-only and receive typed props or callbacks.
  *
- * This page intentionally never loads the accumulated validation-case
- * history (data/*.json) — that list only grows and is checked occasionally,
- * not on every page load. Browsing it lives on its own /history route
- * (ValidationCaseHistoryPanel), reached via a link instead of an eager fetch
- * here.
+ * This page restores its last result from localStorage on mount (cheap,
+ * synchronous, no network) so returning to "/" still shows what you last
+ * analyzed. It intentionally never fetches the full accumulated history
+ * (data/*.json) — that list only grows and is checked occasionally, not on
+ * every page load — which lives on its own /history route instead.
  */
 export default function AnalyzerPage() {
   const [jobDescription, setJobDescription] = useState("");
@@ -34,6 +34,16 @@ export default function AnalyzerPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [validationCount, setValidationCount] = useState(0);
   const [result, setResult] = useState<CareerDiffAnalysisResult | null>(null);
+
+  useEffect(() => {
+    // Deferred to a microtask so state updates happen in a callback rather
+    // than synchronously in the effect body (react-hooks/set-state-in-effect).
+    queueMicrotask(() => {
+      const cases = loadValidationCases();
+      setValidationCount(cases.length);
+      if (cases.length > 0) setResult(cases[cases.length - 1].result);
+    });
+  }, []);
 
   // Enable on length only. The local skill dictionary is incomplete, so a job
   // with no recognized skill must NOT be a hard block (it would trap valid
