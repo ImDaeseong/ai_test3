@@ -30,8 +30,11 @@ export function ValidationCaseHistoryPanel({
   const ordered = [...cases].reverse();
 
   return (
-    <section aria-labelledby="validation-case-history-heading" className="rounded-lg border border-neutral-200 p-4">
-      <h2 id="validation-case-history-heading" className="text-sm font-semibold text-neutral-800">
+    <section
+      aria-labelledby="validation-case-history-heading"
+      className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-200/40"
+    >
+      <h2 id="validation-case-history-heading" className="text-sm font-bold text-violet-900">
         분석 히스토리 ({cases.length}건)
       </h2>
       <ul className="mt-3 flex max-h-[28rem] flex-col gap-2 overflow-y-auto pr-1">
@@ -43,8 +46,8 @@ export function ValidationCaseHistoryPanel({
                 type="button"
                 onClick={() => onSelect(item)}
                 aria-pressed={selected}
-                className={`w-full rounded-md border p-3 text-left text-sm ${
-                  selected ? "border-neutral-900 bg-neutral-50" : "border-neutral-200 bg-white"
+                className={`w-full rounded-xl border p-3 text-left text-sm ${
+                  selected ? "border-violet-400 bg-violet-50" : "border-violet-100 bg-white hover:bg-violet-50/50"
                 }`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -52,7 +55,9 @@ export function ValidationCaseHistoryPanel({
                   <span className="text-xs text-neutral-500">{formatDate(item.createdAt)}</span>
                 </div>
                 <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-600">
-                  <span>적합도 {item.result.fitScore.total}점</span>
+                  <span className="rounded-full bg-violet-100 px-2 py-0.5 font-medium text-violet-700">
+                    적합도 {item.result.fitScore.total}점
+                  </span>
                   <span>연관 기술 가이드 {item.result.relatedSkillGuidance.length}건</span>
                 </div>
               </button>

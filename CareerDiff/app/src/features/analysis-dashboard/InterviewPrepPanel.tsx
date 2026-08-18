@@ -5,8 +5,11 @@ export function InterviewPrepPanel({ interviewPrep }: { interviewPrep: Interview
     interviewPrep.questions.length > 0 || interviewPrep.weakAreas.length > 0 || interviewPrep.sevenDayPlan.length > 0;
 
   return (
-    <section aria-labelledby="interview-prep-panel-heading" className="rounded-lg border border-neutral-200 p-4">
-      <h2 id="interview-prep-panel-heading" className="text-sm font-semibold text-neutral-800">
+    <section
+      aria-labelledby="interview-prep-panel-heading"
+      className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-200/40"
+    >
+      <h2 id="interview-prep-panel-heading" className="text-sm font-bold text-violet-900">
         면접 준비
       </h2>
       {!hasAnything ? (

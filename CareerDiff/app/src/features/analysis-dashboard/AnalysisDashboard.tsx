@@ -26,7 +26,7 @@ export function AnalysisDashboard({ result }: { result: CareerDiffAnalysisResult
   return (
     <div className="flex flex-col gap-4">
       {noMatchNotice && (
-        <p role="status" className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <p role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           {noMatchNotice}
         </p>
       )}

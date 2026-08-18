@@ -51,15 +51,15 @@ export function CandidateProfileInputPanel({ value, onChange }: CandidateProfile
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-200/40">
       <div className="flex items-center justify-between gap-2">
-        <label htmlFor="candidate-profile" className="text-sm font-semibold text-neutral-800">
+        <label htmlFor="candidate-profile" className="text-sm font-bold text-violet-900">
           이력서 / 커리어 / 프로젝트
         </label>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-semibold"
+          className="rounded-full border border-violet-200 bg-white px-3 py-1.5 text-sm font-semibold text-violet-700 hover:bg-violet-50"
         >
           {filename ? "재첨부" : "첨부"}
         </button>
@@ -84,7 +84,7 @@ export function CandidateProfileInputPanel({ value, onChange }: CandidateProfile
         onBlur={() => setTouched(true)}
         rows={10}
         placeholder="JSON 파일을 첨부하거나 이력서, 커리어 요약, 프로젝트 설명을 붙여넣으세요."
-        className="w-full resize-y rounded-md border border-neutral-300 p-3 text-sm focus:border-neutral-500 focus:outline-none"
+        className="w-full resize-y rounded-xl border border-violet-100 p-3 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-200 focus:outline-none"
       />
       <div className="flex min-h-[1rem] items-center justify-between text-xs text-neutral-500">
         <span>{trimmedLength.toLocaleString()}자</span>

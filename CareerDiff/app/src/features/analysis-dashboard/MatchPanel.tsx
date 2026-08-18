@@ -12,7 +12,7 @@ function MatchList({ status, items }: { status: MatchItem["status"]; items: Matc
   return (
     <div>
       <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-        <span className={`rounded px-1.5 py-0.5 ${style.badge}`}>{style.title}</span>
+        <span className={`rounded-full px-2 py-0.5 ${style.badge}`}>{style.title}</span>
         <span>{items.length}</span>
       </h3>
       {items.length === 0 ? (
@@ -34,8 +34,11 @@ function MatchList({ status, items }: { status: MatchItem["status"]; items: Matc
 
 export function MatchPanel({ matches }: { matches: MatchResult }) {
   return (
-    <section aria-labelledby="match-panel-heading" className="rounded-lg border border-neutral-200 p-4">
-      <h2 id="match-panel-heading" className="text-sm font-semibold text-neutral-800">
+    <section
+      aria-labelledby="match-panel-heading"
+      className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-200/40"
+    >
+      <h2 id="match-panel-heading" className="text-sm font-bold text-violet-900">
         매칭 결과
       </h2>
       <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">

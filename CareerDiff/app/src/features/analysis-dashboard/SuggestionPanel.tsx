@@ -9,8 +9,11 @@ export function SuggestionPanel({ resumeSuggestions }: { resumeSuggestions: Resu
     resumeSuggestions.atsKeywords.length > 0;
 
   return (
-    <section aria-labelledby="suggestion-panel-heading" className="rounded-lg border border-neutral-200 p-4">
-      <h2 id="suggestion-panel-heading" className="text-sm font-semibold text-neutral-800">
+    <section
+      aria-labelledby="suggestion-panel-heading"
+      className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-200/40"
+    >
+      <h2 id="suggestion-panel-heading" className="text-sm font-bold text-violet-900">
         이력서 개선 제안
       </h2>
       {!hasAnything ? (
@@ -58,7 +61,10 @@ export function SuggestionPanel({ resumeSuggestions }: { resumeSuggestions: Resu
               <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">ATS 키워드</h3>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {resumeSuggestions.atsKeywords.map((keyword, index) => (
-                  <span key={`${keyword}-${index}`} className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
+                  <span
+                    key={`${keyword}-${index}`}
+                    className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700"
+                  >
                     {keyword}
                   </span>
                 ))}

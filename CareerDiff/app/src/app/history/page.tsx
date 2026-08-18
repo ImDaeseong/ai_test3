@@ -54,12 +54,14 @@ export default function ValidationHistoryPage() {
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-10">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">분석 히스토리</h1>
+          <h1 className="bg-gradient-to-r from-violet-700 to-fuchsia-600 bg-clip-text text-3xl font-extrabold text-transparent">
+            분석 히스토리
+          </h1>
           <p className="mt-1 text-sm text-neutral-600">이 서버에 누적된 모든 분석 결과를 훑어보고 다시 열어볼 수 있습니다.</p>
         </div>
         <Link
           href="/"
-          className="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-800"
+          className="shrink-0 rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-semibold text-violet-700 shadow-sm hover:bg-violet-50"
         >
           분석하기로 돌아가기
         </Link>

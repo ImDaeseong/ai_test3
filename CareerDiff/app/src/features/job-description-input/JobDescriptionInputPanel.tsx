@@ -62,8 +62,8 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor="job-description" className="text-sm font-semibold text-neutral-800">
+    <div className="flex flex-col gap-2 rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-200/40">
+      <label htmlFor="job-description" className="text-sm font-bold text-violet-900">
         채용공고
       </label>
       <p className="text-xs text-neutral-500">
@@ -77,7 +77,7 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
         onBlur={() => setTouched(true)}
         rows={10}
         placeholder="공고의 상세 모집요강을 복사해 붙여넣으세요."
-        className="w-full resize-y rounded-md border border-neutral-300 p-3 text-sm focus:border-neutral-500 focus:outline-none"
+        className="w-full resize-y rounded-xl border border-violet-100 p-3 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-200 focus:outline-none"
       />
       <div className="flex min-h-[1rem] items-center justify-between text-xs text-neutral-500">
         <span>{trimmedLength.toLocaleString()}자</span>
@@ -87,7 +87,7 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
         )}
       </div>
 
-      <div className="mt-1 flex flex-col gap-1 rounded-md border border-neutral-200 bg-neutral-50 p-2">
+      <div className="mt-1 flex flex-col gap-1 rounded-xl border border-violet-100 bg-violet-50/60 p-3">
         <label htmlFor="job-url" className="text-xs font-medium text-neutral-600">
           채용공고 URL
         </label>
@@ -102,13 +102,13 @@ export function JobDescriptionInputPanel({ value, onChange }: JobDescriptionInpu
             value={jobUrl}
             onChange={(event) => setJobUrl(event.target.value)}
             placeholder="잡코리아·사람인·인크루트 상세공고 URL"
-            className="min-w-0 flex-1 rounded-md border border-neutral-300 p-2 text-sm focus:border-neutral-500 focus:outline-none"
+            className="min-w-0 flex-1 rounded-xl border border-violet-100 bg-white p-2 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-200 focus:outline-none"
           />
           <button
             type="button"
             onClick={importJobPosting}
             disabled={!jobUrl.trim() || importStatus === "loading"}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-full border border-violet-200 bg-white px-3 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {importStatus === "loading" ? "가져오는 중..." : "공고 가져오기"}
           </button>

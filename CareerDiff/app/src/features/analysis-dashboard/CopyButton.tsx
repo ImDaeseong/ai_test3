@@ -17,7 +17,7 @@ export function CopyButton({ text }: { text: string }) {
           // Clipboard access can be denied by the browser; fail silently, the text is still visible to select/copy manually.
         }
       }}
-      className="shrink-0 rounded border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100"
+      className="shrink-0 rounded-full border border-violet-200 px-2.5 py-0.5 text-xs font-medium text-violet-700 hover:bg-violet-50"
     >
       {copied ? "복사됨" : "복사"}
     </button>

@@ -22,8 +22,11 @@ function RequirementList({ title, items }: { title: string; items: RequirementIt
 
 export function RequirementPanel({ jobRequirements }: { jobRequirements: JobRequirements }) {
   return (
-    <section aria-labelledby="requirement-panel-heading" className="rounded-lg border border-neutral-200 p-4">
-      <h2 id="requirement-panel-heading" className="text-sm font-semibold text-neutral-800">
+    <section
+      aria-labelledby="requirement-panel-heading"
+      className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-200/40"
+    >
+      <h2 id="requirement-panel-heading" className="text-sm font-bold text-violet-900">
         채용 요건
       </h2>
       {jobRequirements.seniority && (

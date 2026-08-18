@@ -109,20 +109,22 @@ export default function AnalyzerPage() {
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-10">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">CareerDiff</h1>
+          <h1 className="bg-gradient-to-r from-violet-700 to-fuchsia-600 bg-clip-text text-3xl font-extrabold text-transparent">
+            CareerDiff
+          </h1>
           <p className="mt-1 text-sm text-neutral-600">
             채용공고와 이력서/커리어를 비교해 적합도, 부족한 역량, 이력서 수정안, 보완 프로젝트, 면접 준비 플랜을 확인하세요.
           </p>
         </div>
         <Link
           href="/history"
-          className="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-800"
+          className="shrink-0 rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-semibold text-violet-700 shadow-sm hover:bg-violet-50"
         >
           분석 히스토리 보기
         </Link>
       </header>
 
-      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         첨부한 후보자 JSON은 이 브라우저에 저장되고, 분석 검증 데이터는 브라우저와 CareerDiff/data 폴더에 저장됩니다.
         비밀번호, 토큰, 사내 전용 식별자, 고객 개인정보 등 민감한 정보는 첨부하지 마세요. 누적 JSON을 외부에 공유하기
         전 개인정보를 확인하세요.
@@ -144,7 +146,7 @@ export default function AnalyzerPage() {
           type="button"
           onClick={handleAnalyze}
           disabled={!canAnalyze}
-          className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          className="self-start rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-300/50 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
         >
           {status === "loading" ? "분석 중..." : "분석하기"}
         </button>
