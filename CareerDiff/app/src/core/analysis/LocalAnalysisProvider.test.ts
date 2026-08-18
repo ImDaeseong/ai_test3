@@ -44,6 +44,12 @@ describe("inspectJobDescription", () => {
       expect.arrayContaining(["C++", "Linux", "CATIA", "OrCAD", "CUDA", "MCU", "Embedded", "SIMD"]),
     );
   });
+
+  it("recognizes WPF from a real 'C# WPF 개발자' posting", () => {
+    const result = inspectJobDescription("모집분야: C# WPF 개발자. 스킬: C#, WPF, CIM, HCM");
+    expect(result.ready).toBe(true);
+    expect(result.detectedSkills).toEqual(expect.arrayContaining(["C#", "WPF"]));
+  });
 });
 
 describe("buildLocalAnalysis", () => {

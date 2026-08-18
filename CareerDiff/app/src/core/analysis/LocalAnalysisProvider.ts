@@ -100,6 +100,10 @@ const SKILLS: SkillDefinition[] = [
   { label: "OrCAD", category: "hardware", aliases: ["orcad"] },
   { label: "MCU", category: "hardware", aliases: ["mcu"] },
   { label: "SIMD", category: "hardware", aliases: ["simd"] },
+  // Added from a real "C# WPF 개발자" posting where a 47-case batch test run
+  // left WPF unmatched. CIM/HCM from the same 스킬 line were skipped as
+  // ambiguous ERP-module acronyms, not identifiable developer skills.
+  { label: "WPF", category: "framework", aliases: ["wpf"] },
 ];
 
 const FALLBACK_GAPS = ["요구사항 기반 API 구현", "자동화 테스트", "배포 및 운영 문서화"];
