@@ -1,16 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 import { inspectJobDescription } from "@/core/analysis/LocalAnalysisProvider";
 import type { AnalyzeResponse, ApiErrorResponse, CareerDiffAnalysisResult } from "@/core/types";
-import {
-  appendValidationCase,
-  loadValidationCases,
-  type AnalysisValidationCase,
-} from "@/core/validation/analysisValidationStore";
+import { appendValidationCase } from "@/core/validation/analysisValidationStore";
 import { AnalysisDashboard } from "@/features/analysis-dashboard/AnalysisDashboard";
 import { AnalysisJsonPanel } from "@/features/analysis-dashboard/AnalysisJsonPanel";
-import { ValidationCaseHistoryPanel } from "@/features/analysis-dashboard/ValidationCaseHistoryPanel";
 import {
   CandidateProfileInputPanel,
   isCandidateProfileValid,
@@ -23,6 +19,12 @@ type Status = "idle" | "loading" | "error" | "done";
  * Owns page composition and analysis state (docs/ARCHITECTURE.md
  * "UI component boundaries"). Input panels and the dashboard stay
  * display/input-only and receive typed props or callbacks.
+ *
+ * This page intentionally never loads the accumulated validation-case
+ * history (data/*.json) — that list only grows and is checked occasionally,
+ * not on every page load. Browsing it lives on its own /history route
+ * (ValidationCaseHistoryPanel), reached via a link instead of an eager fetch
+ * here.
  */
 export default function AnalyzerPage() {
   const [jobDescription, setJobDescription] = useState("");
@@ -32,40 +34,6 @@ export default function AnalyzerPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [validationCount, setValidationCount] = useState(0);
   const [result, setResult] = useState<CareerDiffAnalysisResult | null>(null);
-  const [cases, setCases] = useState<AnalysisValidationCase[]>([]);
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Deferred to a microtask so state updates happen in a callback rather
-    // than synchronously in the effect body (react-hooks/set-state-in-effect).
-    queueMicrotask(async () => {
-      // The data/ folder on disk is the full record of everything ever
-      // analyzed on this machine; the browser's localStorage copy only
-      // covers this one browser and can be cleared. Prefer the server list
-      // and fall back to localStorage only if the fetch itself fails.
-      let loaded: AnalysisValidationCase[];
-      try {
-        const response = await fetch("/api/validation-cases");
-        if (!response.ok) throw new Error("failed to load validation cases");
-        const body = (await response.json()) as { cases: AnalysisValidationCase[] };
-        loaded = body.cases;
-      } catch {
-        loaded = loadValidationCases();
-      }
-      setCases(loaded);
-      setValidationCount(loaded.length);
-      if (loaded.length > 0) {
-        const last = loaded[loaded.length - 1];
-        setResult(last.result);
-        setSelectedCaseId(last.id);
-      }
-    });
-  }, []);
-
-  function handleSelectCase(validationCase: AnalysisValidationCase) {
-    setResult(validationCase.result);
-    setSelectedCaseId(validationCase.id);
-  }
 
   // Enable on length only. The local skill dictionary is incomplete, so a job
   // with no recognized skill must NOT be a hard block (it would trap valid
@@ -105,17 +73,7 @@ export default function AnalyzerPage() {
           candidateProfile,
           result: body.result,
         });
-        setCases(updatedCases);
         setValidationCount(updatedCases.length);
-        const matchedCase =
-          added ??
-          updatedCases.find(
-            (existingCase) =>
-              existingCase.jobDescription === jobDescription &&
-              existingCase.candidateProfile === candidateProfile &&
-              JSON.stringify(existingCase.result) === JSON.stringify(body.result),
-          );
-        if (matchedCase) setSelectedCaseId(matchedCase.id);
         // Identical input and result already stored: skip the redundant file write.
         if (added) {
           const saveResponse = await fetch("/api/validation-cases", {
@@ -139,11 +97,19 @@ export default function AnalyzerPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-10">
-      <header>
-        <h1 className="text-2xl font-bold text-neutral-900">CareerDiff</h1>
-        <p className="mt-1 text-sm text-neutral-600">
-          채용공고와 이력서/커리어를 비교해 적합도, 부족한 역량, 이력서 수정안, 보완 프로젝트, 면접 준비 플랜을 확인하세요.
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-900">CareerDiff</h1>
+          <p className="mt-1 text-sm text-neutral-600">
+            채용공고와 이력서/커리어를 비교해 적합도, 부족한 역량, 이력서 수정안, 보완 프로젝트, 면접 준비 플랜을 확인하세요.
+          </p>
+        </div>
+        <Link
+          href="/history"
+          className="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-800"
+        >
+          분석 히스토리 보기
+        </Link>
       </header>
 
       <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
@@ -189,8 +155,6 @@ export default function AnalyzerPage() {
       )}
 
       {validationError && <p role="alert" className="text-sm text-red-600">{validationError}</p>}
-
-      <ValidationCaseHistoryPanel cases={cases} selectedCaseId={selectedCaseId} onSelect={handleSelectCase} />
 
       {result && (
         <>
