@@ -111,7 +111,8 @@ API 비용 없이 회귀 테스트가 가능하다.
 ## 연관 기술 가이드 (경량 온톨로지)
 
 `LocalAnalysisProvider`의 `SKILLS` 배열은 각 스킬에 `relatedTo`(다른 스킬 라벨 목록)를 선택적으로
-가질 수 있습니다. 부족한 기술 중 `relatedTo`가 있는 항목만 `relatedSkillGuidance`로 노출되며,
+가질 수 있습니다. 부족한 기술은 전부 `relatedSkillGuidance`로 노출됩니다 — `relatedTo`가 없는
+항목도 빈 `relatedSkills`와 함께 "직접 학습이 필요하다"는 안내를 받으며 조용히 누락되지 않습니다.
 후보자가 직접 연결된 관련 기술을 이미 보유했으면 그 기술을 출발점으로 언급합니다. 직접 연결에
 후보자 경험이 없으면 `findBridgePath`가 `relatedTo` 그래프를 최대 3-hop까지 BFS로 순회해 더 먼
 연결(예: LangGraph→LangChain→LLM→OpenAI)까지 찾아 학습 경로로 제시합니다. 관계는 RAG↔Vector

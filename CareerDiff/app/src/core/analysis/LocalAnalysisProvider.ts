@@ -223,9 +223,25 @@ function findBridgePath(skillLabel: string, candidateProfile: string): string[] 
   return null;
 }
 
+const ASCII_ALIAS_PATTERN = /^[\x00-\x7f]+$/;
+
 function includesSkill(text: string, skill: SkillDefinition): boolean {
   const lower = text.toLowerCase();
-  return skill.aliases.some((alias) => lower.includes(alias));
+  return skill.aliases.some((alias) => {
+    const lowerAlias = alias.toLowerCase();
+    if (!ASCII_ALIAS_PATTERN.test(lowerAlias)) {
+      // Korean aliases have no Latin word-boundary concept; keep plain
+      // substring matching, as the existing entries are already curated to
+      // be substring-safe (see the SKILLS comments above).
+      return lower.includes(lowerAlias);
+    }
+    // ASCII aliases must not be embedded inside a larger word — e.g. the
+    // "html" alias previously matched inside "Dhtml" (1990s DHTML, not
+    // modern HTML/CSS), falsely reporting a strong skill match. A trailing
+    // version digit (e.g. "html5", "css3") still counts as the same skill.
+    const escaped = lowerAlias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(?<![a-z0-9])${escaped}(?![a-z])`, "i").test(lower);
+  });
 }
 
 export type AnalysisReadiness = {
@@ -312,24 +328,38 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
   const gaps = missing.length ? missing.map((skill) => skill.label) : FALLBACK_GAPS;
   const projectGaps = Array.from({ length: 3 }, (_, index) => gaps[index % gaps.length]);
 
-  // A lightweight ontology pass: for each missing skill with a known relation,
-  // explain the connection and, when the candidate already has a related
-  // skill, name it as a concrete starting point instead of a bare gap list.
-  const relatedSkillGuidance: RelatedSkillGuidance[] = missing
-    .filter((skill) => (skill.relatedTo?.length ?? 0) > 0)
-    .map((skill) => {
-      const relatedLabels = skill.relatedTo ?? [];
-      const bridgeSkills = relatedLabels.filter((label) =>
-        SKILLS.some((related) => related.label === label && includesSkill(input.candidateProfile, related)),
-      );
-      const bridgePath = bridgeSkills.length ? null : findBridgePath(skill.label, input.candidateProfile);
-      const reason = bridgeSkills.length
-        ? `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 후보자는 이미 ${bridgeSkills.join(", ")} 경험이 있어 ${skill.label} 학습의 출발점으로 활용할 수 있습니다.`
-        : bridgePath
-          ? `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 후보자의 ${bridgePath.join(" → ")} 경험이 ${skill.label}까지 이어지는 학습 경로가 될 수 있습니다.`
-          : `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 관련 기술부터 함께 준비하면 학습 경로를 좁힐 수 있습니다.`;
-      return { skill: skill.label, relatedSkills: relatedLabels, reason };
-    });
+  // A lightweight ontology pass over every gap — `gaps`, not `missing`, so
+  // this covers the no-signal case too (an unrelated posting where zero
+  // skills were even recognized): it already drives miniProjects,
+  // resumeSuggestions and interviewPrep via FALLBACK_GAPS, and
+  // relatedSkillGuidance must not be the one section left empty there.
+  // When a relatedTo link exists, explain the connection and, when the
+  // candidate already has a related skill, name it as a concrete starting
+  // point. When no relation is known (including FALLBACK_GAPS labels, which
+  // aren't in the SKILLS taxonomy at all), still emit guidance
+  // (relatedSkills: []) pointing at the gap itself instead of silently
+  // omitting it.
+  const relatedSkillGuidance: RelatedSkillGuidance[] = gaps.map((gapLabel) => {
+    const skill = SKILLS.find((candidate) => candidate.label === gapLabel);
+    const relatedLabels = skill?.relatedTo ?? [];
+    if (!skill || relatedLabels.length === 0) {
+      return {
+        skill: gapLabel,
+        relatedSkills: [],
+        reason: `${gapLabel}은 taxonomy에 연결된 상위/인접 기술이 없습니다. ${gapLabel}을 직접 다루는 미니 프로젝트나 학습 자료로 근거를 만드는 것이 가장 확실한 준비 방법입니다.`,
+      };
+    }
+    const bridgeSkills = relatedLabels.filter((label) =>
+      SKILLS.some((related) => related.label === label && includesSkill(input.candidateProfile, related)),
+    );
+    const bridgePath = bridgeSkills.length ? null : findBridgePath(skill.label, input.candidateProfile);
+    const reason = bridgeSkills.length
+      ? `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 후보자는 이미 ${bridgeSkills.join(", ")} 경험이 있어 ${skill.label} 학습의 출발점으로 활용할 수 있습니다.`
+      : bridgePath
+        ? `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 후보자의 ${bridgePath.join(" → ")} 경험이 ${skill.label}까지 이어지는 학습 경로가 될 수 있습니다.`
+        : `${skill.label}은 ${relatedLabels.join(", ")}과 연결된 기술입니다. 관련 기술부터 함께 준비하면 학습 경로를 좁힐 수 있습니다.`;
+    return { skill: skill.label, relatedSkills: relatedLabels, reason };
+  });
 
   return {
     fitScore: {

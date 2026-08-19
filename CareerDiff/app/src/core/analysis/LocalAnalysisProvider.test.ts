@@ -50,6 +50,14 @@ describe("inspectJobDescription", () => {
     expect(result.ready).toBe(true);
     expect(result.detectedSkills).toEqual(expect.arrayContaining(["C#", "WPF"]));
   });
+
+  it("does not match the HTML alias inside an unrelated word like 'Dhtml'", () => {
+    const result = inspectJobDescription("자사몰 개발자 채용. 스킬: CSS3, Git, HTML5, JavaScript, Node.js, React");
+    // A candidate profile whose only "html"-adjacent token is the legacy
+    // "Dhtml" (1990s DHTML) must not be reported as having HTML evidence.
+    expect(result.detectedSkills).toContain("HTML");
+    expect(inspectJobDescription("VC++, Dhtml, Xml 기반 개발 경험이 있습니다.").detectedSkills).not.toContain("HTML");
+  });
 });
 
 describe("buildLocalAnalysis", () => {
@@ -83,6 +91,21 @@ describe("buildLocalAnalysis", () => {
     expect(result.miniProjects).toHaveLength(3);
   });
 
+  it("still fills relatedSkillGuidance from the FALLBACK_GAPS labels when the posting has zero recognized skills", () => {
+    const result = buildLocalAnalysis({
+      jobDescription: "매장 운영과 고객 응대를 담당할 매니저를 모집합니다. 성실하고 책임감 있는 분 우대합니다.",
+      candidateProfile: "VC++로 PC방 관리프로그램을 개발한 경험이 있습니다. Android, C#, Python도 다룹니다.".repeat(2),
+    });
+
+    expect(result.jobRequirements.requiredSkills).toHaveLength(0);
+    expect(result.relatedSkillGuidance.length).toBeGreaterThan(0);
+    expect(result.relatedSkillGuidance).toEqual(
+      result.resumeSuggestions.skillPriority.map((label) =>
+        expect.objectContaining({ skill: label, relatedSkills: [] }),
+      ),
+    );
+  });
+
   it("extracts simulation and physical AI skills from detailed postings", () => {
     const result = buildLocalAnalysis({
       jobDescription: "Unreal Engine, WebGPU, 디지털 트윈, 강화학습, VLA, Sim2Real 경험이 필요합니다.",
@@ -113,6 +136,18 @@ describe("buildLocalAnalysis", () => {
       }),
     ]);
     expect(result.relatedSkillGuidance[0].reason).not.toContain("이미");
+  });
+
+  it("still gives guidance for a missing skill with no taxonomy relation, instead of omitting it", () => {
+    const result = buildLocalAnalysis({
+      jobDescription: "Python 기반 데이터 엔지니어를 찾습니다.",
+      candidateProfile: "자바스크립트와 웹 서비스를 개발한 경험이 있습니다.".repeat(2),
+    });
+
+    const pythonGuidance = result.relatedSkillGuidance.find((guidance) => guidance.skill === "Python");
+    expect(pythonGuidance).toBeDefined();
+    expect(pythonGuidance?.relatedSkills).toEqual([]);
+    expect(pythonGuidance?.reason).toContain("Python");
   });
 
   it("names the candidate's existing skill as a bridge toward a missing related skill", () => {
@@ -187,8 +222,10 @@ describe("buildLocalAnalysis", () => {
     expect(bySkill["BeautifulSoup"].relatedSkills).toEqual(["Python"]);
     expect(bySkill["MS SQL Server"].relatedSkills).toEqual(["SQL"]);
     expect(bySkill["MariaDB"].relatedSkills).toEqual(["SQL"]);
-    // Delphi has no relatedTo — it was added as a standalone recognized skill.
-    expect(bySkill["Delphi"]).toBeUndefined();
+    // Delphi has no relatedTo — it still gets a direct-learning guidance
+    // entry (empty relatedSkills) instead of being silently omitted.
+    expect(bySkill["Delphi"].relatedSkills).toEqual([]);
+    expect(bySkill["Delphi"].reason).toContain("Delphi");
 
     const requiredLabels = result.jobRequirements.requiredSkills.map((item) => item.label);
     expect(requiredLabels).toEqual(expect.arrayContaining(["Delphi", "MS SQL Server"]));
@@ -216,6 +253,16 @@ describe("buildLocalAnalysis", () => {
     const langGraphGuidance = result.relatedSkillGuidance.find((guidance) => guidance.skill === "LangGraph");
     expect(langGraphGuidance?.relatedSkills).toEqual(["LangChain"]);
     expect(langGraphGuidance?.reason).toContain("OpenAI → LLM → LangChain");
+  });
+
+  it("reports HTML as missing, not a strong match, for a candidate whose only evidence is legacy 'Dhtml'", () => {
+    const result = buildLocalAnalysis({
+      jobDescription: "CSS3, HTML5, JavaScript 기반 프런트엔드 개발자를 찾습니다.",
+      candidateProfile: "VC++(MFC, ATL, OCX), Dhtml, Xml 기반 시스템을 개발한 경험이 있습니다.".repeat(2),
+    });
+
+    expect(result.matches.strong.map((match) => match.requirement)).not.toContain("HTML");
+    expect(result.matches.missing.map((match) => match.requirement)).toContain("HTML");
   });
 
   it("does not bridge a missing skill beyond MAX_BRIDGE_DEPTH hops", () => {
