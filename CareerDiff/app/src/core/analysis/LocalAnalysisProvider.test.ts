@@ -91,6 +91,32 @@ describe("buildLocalAnalysis", () => {
     expect(result.miniProjects).toHaveLength(3);
   });
 
+  it("shows no gaps anywhere for a full match, instead of inventing fallback categories", () => {
+    // Real-data regression: a posting requiring only "Java" against a
+    // candidate who has it was a 100% match (missing: 0), yet
+    // relatedSkillGuidance/miniProjects/resumeSuggestions/interviewPrep all
+    // still showed generic FALLBACK_GAPS content as if something were
+    // missing — the no-signal fallback was firing on missing.length === 0
+    // without checking whether any requirement was even detected.
+    const result = buildLocalAnalysis({
+      jobDescription: "Java 백엔드 개발자를 채용합니다.",
+      candidateProfile: "Java로 대규모 백엔드 시스템을 설계하고 운영한 경험이 있습니다.".repeat(2),
+    });
+
+    expect(result.matches.missing).toHaveLength(0);
+    expect(result.jobRequirements.requiredSkills.length).toBeGreaterThan(0);
+    expect(result.relatedSkillGuidance).toEqual([]);
+    expect(result.resumeSuggestions.skillPriority).toEqual([]);
+    expect(result.interviewPrep.weakAreas).toEqual([]);
+    // Mini projects still total exactly three (product requirement), but
+    // must reference the candidate's own matched skill, not a fake gap.
+    expect(result.miniProjects).toHaveLength(3);
+    for (const project of result.miniProjects) {
+      expect(project.targetGaps).toEqual(["Java"]);
+      expect(project.goal).not.toContain("구현 근거를 만듭니다");
+    }
+  });
+
   it("still fills relatedSkillGuidance from the FALLBACK_GAPS labels when the posting has zero recognized skills", () => {
     const result = buildLocalAnalysis({
       jobDescription: "매장 운영과 고객 응대를 담당할 매니저를 모집합니다. 성실하고 책임감 있는 분 우대합니다.",

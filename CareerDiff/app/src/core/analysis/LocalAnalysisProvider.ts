@@ -325,15 +325,37 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
     status: "missing",
     reason: `후보자 프로필에서 ${skill.label} 관련 근거를 찾지 못했습니다.`,
   }));
-  const gaps = missing.length ? missing.map((skill) => skill.label) : FALLBACK_GAPS;
-  const projectGaps = Array.from({ length: 3 }, (_, index) => gaps[index % gaps.length]);
+  // FALLBACK_GAPS is only for the no-signal case (nothing recognized in the
+  // posting at all). A full match — real requirements detected and every one
+  // satisfied — is a different, positive outcome and must not reuse the
+  // no-signal fallback, or every downstream section (mini projects, resume
+  // suggestions, interview prep, related-skill guidance) ends up inventing
+  // gaps that don't exist.
+  const hasFullMatch = detected.length > 0 && missing.length === 0;
+  const gaps = missing.length ? missing.map((skill) => skill.label) : hasFullMatch ? [] : FALLBACK_GAPS;
+  // Mini projects and the resume/interview copy below still need exactly
+  // three focus items even on a full match, so fall back to the candidate's
+  // own matched skills there — framed as deepening existing evidence, not
+  // filling a gap (see gapProjectTitle/Goal/Description).
+  const projectFocus = gaps.length ? gaps : matched.map((skill) => skill.label);
+  const projectGaps = Array.from({ length: 3 }, (_, index) => projectFocus[index % projectFocus.length]);
+  const gapProjectTitle = (focus: string, index: number) =>
+    hasFullMatch ? `${focus} 심화 프로젝트 ${index + 1}` : `${focus} 검증 프로젝트 ${index + 1}`;
+  const gapProjectGoal = (focus: string) =>
+    hasFullMatch
+      ? `이미 보유한 ${focus} 경험을 더 구체적인 성과로 발전시킵니다.`
+      : `${focus}에 대한 직접적인 구현 근거를 만듭니다.`;
+  const gapProjectDescription = (focus: string) =>
+    hasFullMatch
+      ? `${focus} 심화 프로젝트의 문제, 구현, 테스트, 결과를 한 문단으로 정리해 이력서에 구체적 성과로 남기세요.`
+      : `${focus} 보완 프로젝트의 문제, 구현, 테스트, 결과를 한 문단으로 정리하세요.`;
 
   // A lightweight ontology pass over every gap — `gaps`, not `missing`, so
   // this covers the no-signal case too (an unrelated posting where zero
-  // skills were even recognized): it already drives miniProjects,
-  // resumeSuggestions and interviewPrep via FALLBACK_GAPS, and
-  // relatedSkillGuidance must not be the one section left empty there.
-  // When a relatedTo link exists, explain the connection and, when the
+  // skills were even recognized, so miniProjects/resumeSuggestions/
+  // interviewPrep fall back to FALLBACK_GAPS). On a full match, `gaps` is
+  // correctly empty, so this naturally yields no entries too — there is
+  // nothing left to guide toward. When a relatedTo link exists, explain the
   // candidate already has a related skill, name it as a concrete starting
   // point. When no relation is known (including FALLBACK_GAPS labels, which
   // aren't in the SKILLS taxonomy at all), still emit guidance
@@ -415,13 +437,13 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
     },
     resumeSuggestions: {
       bullets: matched.slice(0, 3).map((skill) => `${skill.label}을 활용한 프로젝트의 역할, 규모, 성과 수치를 이력서에 명시하세요.`),
-      projectDescriptions: projectGaps.map((gap) => `${gap} 보완 프로젝트의 문제, 구현, 테스트, 결과를 한 문단으로 정리하세요.`),
+      projectDescriptions: projectGaps.map((gap) => gapProjectDescription(gap)),
       skillPriority: gaps,
       atsKeywords: detected.map((skill) => skill.label),
     },
     miniProjects: projectGaps.map((gap, index) => ({
-      title: `${gap} 검증 프로젝트 ${index + 1}`,
-      goal: `${gap}에 대한 직접적인 구현 근거를 만듭니다.`,
+      title: gapProjectTitle(gap, index),
+      goal: gapProjectGoal(gap),
       targetGaps: [gap],
       deliverables: ["실행 가능한 소스 코드", "자동화 테스트", "설계와 실행 방법을 설명하는 README"],
       suggestedDurationDays: 3,
@@ -432,7 +454,7 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
       sevenDayPlan: [
         `1일차: 공고 요구 기술 ${detected.map((skill) => skill.label).join(", ") || "원문"} 정리`,
         "2일차: 후보자 프로필의 직접 근거와 성과 수치 정리",
-        `3~4일차: ${projectGaps[0]} 보완 프로젝트 구현`,
+        `3~4일차: ${projectGaps[0]} ${hasFullMatch ? "심화" : "보완"} 프로젝트 구현`,
         "5일차: 이력서 프로젝트 설명 수정",
         "6일차: 예상 질문에 STAR 형식으로 답변",
         "7일차: 모의 면접과 누락 근거 최종 점검",
