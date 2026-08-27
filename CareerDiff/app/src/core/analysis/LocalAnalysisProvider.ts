@@ -289,6 +289,50 @@ function requirement(skill: SkillDefinition, index: number, prefix: string): Req
   };
 }
 
+/**
+ * Extracts 경력/학력/우대조건 from the 잡코리아-style "지원자격" block that most
+ * postings share, regardless of whether SKILLS recognizes any tech keyword in
+ * the text. A non-dev posting (QA/제조/영업 등) still has these fields, so this
+ * is what keeps jobRequirements.domain from going empty on every posting
+ * outside the SKILLS taxonomy's coverage — see LocalAnalysisProvider.test.ts
+ * for the real postings (다이캐스팅 품질, 자동차 렌트 CTO) that exposed the gap.
+ * Heuristic pattern matching over free text, so confidence stays "medium".
+ */
+function extractDomainRequirements(jobDescription: string): RequirementItem[] {
+  const items: RequirementItem[] = [];
+  const push = (label: string, category: string) => {
+    items.push({ id: `domain-${items.length + 1}`, label, category, confidence: "medium" });
+  };
+
+  // Two jobkorea layouts have been seen in real postings: "경력\n경력\n(N년이상)"
+  // (parenthesized value on its own line) and "경력\n경력(N년이상)" (no newline
+  // before the parenthesis, mobile layout) — the \n? keeps both matching.
+  // "경력무관" is a third literal value (no parentheses) alongside "신입·경력".
+  const careerMatch = jobDescription.match(/경력\s*\n\s*(신입[·・]경력|경력무관|경력\s*\n?\s*\(([^)]+)\))/);
+  if (careerMatch) {
+    push(careerMatch[2] ? `경력 ${careerMatch[2]}` : careerMatch[1], "experience");
+  }
+
+  // A parenthesized qualifier ("(졸업예정자 가능)", "(직무별 상이)") sometimes
+  // wraps onto its own following line rather than staying on the 학력 value
+  // line (real-data check: 10/161 stored postings) — fold it back in so it
+  // isn't silently dropped.
+  const educationMatch = jobDescription.match(/학력\s*\n\s*([^\n]+)\n?(\([^\n]*\))?/);
+  if (educationMatch) {
+    const value = [educationMatch[1].trim(), educationMatch[2]?.trim()].filter(Boolean).join(" ");
+    push(`학력 ${value}`, "education");
+  }
+
+  const preferredMatch = jobDescription.match(/우대(?:조건)?\s*\n\s*(?:기본우대\s*\n)?\s*([^\n]+)/);
+  if (preferredMatch) {
+    for (const condition of preferredMatch[1].split(",").map((entry) => entry.trim()).filter(Boolean)) {
+      push(condition, "preferred");
+    }
+  }
+
+  return items;
+}
+
 export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalysisResult {
   const preferredMarker = input.jobDescription.search(/우대|preferred|plus/i);
   const detected = SKILLS.filter((skill) => includesSkill(input.jobDescription, skill));
@@ -405,7 +449,7 @@ export function buildLocalAnalysis(input: AnalyzeRequestInput): CareerDiffAnalys
     jobRequirements: {
       requiredSkills: required.map((skill, index) => requirement(skill, index, "required")),
       preferredSkills: preferred.map((skill, index) => requirement(skill, index, "preferred")),
-      domain: [],
+      domain: extractDomainRequirements(input.jobDescription),
       collaboration: [],
       deliveryExpectations: [],
     },

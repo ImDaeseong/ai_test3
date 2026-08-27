@@ -305,3 +305,90 @@ describe("buildLocalAnalysis", () => {
     expect(vlaGuidance?.reason).not.toContain("→");
   });
 });
+
+describe("jobRequirements.domain (경력/학력/우대조건 extraction)", () => {
+  // Real-data regression: a 다이캐스팅 품질 팀장 posting (no SKILLS-taxonomy
+  // keyword anywhere in the text) against a software-dev candidate produced
+  // an entirely empty jobRequirements — the actual 경력/학력/우대조건 the
+  // posting stated were silently dropped, and the UI's "도메인" panel showed
+  // "추출된 항목이 없습니다." even though that information was in the text.
+  // domain must reflect the posting regardless of candidate fit or SKILLS
+  // coverage, since this tool isn't only for a single candidate's résumé.
+  it("extracts career/education/preferred conditions from a posting with zero recognized tech skills", () => {
+    const jobDescription =
+      "다이캐스팅 품질 팀장급 모집-베트남주재원\n상세요강\n모집요강\n모집분야\n품질보증 팀장급 모집-베트남주재원\n" +
+      "모집인원\n1명\n고용형태\n정규직(수습 3개월)\n지원자격\n경력\n경력\n(5년이상)\n학력\n학력무관\n" +
+      "우대조건\n기본우대\n해외근무 가능자, 유관업무 경력자(5년)";
+
+    const result = buildLocalAnalysis({
+      jobDescription,
+      candidateProfile: "VC++로 PC방 관리프로그램을 개발한 경험이 있습니다. Android, C#, Python도 다룹니다.".repeat(2),
+    });
+
+    expect(result.jobRequirements.requiredSkills).toHaveLength(0);
+    const labels = result.jobRequirements.domain.map((item) => item.label);
+    expect(labels).toContain("경력 5년이상");
+    expect(labels).toContain("학력 학력무관");
+    expect(labels).toContain("해외근무 가능자");
+    expect(labels).toContain("유관업무 경력자(5년)");
+  });
+
+  it("also extracts domain requirements when the posting has recognized tech skills", () => {
+    const jobDescription = "지원자격\n경력\n경력\n(7년이상)\n학력\n학력무관\n스킬\nOracle, PL/SQL, PostgreSQL, Python";
+    const result = buildLocalAnalysis({
+      jobDescription,
+      candidateProfile: "Python과 PostgreSQL로 백엔드를 개발한 경험이 있습니다.",
+    });
+
+    expect(result.jobRequirements.requiredSkills.length).toBeGreaterThan(0);
+    expect(result.jobRequirements.domain.map((item) => item.label)).toEqual(
+      expect.arrayContaining(["경력 7년이상", "학력 학력무관"]),
+    );
+  });
+
+  it("recognizes the 신입·경력 career label", () => {
+    const jobDescription = "지원자격\n경력\n신입·경력\n학력\n(직무별 상이 / 상세요강 참조)";
+    const result = buildLocalAnalysis({ jobDescription, candidateProfile: "경력 사항입니다." });
+
+    expect(result.jobRequirements.domain.map((item) => item.label)).toContain("신입·경력");
+  });
+
+  // Real-data regression: a broader audit of every stored data/*.json case
+  // found 9 postings where domain came back empty despite having a
+  // 지원자격 section — a second jobkorea layout puts the career value inline
+  // ("경력\n경력(10년이상)", no newline before the parenthesis) instead of on
+  // its own line, and "경력무관" (career not required) has no parentheses at
+  // all. Both were silently dropped by the first regex.
+  it("recognizes the inline mobile-layout career value with no newline before the parenthesis", () => {
+    const jobDescription = "지원자격\n경력\n경력(10년이상)\n\n접수기간/방법\n...";
+    const result = buildLocalAnalysis({ jobDescription, candidateProfile: "경력 사항입니다." });
+
+    expect(result.jobRequirements.domain.map((item) => item.label)).toContain("경력 10년이상");
+  });
+
+  it("recognizes the 경력무관 career label", () => {
+    const jobDescription = "지원자격\n경력\n경력무관\n\n스킬\n\n역량\n성실성";
+    const result = buildLocalAnalysis({ jobDescription, candidateProfile: "경력 사항입니다." });
+
+    expect(result.jobRequirements.domain.map((item) => item.label)).toContain("경력무관");
+  });
+
+  // Real-data regression: a full-dataset audit found 10/161 postings put a
+  // parenthesized qualifier ("(졸업예정자 가능)") on its own line after the 학력
+  // value instead of on the same line — it was silently dropped.
+  it("folds a parenthesized 학력 qualifier on the following line back into the value", () => {
+    const jobDescription = "지원자격\n경력\n경력\n(5년이상)\n학력\n대졸이상\n(졸업예정자 가능)\n스킬\nJava";
+    const result = buildLocalAnalysis({ jobDescription, candidateProfile: "경력 사항입니다." });
+
+    expect(result.jobRequirements.domain.map((item) => item.label)).toContain("학력 대졸이상 (졸업예정자 가능)");
+  });
+
+  it("returns no domain items when the posting has no 지원자격 section", () => {
+    const result = buildLocalAnalysis({
+      jobDescription: "회사 소개와 복리후생 안내만 있는 채용공고입니다.".repeat(3),
+      candidateProfile: "후보자 프로필입니다.",
+    });
+
+    expect(result.jobRequirements.domain).toEqual([]);
+  });
+});
