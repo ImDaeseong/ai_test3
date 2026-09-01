@@ -391,4 +391,23 @@ describe("jobRequirements.domain (경력/학력/우대조건 extraction)", () =>
 
     expect(result.jobRequirements.domain).toEqual([]);
   });
+
+  // Real-data regression: a stored posting's free-text title ended in
+  // "...보험 경험 우대\n⭐ 158명 이상 찜한 기업" — that sentence-ending "우대"
+  // satisfied the old regex before the real "우대조건" heading further down
+  // was ever reached, so the extracted "preferred" item was the company
+  // interest banner instead of the posting's actual preferred conditions.
+  it("skips a sentence-ending '우대' in the posting title and extracts the real 우대조건 heading", () => {
+    const jobDescription =
+      "웹프로그래머 프리랜서 개발자(경력직)-React, 은행, 보험 경험 우대\n⭐ 158명 이상 찜한 기업\n" +
+      "지원자격\n경력\n경력\n(6년이상)\n학력\n고졸이상\n스킬\nJAVA, React, Spring, Vue.js\n" +
+      "우대조건\n기본우대\n정보처리기사, 정보처리산업기사";
+
+    const result = buildLocalAnalysis({ jobDescription, candidateProfile: "경력 사항입니다." });
+
+    const labels = result.jobRequirements.domain.map((item) => item.label);
+    expect(labels).not.toContain("⭐ 158명 이상 찜한 기업");
+    expect(labels).toContain("정보처리기사");
+    expect(labels).toContain("정보처리산업기사");
+  });
 });

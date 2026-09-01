@@ -323,7 +323,13 @@ function extractDomainRequirements(jobDescription: string): RequirementItem[] {
     push(`학력 ${value}`, "education");
   }
 
-  const preferredMatch = jobDescription.match(/우대(?:조건)?\s*\n\s*(?:기본우대\s*\n)?\s*([^\n]+)/);
+  // Real-data regression: a posting whose free-text title ended in "...경험
+  // 우대\n⭐ 158명 이상 찜한 기업" made this match on that sentence's "우대"
+  // instead of the actual "우대조건" heading further down, capturing the
+  // company-interest banner as a fake preferred condition and silently
+  // dropping the real 우대조건 list. Anchoring to line-start (the heading is
+  // always alone on its own line) rules out a "우대" that ends a sentence.
+  const preferredMatch = jobDescription.match(/(?:^|\n)우대(?:조건)?\s*\n\s*(?:기본우대\s*\n)?\s*([^\n]+)/);
   if (preferredMatch) {
     for (const condition of preferredMatch[1].split(",").map((entry) => entry.trim()).filter(Boolean)) {
       push(condition, "preferred");
